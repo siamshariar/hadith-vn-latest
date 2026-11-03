@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { loadStaticPage } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
@@ -42,6 +43,8 @@ NotFoundPage.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };
 
+// Built once, in the site's interface; the browser switches it to the reader's language
+// (contexts/LocaleContext.js), loading that catalog.
 export async function getStaticProps() {
-  return { props: { contentTitle: "404" } };
+  return loadStaticPage({ contentTitle: "404" });
 }

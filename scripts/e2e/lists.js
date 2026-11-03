@@ -3,7 +3,7 @@
 // lists (language chips, subcategories, pagination) and the category tree.
 'use strict';
 
-const { api, assert, loc, norm, spec, until, waitForH1, waitForText, viNumber } = require('./harness');
+const { BREADCRUMB_NAV, api, assert, loc, norm, readableCategories, spec, until, waitForH1, waitForText, viNumber } = require('./harness');
 
 const cardIds = (page) =>
   page.locator('article[id^="hadith-"]').evaluateAll((cards) => cards.map((card) => Number(card.id.replace('hadith-', ''))));
@@ -38,7 +38,7 @@ module.exports = spec(module, 'lists', (h) => {
         [
           'Đọc được bằng tiếng Việt',
           viNumber(totals.translated + totals.linkedTranslated),
-          `${viNumber(totals.translated)} bản dịch + ${viNumber(totals.linkedTranslated)} theo HadeethEnc`,
+          `${viNumber(totals.translated)} bản dịch + ${viNumber(totals.linkedTranslated)} từ bộ hadith theo chủ đề`,
         ],
         ['Hadith', viNumber(totals.hadith)],
         ['Bộ sưu tập', viNumber(totals.book)],
@@ -77,11 +77,13 @@ module.exports = spec(module, 'lists', (h) => {
     assert.deepEqual(facts, [
       ['Hadith', viNumber(book.totalHadith)],
       ['Chương', viNumber(book.chapters.length)],
-      ['Đọc được bằng tiếng Việt', viNumber(own + linked), ...(linked > 0 ? [own > 0 ? `${viNumber(own)} bản dịch + ${viNumber(linked)} theo HadeethEnc` : 'tất cả theo bản dịch của HadeethEnc'] : [])],
+      ['Đọc được bằng tiếng Việt', viNumber(own + linked), ...(linked > 0 ? [own > 0 ? `${viNumber(own)} bản dịch + ${viNumber(linked)} từ bộ hadith theo chủ đề` : 'tất cả qua bản dịch từ bộ hadith theo chủ đề'] : [])],
     ]);
     const bookEditions = editions.filter((e) => e.bookSlug === book.slug);
-    assert.equal(norm(await page.locator('header details summary').textContent()), `Bản dịch (${bookEditions.length} ấn bản)`);
+    // one row per language, with the translator when the source names one
+    assert.equal(norm(await page.locator('header details summary').textContent()), `Bản dịch (${bookEditions.length} ngôn ngữ)`);
     assert.equal(await page.locator('header details li').count(), bookEditions.length);
+    assert.equal(await page.locator('header details li').filter({ hasText: 'Muhsin Khan' }).count(), 1);
 
     const rows = await page.locator('#book-chapters + ol > li a').evaluateAll((links) =>
       links.map((a) => [a.getAttribute('href'), [...a.children].map((el) => el.textContent.trim())])
@@ -117,8 +119,11 @@ module.exports = spec(module, 'lists', (h) => {
       await h.waitForPath(page, (url) => url.searchParams.get('translated') === '1', 'filter on');
       await until(async () => (await page.getByRole('switch').getAttribute('aria-checked')) === 'true', 'switch checked');
       await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(readable)), 'only the readable hadiths');
-      // each shows HadeethEnc's translation, labelled as such, and the list says what that means once
-      assert.equal(await page.getByText('Bản dịch tiếng Việt theo HadeethEnc', { exact: true }).count(), readable.hadiths.filter((x) => x.linkedTranslation).length);
+      // each shows the topic collection's translation, labelled as such and with its
+      // source line, and the list says what that means once
+      const linkedCount = readable.hadiths.filter((x) => x.linkedTranslation).length;
+      assert.equal(await page.getByText('Bản dịch tiếng Việt từ bộ hadith theo chủ đề', { exact: true }).count(), linkedCount);
+      assert.equal(await page.locator('article div[class*="linked"] p[data-source-line]').count(), linkedCount);
       assert.equal(await page.getByRole('note').filter({ hasText: 'Những hadith có nhãn' }).count(), 1);
 
       await page.getByRole('switch').click();
@@ -137,7 +142,7 @@ module.exports = spec(module, 'lists', (h) => {
     // no position in a chapter for these
     assert.equal(await page.locator('article[id^="hadith-"] span[class*="inBook"]').count(), 0);
     assert.equal(await page.getByRole('combobox', { name: 'Chọn chương' }).inputValue(), '-1');
-    const crumbs = await page.locator('nav[aria-label="Breadcrumb"] li').allTextContents();
+    const crumbs = await page.locator(BREADCRUMB_NAV).locator('li').allTextContents();
     assert.equal(norm(crumbs[crumbs.length - 1]), 'Chưa xếp chương');
     assert.ok(book.chapters.some((c) => c.chapterNo === -1));
 
@@ -233,16 +238,19 @@ module.exports = spec(module, 'lists', (h) => {
   });
 
   h.test('category tree page: top-level categories with their children and counts', async (t) => {
-    const [home, all] = await Promise.all([api(`/home${loc()}`), api(`/categories${loc()}`)]);
+    const [home, every] = await Promise.all([api(`/home${loc()}`), api(`/categories${loc()}`)]);
+    // the lists leave out the categories with nothing to read in Vietnamese
+    const all = readableCategories(every, 'vi');
     const { page } = await h.open(t, '/categories');
     await waitForH1(page, 'Danh mục');
     assert.deepEqual(await metaLine(page), [`${viNumber(all.length)} danh mục`]);
     const top = all.filter((c) => c.parentId == null);
     const heads = await page.locator('main ol > li > div > a').evaluateAll((links) => links.map((a) => a.getAttribute('href')));
     assert.deepEqual(heads, top.map((c) => `/categories/${c.slug}`), 'top-level categories in order');
-    for (const parent of home.categories) {
+    for (const parent of home.categories.filter((c) => all.some((a) => a.id === c.id))) {
       const list = page.getByRole('list', { name: `Danh mục con: ${parent.title}` });
-      const children = await list.locator('a').evaluateAll((links) => links.map((a) => [decodeURIComponent(a.getAttribute('href')), a.lastElementChild.textContent.trim()]));
+      // the count as shown ("6/76"); the visually hidden sentence after it is for screen readers
+      const children = await list.locator('a').evaluateAll((links) => links.map((a) => [decodeURIComponent(a.getAttribute('href')), a.querySelector('span[aria-hidden="true"]').textContent.trim()]));
       assert.deepEqual(
         children,
         all.filter((c) => c.parentId === parent.id).map((c) => [`/categories/${c.slug}`, `${viNumber(c.totalTranslated)}/${viNumber(c.totalHadith)}`]),

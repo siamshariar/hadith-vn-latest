@@ -23,7 +23,7 @@ import styles from "../content/Page.module.scss";
 // Shared by /hadiths/{id} and /books/{book}/hadiths/{number}. `translations`:
 // the extra languages shown under the primary translation (lib/api loadPage).
 export default function HadithPage({ hadith, translations, error }) {
-  const { t } = useLocale();
+  const { t, languageName } = useLocale();
 
   if (error || !hadith) {
     return (
@@ -45,17 +45,18 @@ export default function HadithPage({ hadith, translations, error }) {
   if (chapter && !isCategoryBook(book)) {
     crumbs.push({
       href: chapterPath(book.slug, chapter.chapterNo),
-      label: chapter.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : `${t("chapter")} ${chapter.chapterNo}`,
+      label: chapter.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : t("chapterNumber", { number: chapter.chapterNo }),
     });
   }
-  crumbs.push({ label: hadith.referenceNumber ? `${t("hadith")} ${lettered(hadith.referenceNumber)}` : t("hadith") });
+  crumbs.push({ label: hadith.referenceNumber ? t("hadithNumbered", { number: lettered(hadith.referenceNumber) }) : t("hadith") });
 
-  // Described by its own translation (the page language, else English).
-  // HadeethEnc's linked translation is another text, so it is only used,
-  // labelled, when the hadith has no translation at all.
+  // Described by its own translation (the page language, else English). The
+  // topic collection's linked translation is another text, so it is only
+  // used, labelled, when the hadith has no translation at all.
   const own = hadith.translation && hadith.translation.text ? hadith.translation : null;
   const linked = hadith.linkedTranslation && hadith.linkedTranslation.text ? hadith.linkedTranslation : null;
-  const snippet = own ? excerpt(own.text) : linked ? `HadeethEnc: ${excerpt(linked.text, 145)}` : "";
+  const linkedLabel = linked ? t("topicTranslation", { language: languageName(linked.languageCode) }) : "";
+  const snippet = own ? excerpt(own.text) : linked ? `${linkedLabel}: ${excerpt(linked.text, 110)}` : "";
   // The citable URL (/books/{book}/hadiths/8a), whichever URL was opened.
   const url = `${server}${citablePath(hadith, book)}`;
 

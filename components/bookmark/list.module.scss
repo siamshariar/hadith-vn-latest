@@ -16,7 +16,7 @@
   width: 100%;
   position: relative;
   /* padding-right: 46px; */
-  /* border-bottom: 1px dashed var(--bdr14); */
+  /* border-bottom: 1px dashed var(--hairline-soft); */
 }
 
 .link {
@@ -48,7 +48,7 @@
 .item .icon svg {
   width: 20px;
   height: 20px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 .item .delete_icon {
@@ -65,14 +65,14 @@
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  background-color: var(--bg12);
+  background-color: var(--canvas);
   cursor: pointer;
 }
 
 .delete_icon svg {
   width: 14px;
   height: 14px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 .item .desc {
@@ -142,6 +142,6 @@
     visibility: visible;
   }
   .item .delete_icon:hover {
-    background-color: var(--bg12);
+    background-color: var(--canvas);
   }
 }

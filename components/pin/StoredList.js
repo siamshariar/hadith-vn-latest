@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { useRouter } from "next/router";
 import { PinContext } from "../../contexts/PinContext";
 import { useLocale } from "../../contexts/LocaleContext";
+import useNames from "../../hooks/useNames";
 import { storedRefHref, storedRefLabel, storedRefSource } from "../../lib/hadith";
 import PinIcon from "../icons/Pin";
 import AutoStoriesIcon from "../icons/AutoStories";
@@ -20,16 +21,20 @@ const formatDate = (date, locale) => {
 
 // Pinned hadiths (kind="pin") or the last-read history (kind="lastRead").
 // Entries are references (id, book, number); they open the current pages.
+// Books are named in the reader's language (lib/names).
 export default function StoredList({ kind, controller }) {
   const { pin, lastRead, archived } = useContext(PinContext);
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t, lang, locale } = useLocale();
+  const names = useNames(lang);
   const isPin = kind === "pin";
   const items = (isPin ? pin : lastRead) || [];
   const archivedCount = (archived && archived[kind]) || 0;
   const Icon = isPin ? PinIcon : AutoStoriesIcon;
 
   const open = (event, href) => {
+    // Cmd, Ctrl or Shift: a new tab or window, the browser's to open
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     if (controller) controller(false)(event);
     router.push(href);
@@ -42,8 +47,8 @@ export default function StoredList({ kind, controller }) {
       <div className={styles.lists}>
         {items.map((item) => {
           const href = storedRefHref(item, { preferContext: isPin });
-          const label = storedRefLabel(item);
-          const source = storedRefSource(item);
+          const label = storedRefLabel(item, names, t("topicCollection"));
+          const source = storedRefSource(item, names, t("topicCollection"));
           return (
             <div key={item.id} className={styles.item}>
               <a href={href} className={styles.link} onClick={(event) => open(event, href)}>

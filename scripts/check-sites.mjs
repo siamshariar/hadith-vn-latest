@@ -11,10 +11,12 @@
 //   - /api/localizations maps its `localization` to this country (country.code);
 //   - /api/hadith/home/localizations/{localization} answers in its `language`, and so
 //     does /home/localizations/{language} (what the site sends);
-//   - which interface it gets: its `ui` catalog (lib/locales), or English.
+//   - which interface it gets for its own language: its `ui` catalog (lib/locales), or
+//     English. A reader who picks another language gets that language's catalog when there
+//     is one (lib/language.js interfaceFor).
 // An international entry (ac: "international": true) has no localization and no country in
 // the Quran database: only its default `language` is checked, and its interface follows the
-// reader among the catalogs.
+// reader's language among the catalogs.
 // Exits 1 on any mismatch, 2 when the API cannot be reached.
 //
 // API: the Quran API base (default NEXT_PUBLIC_API_BASE_URL, else
@@ -30,7 +32,7 @@ process.on("warning", (warning) => {
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const countries = JSON.parse(readFileSync(path.join(root, "config", "countries.json"), "utf8"));
-const { hasCatalog, interfaceLanguageFor, interfaceLanguages, isRtlLanguage } = await import(
+const { RTL_INTERFACES, hasCatalog, interfaceLanguageFor, interfaceLanguages, isRtlLanguage } = await import(
   pathToFileURL(path.join(root, "lib", "i18n.js")).href
 );
 
@@ -66,7 +68,7 @@ async function getJson(pathname) {
 function interfaceNote(ui) {
   const used = interfaceLanguageFor(ui);
   if (used === ui) return ui;
-  if (isRtlLanguage(ui)) return `en (no right-to-left interface yet${hasCatalog(ui) ? "" : `; no ${ui} catalog`})`;
+  if (isRtlLanguage(ui) && !RTL_INTERFACES) return `en (no right-to-left interface yet${hasCatalog(ui) ? "" : `; no ${ui} catalog`})`;
   return `en (no ${ui} catalog)`;
 }
 
@@ -102,7 +104,7 @@ async function checkCountry(code, localizations) {
     }
   }
 
-  const ui = international ? `the reader's (${interfaceLanguages.join(", ")})` : entry.ui ? interfaceNote(entry.ui) : "?";
+  const ui = international ? `the reader's language (${interfaceLanguages.join(", ")})` : entry.ui ? interfaceNote(entry.ui) : "?";
   return { code, entry, problems, ui };
 }
 
@@ -143,6 +145,7 @@ const withCatalog = rows
   .filter((row) => row.entry.international !== true && interfaceLanguageFor(row.entry.ui) === row.entry.ui)
   .map((row) => row.code);
 console.log(`\nInterface catalog of their own: ${withCatalog.length ? withCatalog.join(", ") : "none"}; the others use English.`);
+console.log(`A reader who picks another language gets its interface on every site: ${interfaceLanguages.join(", ")}.`);
 if (failed.length) {
   console.log(`${failed.length === 1 ? "1 country does" : `${failed.length} countries do`} not match the API.`);
   process.exit(1);

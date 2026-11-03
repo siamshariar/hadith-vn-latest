@@ -1,75 +1,84 @@
+// The bookmark dialogs (add, delete a folder, remove a bookmark): a floating layer
+// like components/utils/ModalPrimary, with the system's controls
+// (docs/hadith-design-system.md: buttons 44px with radius 8px, inputs at 16px).
 .content {
-  width: 280px;
-  max-width: 80%;
-  background: var(--bg12);
   position: absolute;
   top: 50%;
   left: 50%;
-  padding: 44px 34px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: var(--space-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
   transform: translate(-50%, -50%);
 }
 
+// 44px close button in the corner
 .close {
   position: absolute;
-  top: 18px;
-  right: 18px;
-  height: 32px;
-  width: 32px;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
   border: none;
-  /* background-color: var(--bg22); */
-  transition: all 0.3s ease;
   border-radius: 50%;
+  background-color: transparent;
   cursor: pointer;
-  z-index: 1;
-}
+  transition: background-color var(--duration) var(--ease);
 
-.close:hover {
-  background-color: var(--bg22);
+  &:focus-visible {
+    background-color: var(--hover);
+  }
 }
 
 .close svg {
   width: 22px;
   height: 22px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 .title {
-  border-bottom: 1px dashed var(--bdr11);
-  padding-bottom: 12px;
-  margin-bottom: 20px;
-}
-
-.input_area {
+  margin-bottom: var(--space-4);
+  padding-inline-end: var(--tap);
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: var(--leading-snug);
 }
 
 .sub_title {
   display: block; // a <label> for the folder select
-  margin-bottom: 12px;
-  font-weight: normal;
-  font-size: 15px;
-  color: var(--txt11);
+  margin-bottom: var(--space-2);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .title_desc {
-  padding-bottom: 22px;
-  border-bottom: 1px dashed var(--bdr11);
-  margin-bottom: 19px;
-  font-size: 15px;
+  margin-bottom: var(--space-6);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
 }
 
+// 16px text (smaller makes iOS zoom in on focus) on a solid surface (the open list
+// of a select takes these colours on some systems, unreadable over transparent).
 .input_area select,
 .input_area input {
   width: 100%;
-  padding: 10px 7px;
-  font-size: 14px;
-  border: 1px solid var(--bdr11);
-  border-radius: 8px;
-  margin-bottom: 19px;
-  color: var(--txt12);
-  background-color: transparent;
+  min-height: var(--tap);
+  margin-bottom: var(--space-4);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--control-edge);
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text);
+  font-size: var(--text-base);
 }
 
 .input_area input {
@@ -86,36 +95,57 @@
 }
 
 .btn {
-  padding: 8px 12px;
-  border-radius: 24px;
-  min-width: 74px;
+  min-width: 88px;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
 }
 
 .btn_add {
-  background-color: var(--main-color);
-  color: var(--bg22);
+  background-color: var(--accent);
+  color: var(--on-accent);
 }
 
+// destructive: the error colour, never the green that means "go ahead"
 .btn_remove {
-  background-color: #e81123;
-  color: #fff;
+  background-color: var(--error-txt);
+  color: var(--surface);
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background-color: var(--hover);
+  }
+
+  .btn_add:hover {
+    background-color: var(--accent-hover);
+  }
+
+  .btn_remove:hover {
+    background-color: var(--error-hover);
+  }
 }
 
 .message {
-  color: #ff0000;
-  font-size: 12px;
   overflow: hidden;
+  color: var(--error-txt);
+  font-size: var(--text-sm);
   line-height: 0;
-  transition: line-height 250ms ease;
+  transition: line-height var(--duration) var(--ease);
 }
 
 .message.open {
-  line-height: 1.4;
+  margin-bottom: var(--space-3);
+  line-height: var(--leading-snug);
 }
 
-@media only screen and (min-width: 600px) {
-  .content {
-    width: 340px;
-    padding: 50px 44px;
+@media (prefers-reduced-motion: reduce) {
+  .message {
+    transition: none;
   }
 }

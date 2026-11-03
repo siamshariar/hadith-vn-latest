@@ -1,14 +1,20 @@
 import Link from "next/link";
 import FeedbackIcon from "../icons/Feedback";
 import { useLocale } from "../../contexts/LocaleContext";
-import { inBookText, referenceText, reportErrorHref, shownTranslations, translationItemLabel } from "../../lib/citation";
-import { hadithPath, isCategoryBook } from "../../lib/hadith";
-import { Credit } from "./HadithText";
+import {
+  inBookText,
+  referenceText,
+  reportErrorHref,
+  shownTranslations,
+  translationItemLabel,
+  translatorName,
+} from "../../lib/citation";
+import { hadithPath, isCategoryBook, namedGrades } from "../../lib/hadith";
 import styles from "./HadithReference.module.scss";
 
-// Grades exactly as the API gives them: one row per named grader, plus
-// HadeethEnc's gradeText. Nothing when the source gives none (Bukhari, Muslim,
-// the forty-hadith books).
+// Grades exactly as the API gives them: one row per named grader (lib/hadith
+// namedGrades), plus the topic collection's own gradeText. Nothing when the
+// source gives none (Bukhari, Muslim, the forty-hadith books).
 export function GradesTable({ grades, gradeText }) {
   const { t } = useLocale();
   const list = Array.isArray(grades) ? grades.filter((grade) => grade && grade.grade) : [];
@@ -18,7 +24,7 @@ export function GradesTable({ grades, gradeText }) {
     <div className={styles.grades}>
       {gradeText && (
         <p className={styles.gradeText}>
-          <span className={styles.term}>{t("grades")}:</span> <strong>{gradeText}</strong>
+          <span className={styles.term}>{t("labelColon", { label: t("grades") })}</span> <strong>{gradeText}</strong>
         </p>
       )}
       {list.length > 0 && (
@@ -47,11 +53,10 @@ export function GradesTable({ grades, gradeText }) {
 }
 
 // The reference block under the hadith on its page, as sunnah.com has it:
-// citation, in-book reference, where each translation shown comes from (the
-// name its edition gives, quoted as given, and the edition, linked to the
-// source file), the grades, and "report an error" (an e-mail with the
-// citation and permalink filled in). Copy and share are in the icon row at
-// the top.
+// citation, in-book reference, the translator of each translation shown when
+// the source names one (and, for one from the topic collection, its hadith),
+// the grades, and "report an error" (an e-mail with the citation and
+// permalink filled in). Copy and share are in the icon row at the top.
 export default function HadithReference({ hadith, book }) {
   const { t, languageName } = useLocale();
   const translations = shownTranslations(hadith);
@@ -72,17 +77,18 @@ export default function HadithReference({ hadith, book }) {
           </div>
         )}
         {translations.map((item) => {
+          const translator = translatorName(item.entry.author, item.entry.edition);
           const linkedId = item.linked ? (item.entry.linked ? item.entry.linked.hadithId : item.entry.hadithId) : null;
+          if (!translator && !linkedId) return null;
           return (
             <div className={styles.row} key={`${item.code}-${item.linked ? "linked" : item.fallback ? "fallback" : "own"}`}>
               <dt className={styles.term}>{translationItemLabel(item, t, languageName)}</dt>
               <dd className={styles.credit}>
-                <Credit entry={item.entry} />
+                {translator && <bdi>{translator}</bdi>}
                 {linkedId && (
-                  <>
-                    <span aria-hidden="true"> · </span>
-                    <Link href={hadithPath({ id: linkedId })}>HadeethEnc</Link>
-                  </>
+                  <Link href={hadithPath({ id: linkedId })}>
+                    {t("linkedTranslationLink")} <span aria-hidden="true">→</span>
+                  </Link>
                 )}
               </dd>
             </div>
@@ -90,7 +96,7 @@ export default function HadithReference({ hadith, book }) {
         })}
       </dl>
 
-      <GradesTable grades={hadith.grades} gradeText={hadith.gradeText} />
+      <GradesTable grades={namedGrades(hadith, book)} gradeText={hadith.gradeText} />
 
       <p className={styles.report}>
         <a href={reportErrorHref(hadith, book, t)} className={styles.reportLink}>

@@ -17,7 +17,7 @@ export default function ReaderBar({ children, trailing, picker }) {
 
   return (
     <>
-      <div className={styles.bar}>
+      <div className={styles.bar} data-reader-bar="">
         <div className={styles.where}>{children}</div>
         {trailing}
         {picker && (

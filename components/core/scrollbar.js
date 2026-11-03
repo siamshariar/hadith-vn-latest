@@ -6,10 +6,11 @@ export default function Scrollbar({ children, className, scrollPos, id }) {
 
   useEffect(() => {
     if (scrollPos) {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       scrollbar.current.scrollTo({
         top: scrollPos,
         left: 0,
-        behavior: "smooth",
+        behavior: reduce ? "auto" : "smooth",
       });
     }
   }, [id, scrollPos]);

@@ -10,7 +10,7 @@ import styles from "./list.module.scss";
 // The bookmark folders in the desktop header's dialog; a folder opens its page.
 export default function BookmarkList({ controller }) {
   const { bookmarks } = useContext(BookmarkContext);
-  const { t, formatNumber } = useLocale();
+  const { t } = useLocale();
   const router = useRouter();
 
   const handleClick = (e, href) => {
@@ -53,7 +53,7 @@ export default function BookmarkList({ controller }) {
                     </span>
                     <span className={styles.desc}>
                       <span>{name}</span>
-                      <span>{t("folderCount", { count: formatNumber((bookmarks[key].entry || []).length) })}</span>
+                      <span>{t("folderCount", { count: (bookmarks[key].entry || []).length })}</span>
                     </span>
                   </div>
                 </a>

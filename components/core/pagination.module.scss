@@ -28,21 +28,23 @@
   min-width: 40px;
   height: 40px;
   padding: 0 10px;
-  border: 1px solid var(--bdr11);
-  border-radius: 6px;
-  background: var(--bg11);
-  color: var(--txt11);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
   font-size: 14px;
   line-height: 1;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
 }
 
 a.step:hover,
 a.number:hover,
 a.step:focus-visible,
 a.number:focus-visible {
-  border-color: var(--theme-color);
-  color: var(--main-color);
+  border-color: var(--accent);
+  color: var(--link);
 }
 
 .step {
@@ -51,10 +53,10 @@ a.number:focus-visible {
 }
 
 .active {
-  background: var(--theme-color);
-  border-color: var(--theme-color);
-  color: #fff;
-  font-weight: 500;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
 }
 
 .disabled {
@@ -65,12 +67,12 @@ a.number:focus-visible {
 .gap {
   min-width: 18px;
   text-align: center;
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 .info {
   font-size: 13px;
-  color: var(--txt12);
+  color: var(--text-secondary);
 }
 
 .compact {
@@ -85,7 +87,7 @@ a.number:focus-visible {
   }
   .compact {
     display: block;
-    color: var(--txt11);
+    color: var(--text);
     font-size: 15px;
     font-variant-numeric: tabular-nums;
   }

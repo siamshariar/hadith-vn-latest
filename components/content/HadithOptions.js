@@ -58,11 +58,15 @@ const HadithOptions = ({ hadith, book, updateBookmarksData, isBookmarkPage, show
 
   const copy = (text) => {
     setCopyAnchor(null);
-    if (typeof navigator === "undefined" || !navigator.clipboard) return;
+    const failed = () => setMessage(t("copyFailed"));
+    if (typeof navigator === "undefined" || !navigator.clipboard) {
+      failed();
+      return;
+    }
     navigator.clipboard
       .writeText(text)
       .then(() => setMessage(t("copied")))
-      .catch(() => {});
+      .catch(failed);
   };
 
   const share = () => {

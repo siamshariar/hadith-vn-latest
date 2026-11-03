@@ -2,8 +2,8 @@
 // two on tablets, one on phones.
 .list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--space-3);
 
   > li {
     display: flex;
@@ -13,38 +13,35 @@
 .groups {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
-// "Sáu bộ sách chính ——— الكتب الستة"
+// "The six books ——— الكتب الستة": a quiet label ruled to its Arabic name.
 .groupTitle {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 2px 12px;
-  margin-bottom: 10px;
-  color: var(--main-color);
+  gap: 2px var(--space-3);
+  margin-bottom: var(--space-3);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  line-height: var(--leading-snug);
 
   &::after {
     content: "";
     flex: 1 1 40px;
     order: 1;
     align-self: center;
-    border-top: 1px solid var(--bdr11);
+    border-top: 1px solid var(--hairline);
   }
 }
 
 .groupArabic {
   order: 2;
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-family: var(--font-arabic);
   font-size: 20px;
   font-weight: 400;
-  letter-spacing: 0;
   line-height: 1.4;
-  text-transform: none;
 }

@@ -3,7 +3,7 @@
   width: 100%;
   padding-left: 16px;
   padding-right: 16px;
-  background-color: var(--bg11);
+  background-color: var(--surface);
 }
 
 .content {
@@ -12,7 +12,7 @@
 }
 
 .title {
-  background-color: var(--bg12);
+  background-color: var(--canvas);
   border-radius: 8px;
   margin-bottom: 24px;
   padding: 8px;
@@ -22,7 +22,7 @@
   align-items: center;
 }
 .title_text {
-  color: var(--txt11);
+  color: var(--text);
   line-height: 1.3;
   margin-top: 0;
   margin-bottom: 0;
@@ -47,7 +47,7 @@
 }
 
 .quran_content_title {
-  color: var(--txt00);
+  color: var(--ink);
   font-family: Roboto;
   font-size: 24px;
   font-weight: normal;
@@ -57,7 +57,7 @@
 
 .quran_content_text {
   font-family: Roboto;
-  color: var(--txt11);
+  color: var(--text);
   font-size: 16px;
   font-weight: normal;
   line-height: 1.5;
@@ -81,7 +81,7 @@
   .content {
     padding: 12px 32px;
     border-radius: 8px;
-    background: var(--bg11);
+    background: var(--surface);
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
@@ -108,11 +108,11 @@
   .title_icon svg {
     width: 22px;
     height: 22px;
-    fill: var(--txt11);
+    fill: var(--text);
   }
 
   .title_text {
-    color: var(--txt11);
+    color: var(--text);
     font-size: 25px;
     font-weight: 400;
     line-height: 1.3;
@@ -138,7 +138,7 @@
     justify-content: center;
     align-items: center;
     margin-bottom: 40px;
-    background: var(--bg12);
+    background: var(--canvas);
     padding: 8px;
     border-radius: 8px;
     text-align: center;
@@ -148,11 +148,11 @@
     justify-content: center;
     align-items: center;
     font-size: 22px;
-    color: var(--txt11);
+    color: var(--text);
   }
 
   .print_footer {
-    border-top: 1px solid var(--bdr11);
+    border-top: 1px solid var(--hairline);
     margin-top: 30px;
     padding-top: 30px;
     width: 100%;
@@ -162,7 +162,7 @@
 
   .print_footer span {
     font-size: 13px;
-    color: #777;
+    color: var(--muted);
   }
   .print_footer span:nth-child(1) {
   }
@@ -173,8 +173,8 @@
 .notice {
   margin-bottom: 16px;
   padding: 10px 12px;
-  border-left: 3px solid var(--notice-bdr);
-  border-radius: 4px;
+  border: 1px solid var(--notice-bdr);
+  border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);
   font-size: 14px;
@@ -184,7 +184,7 @@
 .remove {
   border: 0;
   background: none;
-  color: var(--main-color);
+  color: var(--link);
   font: inherit;
   text-decoration: underline;
   cursor: pointer;

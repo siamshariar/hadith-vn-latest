@@ -7,15 +7,15 @@
 .settings_radio svg.MuiSvgIcon-root {
   width: 20px;
   height: 20px;
-  fill: var(--bdr11);
+  fill: var(--control-edge); // a control's edge: 3:1 at least
 }
 
 .settings_radio .Mui-checked svg.MuiSvgIcon-root {
-  fill: var(--main-color);
+  fill: var(--link);
 }
 
 .settings_radio .MuiFormControlLabel-label {
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -36,24 +36,53 @@
 .verse_mode_radio .MuiTypography-root {
   padding: 6px 0;
   background-color: #f5f5f5;
-  background-color: var(--bg22);
+  background-color: var(--hover);
   border-radius: 28px;
   width: 60px;
   text-align: center;
 }
 .verse_mode_radio.checked .MuiTypography-root {
-  background-color: var(--main-color);
+  background-color: var(--link);
   color: #fff;
-  color: var(--bg22);
+  color: var(--hover);
 }
 
-// material ui tooltip
+// material ui tooltip: ink on the page colour, inverted per theme
 .MuiTooltip-tooltipArrow {
-  background: #223645 !important;
+  background: var(--ink) !important;
+  color: var(--canvas) !important;
 }
 
 .MuiTooltip-arrow::before {
-  background-color: #223645 !important;
+  background-color: var(--ink) !important;
+}
+
+// material ui menus and popovers: the floating surface (the one place a shadow is used)
+.MuiPopover-paper {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md) !important;
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+
+// sheets and the menu drawer: scrolling inside them never scrolls the page behind
+.MuiDrawer-paper {
+  overscroll-behavior: contain;
+}
+
+// Less motion: sheets, menus and dialogs appear in place instead of sliding in.
+// Less motion: panels, menus and the sidebar's sections appear without sliding,
+// growing or rotating (MUI sets its durations inline, hence !important).
+@media (prefers-reduced-motion: reduce) {
+  .MuiDrawer-paper,
+  .MuiPopover-paper,
+  .MuiDialog-container,
+  .MuiModal-root > .MuiBackdrop-root,
+  .MuiCollapse-root,
+  .MuiAccordionSummary-expandIconWrapper {
+    transition: none !important;
+  }
 }
 
 // mui grid
@@ -69,10 +98,10 @@
 
 // nprogress
 #nprogress .bar {
-  background: var(--main-color);
+  background: var(--link);
 }
 #nprogress .peg {
-  box-shadow: 0 0 10px var(--main-color), 0 0 5px var(--main-color);
+  box-shadow: 0 0 10px var(--link), 0 0 5px var(--link);
 }
 #nprogress .spinner {
   display: none;
@@ -82,21 +111,21 @@
 .MuiBottomNavigationAction-root {
   padding-left: 0 !important;
   padding-right: 0 !important;
-  color: var(--txt12) !important;
+  color: var(--text-secondary) !important;
 }
 
 .MuiBottomNavigationAction-root svg {
-  fill: var(--txt11);
+  fill: var(--text);
   width: 20px;
   height: 20px;
 }
 
 .MuiBottomNavigationAction-root.Mui-selected {
-  color: var(--main-color) !important;
+  color: var(--link) !important;
 }
 
 .MuiBottomNavigationAction-root.Mui-selected svg {
-  fill: var(--main-color);
+  fill: var(--link);
 }
 
 // go to verse select popover menu
@@ -107,4 +136,10 @@
 // mui menu item
 .MuiMenuItem-root {
   min-height: auto !important;
+  font-family: inherit !important;
+}
+
+.MuiMenuItem-root:hover,
+.MuiMenuItem-root.Mui-focusVisible {
+  background-color: var(--hover) !important;
 }

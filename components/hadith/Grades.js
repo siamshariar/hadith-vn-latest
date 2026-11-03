@@ -1,9 +1,10 @@
 import { useLocale } from "../../contexts/LocaleContext";
 import styles from "./hadith.module.scss";
 
-// Grades exactly as the API gives them: one entry per grader the source names,
-// plus HadeethEnc's `gradeText`. Nothing is inferred: Bukhari, Muslim and the
-// forty-hadith books have no per-hadith grades, so nothing is rendered.
+// Grades exactly as the API gives them: one entry per grader the source names
+// (lib/hadith namedGrades), plus the topic collection's own `gradeText`.
+// Nothing is inferred: Bukhari, Muslim and the forty-hadith books have no
+// per-hadith grades, so nothing is rendered.
 export default function Grades({ grades, gradeText, variant = "compact" }) {
   const { t } = useLocale();
   const list = Array.isArray(grades) ? grades.filter((grade) => grade && grade.grade) : [];
@@ -43,7 +44,7 @@ export default function Grades({ grades, gradeText, variant = "compact" }) {
 }
 
 // The first grade the source gives, with its grader ("Sahih · Al-Albani"),
-// or HadeethEnc's gradeText; "+2" when more graders follow (detail page).
+// or the topic collection's gradeText; "+2" when more graders follow (detail page).
 export function GradeBadge({ grades, gradeText }) {
   const { t } = useLocale();
   const list = Array.isArray(grades) ? grades.filter((grade) => grade && grade.grade) : [];
@@ -53,8 +54,8 @@ export function GradeBadge({ grades, gradeText }) {
   const all = list.map((grade) => `${grade.graderName}: ${grade.grade}`).join("; ");
 
   return (
-    <span className={styles.gradeBadge} title={all ? `${t("grades")}: ${all}` : t("grades")}>
-      <span className="visually_hidden">{t("grades")}: </span>
+    <span className={styles.gradeBadge} title={all ? t("labelValue", { label: t("grades"), value: all }) : t("grades")}>
+      <span className="visually_hidden">{t("labelColon", { label: t("grades") })} </span>
       <bdi className={styles.gradeBadgeGrade}>{gradeText || first.grade}</bdi>
       {first && first.graderName && <span className={styles.gradeBadgeGrader}>· {first.graderName}</span>}
       {more > 0 && (

@@ -15,7 +15,7 @@
   padding: 15px 0;
   width: 100%;
   position: relative;
-  border-bottom: 1px dashed var(--bdr12);
+  border-bottom: 1px dashed var(--hairline);
 }
 .item:last-child {
   border-bottom: none;
@@ -50,7 +50,7 @@
 .item .icon svg {
   width: 20px;
   height: 20px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 .item .delete_icon {
@@ -65,13 +65,13 @@
   justify-content: center;
   align-items: center;
   border-radius: 50%;
-  background-color: var(--bg12);
+  background-color: var(--canvas);
 }
 
 .delete_icon svg {
   width: 14px;
   height: 14px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 .item .desc {
@@ -131,7 +131,7 @@
   .content {
     padding-top: 0;
     padding-bottom: 0;
-    border-top: 1px dashed var(--bdr12);
+    border-top: 1px dashed var(--hairline);
     margin-top: -2px;
   }
   .item .delete_icon {
@@ -142,15 +142,15 @@
     visibility: visible;
   }
   .item .delete_icon:hover {
-    background-color: var(--bg12);
+    background-color: var(--canvas);
   }
 }
 
 .archived {
   margin: 0 0 12px;
   padding: 10px 12px;
-  border-left: 3px solid var(--notice-bdr);
-  border-radius: 4px;
+  border: 1px solid var(--notice-bdr);
+  border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);
   font-size: 13px;

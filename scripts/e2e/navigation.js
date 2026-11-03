@@ -3,7 +3,7 @@
 // header search, back-to-top and the phone header that hides on scroll.
 'use strict';
 
-const { BASE, api, assert, loc, norm, scrollTo, sleep, spec, until, waitForH1, waitForText, viNumber } = require('./harness');
+const { BASE, api, assert, loc, norm, readableCategories, scrollTo, sleep, spec, until, waitForH1, waitForText, viNumber } = require('./harness');
 
 const BUKHARI = 'sahih-al-bukhari';
 
@@ -117,7 +117,7 @@ module.exports = spec(module, 'navigation', (h) => {
         'sidebar marks the new chapter'
       );
 
-      const filter = page.locator('aside').getByRole('textbox', { name: 'Bộ sưu tập hadith' });
+      const filter = page.locator('aside').getByRole('searchbox', { name: 'Bộ sưu tập hadith' });
       await filter.fill('muslim');
       await until(async () => (await bookLinks.count()) === 1, 'filter leaves one collection');
       assert.equal(await bookLinks.first().getAttribute('href'), '/books/sahih-muslim');
@@ -125,16 +125,19 @@ module.exports = spec(module, 'navigation', (h) => {
       await until(async () => (await bookLinks.count()) === books.length, 'clearing the filter shows all');
 
       // categories mode
-      const [creed, all] = await Promise.all([api(`/categories/the-creed${loc()}`), api(`/categories${loc()}`)]);
+      const [creed, every] = await Promise.all([api(`/categories/the-creed${loc()}`), api(`/categories${loc()}`)]);
+      // the tree lists the categories with something to read in Vietnamese
+      const all = readableCategories(every, 'vi');
+      const shown = new Set(all.map((c) => c.id));
       await h.goto(page, `/categories/${creed.slug}`);
       const tree = page.locator('aside').getByRole('navigation', { name: 'Danh mục' });
       await until(async () => (await tree.locator('a[aria-current="page"]').count()) === 1, 'current category marked');
       assert.equal(await tree.locator('a[aria-current="page"]').getAttribute('href'), `/categories/${creed.slug}`);
-      for (const child of creed.children) {
+      for (const child of creed.children.filter((c) => shown.has(c.id))) {
         // (slugs can be Arabic: hrefs are percent-encoded)
         assert.equal(await tree.locator(`a[href^="/categories/${encodeURIComponent(child.slug)}"]`).count(), 1, `child ${child.slug} shown in the open branch`);
       }
-      await page.locator('aside').getByRole('textbox', { name: 'Danh mục' }).fill('giao ly');
+      await page.locator('aside').getByRole('searchbox', { name: 'Danh mục' }).fill('giao ly');
       const matches = all.filter((c) => /giao ly/.test(c.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase()));
       await until(async () => (await tree.locator('a').count()) === matches.length, `filter shows the ${matches.length} matching categories`);
     },
@@ -162,7 +165,7 @@ module.exports = spec(module, 'navigation', (h) => {
         ['/settings', 'Cài đặt'],
         ['/support', 'Ủng hộ'],
         ['/grateful', 'Lời cảm ơn'],
-        ['/sources', 'Nguồn & phương pháp'],
+        ['/sources', 'Dữ liệu & phương pháp'],
         ['/about', 'Giới thiệu'],
         ['/contact', 'Liên hệ'],
         ['/deeniinfotech', 'Deeni Info Tech'],
@@ -185,7 +188,7 @@ module.exports = spec(module, 'navigation', (h) => {
 
       // a link to a page with the same layout: the drawer must not stay open
       for (const [name, path, h1] of [
-        ['Nguồn & phương pháp', '/sources', 'Nguồn & phương pháp'],
+        ['Dữ liệu & phương pháp', '/sources', 'Dữ liệu & phương pháp'],
         ['Bộ sưu tập hadith', '/books', 'Bộ sưu tập hadith'],
         ['Đã ghim', '/bookmarks', 'Đã lưu'],
       ]) {
@@ -293,14 +296,14 @@ module.exports = spec(module, 'navigation', (h) => {
       // with pages behind it, back goes back in history: here /books -> /sources -> /about
       // (a text page with its own header)
       await h.goto(page, '/books');
-      await page.getByRole('contentinfo').getByRole('link', { name: 'Nguồn & phương pháp' }).click();
+      await page.getByRole('contentinfo').getByRole('link', { name: 'Dữ liệu & phương pháp' }).click();
       await h.waitForPath(page, (url) => url.pathname === '/sources', 'to /sources');
       await page.getByRole('contentinfo').getByRole('link', { name: 'Giới thiệu' }).click();
       await h.waitForPath(page, (url) => url.pathname === '/about', 'to /about');
       await waitForH1(page, 'Giới thiệu');
       await back();
       await h.waitForPath(page, (url) => url.pathname === '/sources', 'back in history to /sources');
-      await waitForH1(page, 'Nguồn & phương pháp');
+      await waitForH1(page, 'Dữ liệu & phương pháp');
       // opened directly, a text page goes up to the home page
       const { page: fresh } = await h.open(t, '/about');
       await fresh.getByRole('button', { name: 'Quay lại' }).click();

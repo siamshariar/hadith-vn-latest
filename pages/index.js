@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { server, shareImage } from "../lib/config";
-import { getHome, getLanguages, loadPage } from "../lib/api";
+import { getHome, getLanguages, loadPage, readableCategoryTree } from "../lib/api";
 import { INTERNATIONAL } from "../lib/language";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
@@ -91,7 +91,7 @@ export default function Home({ home, languages, error }) {
 
               <p className={styles.sources}>
                 <Link href="/sources">
-                  {t("sourcesAndMethod")} <span aria-hidden="true">→</span>
+                  {t("dataAndMethod")} <span aria-hidden="true">→</span>
                 </Link>
               </p>
             </div>
@@ -106,11 +106,14 @@ Home.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };
 
-// An international site also lists every content language (/hadith/languages).
+// The categories listed are those with something to read in the language (lib/api
+// readableCategoryTree). An international site also lists every content language
+// (/hadith/languages).
 export async function getServerSideProps(context) {
   return loadPage(context, async (lang) => {
-    if (!INTERNATIONAL) return { props: { home: await getHome(lang) } };
-    const [home, languages] = await Promise.all([getHome(lang), getLanguages()]);
-    return { props: { home, languages: directoryLanguages(languages) } };
+    const [home, languages] = await Promise.all([getHome(lang), INTERNATIONAL ? getLanguages() : null]);
+    const readable = { ...home, categories: readableCategoryTree(home.categories, lang) };
+    if (!INTERNATIONAL) return { props: { home: readable } };
+    return { props: { home: readable, languages: directoryLanguages(languages) } };
   });
 }

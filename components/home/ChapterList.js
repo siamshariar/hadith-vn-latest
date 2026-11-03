@@ -31,7 +31,7 @@ export default function ChapterList({ book, chapters }) {
               )}{" "}
               <span className={styles.chapterRange}>{range || ""}</span>{" "}
               <span className={styles.chapterCount}>
-                {formatNumber(chapter.totalHadith)} {t("hadiths")}
+                {t("hadithCount", { count: chapter.totalHadith })}
               </span>
             </Link>
           </li>

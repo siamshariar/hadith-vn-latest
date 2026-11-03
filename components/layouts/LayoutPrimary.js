@@ -6,6 +6,7 @@ import PinContextProvider from "../../contexts/PinContext";
 import BookmarkContextProvider from "../../contexts/BookmarkContext";
 import SidenavContextProvider from "../../contexts/SidenavContext";
 import ScrollFrame from "./ScrollFrame";
+import SkipLink from "../core/SkipLink";
 import styles from "./Layout.module.scss";
 
 const Layout = ({ children }) => {
@@ -15,6 +16,7 @@ const Layout = ({ children }) => {
         <BookmarkContextProvider>
           <SidenavContextProvider>
             <div className={styles.wrapper}>
+              <SkipLink />
               <div className={styles.header}>
                 <HeaderWeb page="home" />
                 <HeaderMobile />

@@ -20,7 +20,7 @@ export default function Books({ books, error }) {
     <>
       <Meta
         title={t("books")}
-        description="Hadith collections: Sahih al-Bukhari, Sahih Muslim, the Sunan, Muwatta Malik, the forty-hadith books and HadeethEnc."
+        description={t("booksDescription")}
         url={`${server}/books`}
         image={shareImage}
         type="website"
@@ -33,12 +33,8 @@ export default function Books({ books, error }) {
           <h1 className={styles.title}>{t("books")}</h1>
           {list.length > 0 && (
             <p className={styles.meta}>
-              <span>
-                {formatNumber(list.length)} {t("totalBooks").toLowerCase()}
-              </span>
-              <span>
-                {formatNumber(total)} {t("hadiths")}
-              </span>
+              <span>{t("bookCount", { count: list.length })}</span>
+              <span>{t("hadithCount", { count: total })}</span>
             </p>
           )}
         </header>
@@ -49,13 +45,10 @@ export default function Books({ books, error }) {
           <>
             {lang !== "en" && lang !== "ar" && list.length > 0 && translated < total && (
               <p className={`${styles.notice} ${styles.warning}`}>
-                {t("translationAvailability", {
-                  count: formatNumber(translated),
-                  language: languageName(lang),
-                })}
-                {linked > 0 &&
-                  `; ${t("bookLinkedTranslations", { count: formatNumber(linked), language: languageName(lang) })}`}
-                {". "}
+                {/* whole sentences, so that each language words and punctuates them its own way */}
+                {linked > 0
+                  ? t("booksCoverageLinked", { count: translated, linked: formatNumber(linked), language: languageName(lang) })
+                  : t("booksCoverage", { count: translated, language: languageName(lang) })}{" "}
                 {t("contentLanguageNote")}
               </p>
             )}

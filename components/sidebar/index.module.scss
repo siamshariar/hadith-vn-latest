@@ -23,7 +23,7 @@
   position: relative;
   display: block;
   padding-bottom: 20px;
-  border-bottom: 1px dashed var(--bdr12);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .icon {
@@ -43,30 +43,46 @@
 .icon svg {
   width: 22px;
   height: 22px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 .icon:hover svg {
-  fill: var(--txt11);
+  fill: var(--text);
 }
 
 .icon.search_icon {
   left: 10px;
 }
+// clear: a 44px target over the end of the 45px field
 .icon.close_icon {
-  right: 10px;
+  top: 0;
+  right: 0;
+  width: var(--tap);
+  height: 45px;
+  border-radius: 50%;
+  opacity: 1;
 }
 
+// A search field (Esc clears it) without the browser's own look or its second
+// clear button: the field has one.
 input.input {
+  appearance: none;
   padding-left: 42px;
   padding-right: 42px;
   width: 100%;
   height: auto;
   display: block;
-  color: var(--txt11);
-  background-color: var(--bg12);
-  line-height: 45px;
-  border-radius: 10px;
+  color: var(--text);
+  border: 1px solid var(--hairline);
+  background-color: var(--surface);
+  line-height: 43px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-base); // 16px: iOS zooms into smaller fields
+}
+
+input.input::-webkit-search-cancel-button,
+input.input::-webkit-search-decoration {
+  appearance: none;
 }
 
 .content {
@@ -87,7 +103,7 @@ input.input {
   top: 0;
   left: 0;
   z-index: 1;
-  background-color: var(--bg11);
+  background-color: var(--canvas);
 }
 .category:nth-of-type(2) {
   z-index: 3;
@@ -105,7 +121,7 @@ input.input {
   font-family: "Roboto";
   font-size: 20px;
   font-weight: 500;
-  color: var(--txt11);
+  color: var(--text);
 }
 
 .lists {
@@ -118,29 +134,17 @@ input.input {
 .cat_item {
   width: 100%;
 }
-.sub_item {
-  // padding-left: 20px;
-}
 
 .list {
   display: block;
   width: calc(100% - 30px);
-  color: var(--txt11);
+  color: var(--text);
   line-height: 1.6;
   font-size: 1rem;
   margin-bottom: 0;
   cursor: pointer;
   padding: 6px 0;
-}
-.list::before {
-  content: "";
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background-color: #777;
-  position: absolute;
-  left: -8px;
-  top: 16px;
+  transition: color var(--duration) var(--ease);
 }
 .list .icon {
   position: absolute;
@@ -149,16 +153,14 @@ input.input {
   left: auto;
 }
 
-.list:hover,
-.list:focus {
-  //transform: scale(1.05);
-  //z-index: 1;
-  //box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 -10px 10px -5px rgba(0, 0, 0, 0.04);
-  color: var(--txt11);
+@media (hover: hover) {
+  .list:hover {
+    color: var(--link);
+  }
 }
 
 .list.active {
-  /*border: 1px solid var(--clr11);*/
+  /*border: 1px solid var(--link);*/
 }
 
 // .list a {
@@ -171,7 +173,7 @@ input.input {
 
 .name span {
   display: block;
-  color: var(--txt11);
+  color: var(--text);
 }
 
 .name span:nth-child(2) {
@@ -188,63 +190,81 @@ input.input {
 .active,
 .active:hover,
 .active:focus {
-  color: var(--snsic);
+  color: var(--link);
   font-weight: 500;
 }
 
-.acc_root {
-  box-shadow: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background-color: transparent !important;
-}
-.acc_root::before {
-  display: none;
-}
-.acc_root.acc_expanded {
-}
-.summary_root {
-  height: auto !important;
-  min-height: unset !important;
-  padding: 0 !important;
-  align-items: flex-start !important;
-}
-.summary_expanded {
-  height: auto !important;
-  min-height: unset !important;
-  border-bottom: none !important;
-}
-.summary_icon {
+// A branch: its link, then the toggle for what is under it (components/sidebar:
+// Branch). The chevron turns when open.
+.branch {
   display: flex;
-  justify-content: center;
+  align-items: flex-start;
+}
+
+.branch > .list {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.toggle {
+  display: flex;
+  flex: 0 0 auto;
   align-items: center;
-  padding-top: 6px;
-  padding-bottom: 0;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-inline-start: var(--space-1);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
+
+  svg {
+    width: 24px;
+    height: 24px;
+    transition: transform var(--duration) var(--ease);
+  }
+
+  &[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+
+  // 44px where the screen is touched
+  @media (pointer: coarse) {
+    width: var(--tap);
+    height: var(--tap);
+  }
 }
-.summary_expanded .summary_icon {
-  padding-bottom: 6px;
-  padding-top: 0;
+
+@media (hover: hover) {
+  .toggle:hover {
+    background: var(--hover);
+  }
 }
-.summary_icon svg {
-  color: var(--sidebar-icon-color);
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle svg {
+    transition: none;
+  }
 }
-.summary_content {
-  margin: 0 !important;
-}
-.detail_root {
-  padding: 0 !important;
-  margin: 0;
-  width: 100%;
-  display: block !important;
-  border-left: 1px solid var(--bdr11);
-  padding-left: 20px !important;
-}
-.detail_expanded {
-  color: inherit;
+
+// What is under a branch, ruled on its leading side.
+.branchBody {
+  padding-inline-start: 20px;
+  border-inline-start: 1px solid var(--hairline);
 }
 
 .count {
-  color: var(--txt13);
+  color: var(--muted);
   font-size: 0.85em;
   font-weight: 400;
 }
@@ -252,7 +272,7 @@ input.input {
 .chapterNo {
   display: inline-block;
   min-width: 28px;
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 .chapter {
@@ -261,7 +281,7 @@ input.input {
 
 .empty {
   padding: 16px 0;
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -270,7 +290,7 @@ input.input {
 }
 
 .list:focus-visible {
-  outline: 2px solid var(--theme-color);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 4px;
 }

@@ -2,17 +2,19 @@ import { Fragment, useId, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "../../contexts/LocaleContext";
 import { languageName as catalogName } from "../../lib/i18n";
-import { cleanText, hadithPath } from "../../lib/hadith";
+import { sourceLine, translatorName } from "../../lib/citation";
+import { cleanText, hadithPath, isCategoryBook } from "../../lib/hadith";
 import { extraTranslations, fallbackShownAsExtra, primaryTranslation } from "../../lib/translations";
 import ChevronDownIcon from "../icons/ChevronDown";
 import { Highlighted } from "./Highlight";
 import styles from "./hadith.module.scss";
 
-// Arabic is always present and always rendered right-to-left.
+// Arabic is always present and always rendered right-to-left. It is the original:
+// a browser's page translation must never replace it (translate="no").
 export function ArabicText({ text, clamped = false }) {
   if (!text) return null;
   return (
-    <div className={`${styles.arabic} ${clamped ? styles.clampArabic : ""}`} dir="rtl" lang="ar">
+    <div className={`${styles.arabic} ${clamped ? styles.clampArabic : ""}`} dir="rtl" lang="ar" translate="no">
       <Highlighted text={cleanText(text)} field="arabic" />
     </div>
   );
@@ -63,30 +65,28 @@ const SEPARATOR = (
   </span>
 );
 
-// "Muhsin Khan · eng-bukhari ↗": the name the source gives with the edition
-// (most editions give none, and some give the compiler's, so it is never
-// called the translator), then the edition code, linked to the source file.
-export function Credit({ entry }) {
-  const { t } = useLocale();
-  if (!entry) return null;
-  const edition = entry.edition || {};
+// " · Muhsin Khan" after the language: the translator, when the source names
+// one (lib/citation translatorName); nothing otherwise.
+export function Translator({ entry }) {
+  const name = entry ? translatorName(entry.author, entry.edition) : null;
+  if (!name) return null;
   return (
     <>
-      <span className={styles.creditName} title={t("nameInSource")}>
-        {entry.author ? <bdi>{entry.author}</bdi> : t("nameNotGiven")}
-      </span>
-      {edition.code && SEPARATOR}
-      {edition.code &&
-        (edition.sourceUrl ? (
-          <a href={edition.sourceUrl} target="_blank" rel="noopener noreferrer" className={styles.creditCode}>
-            {edition.code}
-            <span aria-hidden="true"> ↗</span>
-            <span className="visually_hidden"> {t("sourceOpensNewTab")}</span>
-          </a>
-        ) : (
-          <span className={styles.creditCode}>{edition.code}</span>
-        ))}
+      {SEPARATOR}
+      <bdi className={styles.creditName}>{name}</bdi>
     </>
+  );
+}
+
+// "Nguồn: HadeethEnc.com": one small line under HadeethEnc's content, as its
+// terms ask (lib/citation sourceLine): under the translations of its own
+// hadiths, and under its translation shown with another collection's hadith.
+export function SourceLine() {
+  const { t } = useLocale();
+  return (
+    <p className={styles.sourceLine} data-source-line="">
+      {sourceLine(t)}
+    </p>
   );
 }
 
@@ -120,8 +120,7 @@ export function Translation({ translation, clamped = false, showNote = false, ot
             <bdi>{languageName(code)}</bdi>
           </span>
         )}
-        {SEPARATOR}
-        <Credit entry={translation} />
+        <Translator entry={translation} />
       </div>
       {isFallback && showNote && (
         <p className={styles.fallbackNote}>{t("fallbackNote", { language: languageName(lang) })}</p>
@@ -143,36 +142,32 @@ export function shownTranslation(hadith) {
   return linked ? { linked, own: fallback } : { linked: null, own };
 }
 
-// HadeethEnc's translation of wording that appears verbatim in this hadith
-// (API `linkedTranslation`). It is a different text from the hadith's own
-// translation, usually shorter and without the chain of narrators, so it has
-// its own block, label and note, and is never merged with anything else.
-// `compact` (lists): the label and a link only; the list says once what the
-// label means (LinkedTranslationNote).
+// The topic collection's translation of wording that appears verbatim in this
+// hadith (API `linkedTranslation`, from HadeethEnc). It is a different text
+// from the hadith's own translation, usually shorter and without the chain of
+// narrators, so it has its own block, label, note and source line, and is
+// never merged with anything else. `compact` (lists): the label and a link
+// only; the list says once what the label means (LinkedTranslationNote).
 export function LinkedTranslation({ linked, clamped = false, compact = false }) {
   const { t, languageName, directionOf } = useLocale();
   const code = linked.languageCode;
-  const label = t("linkedTranslation", { language: languageName(code) });
+  const label = t("topicTranslation", { language: languageName(code) });
   const source = hadithPath({ id: linked.hadithId });
 
   return (
     <div className={styles.linked}>
       <div className={styles.labelRow}>
         <span className={styles.linkedBadge}>{label}</span>
-        {compact ? (
+        {compact && (
           <Link href={source} className={styles.linkedLink}>
             {t("linkedTranslationLink")} <span aria-hidden="true">→</span>
           </Link>
-        ) : (
-          <span className={styles.credit}>
-            <Credit entry={linked} />
-          </span>
         )}
       </div>
       {/* Said before the text, so it is read as what it is. */}
       {!compact && (
         <p className={styles.linkedNote}>
-          {t("linkedTranslationNote")}{" "}
+          {t("topicTranslationNote")}{" "}
           <Link href={source}>
             {t("linkedTranslationLink")} <span aria-hidden="true">→</span>
           </Link>
@@ -185,13 +180,14 @@ export function LinkedTranslation({ linked, clamped = false, compact = false }) 
       >
         {cleanText(linked.text)}
       </div>
+      <SourceLine />
     </div>
   );
 }
 
-// One extra language under the primary translation: its own translation,
-// HadeethEnc's translation of the same wording (labelled as HadeethEnc's,
-// linked to that hadith), or one muted line when there is neither.
+// One extra language under the primary translation: its own translation, the
+// topic collection's translation of the same wording (labelled as such, linked
+// to that hadith, with its source line), or one muted line when there is neither.
 // `collapsible` (lists): on phones the text folds into a 44px row that opens
 // on a tap; wider screens always show it.
 export function ExtraTranslation({ slot, collapsible = false, compact = false }) {
@@ -223,15 +219,17 @@ export function ExtraTranslation({ slot, collapsible = false, compact = false })
       <div className={styles.labelRow}>
         {linked ? (
           <span className={styles.linkedBadge}>
-            <WithLanguage text={t("linkedTranslation")} name={name} />
+            {/* one inline run: as flex items, the words around the name would lose their spaces */}
+            <span>
+              <WithLanguage text={t("topicTranslation")} name={name} />
+            </span>
           </span>
         ) : (
           <span className={styles.label}>
             <bdi>{name}</bdi>
           </span>
         )}
-        {SEPARATOR}
-        <Credit entry={entry} />
+        <Translator entry={entry} />
         {linked && (
           <Link href={source} className={styles.linkedLink}>
             {t("linkedTranslationLink")} <span aria-hidden="true">→</span>
@@ -251,17 +249,18 @@ export function ExtraTranslation({ slot, collapsible = false, compact = false })
         )}
       </div>
       <div id={bodyId} className={styles.extraBody}>
-        {linked && !compact && <p className={styles.linkedNote}>{t("linkedTranslationNote")}</p>}
+        {linked && !compact && <p className={styles.linkedNote}>{t("topicTranslationNote")}</p>}
         <div className={styles.translationText} lang={slot.code} dir={direction}>
           <TranslationText text={entry.text} code={slot.code} />
         </div>
+        {linked && <SourceLine />}
       </div>
     </div>
   );
 }
 
-// Said once above a list whose cards show HadeethEnc's linked translations
-// (as the primary translation or as an extra one).
+// Said once above a list whose cards show the topic collection's linked
+// translations (as the primary translation or as an extra one).
 export function LinkedTranslationNote({ hadiths }) {
   const { t, languageName } = useLocale();
   const nameOf = useExtraLanguageName();
@@ -277,28 +276,32 @@ export function LinkedTranslationNote({ hadiths }) {
   if (linked.size > 1) {
     return (
       <p className={styles.linkedListNote} role="note">
-        {t("linkedListNoteAny")}
+        {t("topicListNoteAny")}
       </p>
     );
   }
   const language = [...linked.values()][0];
   return (
     <p className={styles.linkedListNote} role="note">
-      {t("linkedListNote", { label: t("linkedTranslation", { language }), language })}
+      {t("topicListNote", { label: t("topicTranslation", { language }), language })}
     </p>
   );
 }
 
 // Cards, the detail page and the daily hadith all render translations here:
-// the primary translation (own, HadeethEnc's linked one, or the labelled
-// English fallback), then the reader's extra languages in their order.
+// the primary translation (own, the topic collection's linked one, or the
+// labelled English fallback), then the reader's extra languages in their
+// order. A hadith of the topic collection ends with its source line (`book`:
+// the hadith's collection, when the hadith does not carry it); a linked
+// translation carries its own.
 // `compact`: the short linked-translation label of the cards;
 // `collapsible`: extra languages fold on phones (lists).
-export function HadithTranslations({ hadith, clamped = false, showNote = false, compact = false, collapsible = false }) {
+export function HadithTranslations({ hadith, book, clamped = false, showNote = false, compact = false, collapsible = false }) {
   const { t, languageName } = useLocale();
   const { own, linked, fallback } = primaryTranslation(hadith);
   const extras = extraTranslations(hadith);
   const othersShown = extras.some((slot) => slot.entry);
+  const source = isCategoryBook(book || hadith.book);
 
   const primary = linked ? (
     <div className={styles.translations}>
@@ -314,7 +317,7 @@ export function HadithTranslations({ hadith, clamped = false, showNote = false, 
     <Translation translation={own} clamped={clamped} showNote={showNote} othersShown={othersShown} />
   );
 
-  if (!extras.length) return primary;
+  if (!extras.length && !source) return primary;
 
   return (
     <div className={styles.stack}>
@@ -322,6 +325,7 @@ export function HadithTranslations({ hadith, clamped = false, showNote = false, 
       {extras.map((slot) => (
         <ExtraTranslation key={slot.code} slot={slot} collapsible={collapsible} compact={compact} />
       ))}
+      {source && <SourceLine />}
     </div>
   );
 }

@@ -6,6 +6,7 @@ import Skeleton from "react-loading-skeleton";
 import { useLocale } from "../../contexts/LocaleContext";
 import useApi from "../../hooks/useApi";
 import { getEditions, getLanguages } from "../../lib/api";
+import { translatorName } from "../../lib/citation";
 import { DEFAULT_LANGUAGE, compareLanguages, writeLanguageCookie } from "../../lib/language";
 import {
   MAX_EXTRA_TRANSLATIONS,
@@ -20,8 +21,6 @@ import CloseIcon from "../icons/Close";
 import SearchIcon from "../icons/Search";
 import SubtitlesIcon from "../icons/SubtitlesOutlined";
 import styles from "./TranslationPicker.module.scss";
-
-const SOURCES = { fawaz: "Fawaz", hadeethenc: "HadeethEnc" };
 
 const capitalize = (text) => (text ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : text);
 // For search: case and diacritics ignored ("viet" finds "Tiếng Việt").
@@ -149,8 +148,8 @@ export default function TranslationPicker({ translations, book = null, variant =
   const hasHadeethEnc = (code) => editions.some((edition) => edition.source === "hadeethenc" && edition.languageCode === code);
   const inCollection = (code) => !book || !editions.length || Boolean(editionOf(code));
 
-  // "Muhsin Khan · Fawaz · 7.580 hadith": the name as the source gives it
-  // (never called the translator), the source and how many hadiths it has.
+  // "Muhsin Khan · 7.580 hadith": the translator when the source names one,
+  // and how many hadiths of the collection the translation has.
   const editionLine = (code) => {
     if (!book) {
       const info = byCode.get(code);
@@ -159,13 +158,11 @@ export default function TranslationPicker({ translations, book = null, variant =
     if (!editions.length) return "";
     const edition = editionOf(code);
     if (edition) {
-      return [
-        edition.author || t("nameNotGiven"),
-        SOURCES[edition.source] || edition.source,
-        t("editionCount", { count: formatNumber(edition.totalHadith || 0) }),
-      ].join(" · ");
+      return [translatorName(edition.author, edition), t("editionCount", { count: formatNumber(edition.totalHadith || 0) })]
+        .filter(Boolean)
+        .join(" · ");
     }
-    return book !== "hadeethenc" && hasHadeethEnc(code) ? t("editionLinkedOnly") : t("editionNone");
+    return book !== "hadeethenc" && hasHadeethEnc(code) ? t("editionTopicOnly") : t("editionNone");
   };
 
   const full = draft.length >= MAX_EXTRA_TRANSLATIONS + 1;

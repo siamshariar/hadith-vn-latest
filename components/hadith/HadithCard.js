@@ -8,6 +8,7 @@ import {
   citablePath,
   cleanText,
   isCategoryBook,
+  namedGrades,
   shortBookName,
 } from "../../lib/hadith";
 import { inBookText, referenceText } from "../../lib/citation";
@@ -32,7 +33,7 @@ function CardContext({ hadith, book }) {
         ›
       </span>
       <Link href={chapterPath(book.slug, chapterNo)}>
-        {chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : `${t("chapter")} ${chapterNo}`}
+        {chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : t("chapterNumber", { number: chapterNo })}
       </Link>
     </p>
   );
@@ -46,7 +47,10 @@ function CardContext({ hadith, book }) {
 // - showContext: book › chapter above the citation (search results);
 // - inBookReference: { chapterNo, position } when the API item has none
 //   (the chapter page knows each hadith's position).
-export default function HadithCard({ hadith, book, showContext = false, inBookReference, isBookmarkPage, updateBookmarksData }) {
+// `headingLevel`: 2 where the cards sit right under the page's h1 (a chapter, a
+// category's list, a bookmark folder); 3 under a section heading (search results).
+export default function HadithCard({ hadith, book, showContext = false, inBookReference, isBookmarkPage, updateBookmarksData, headingLevel = 3 }) {
+  const Title = headingLevel === 2 ? "h2" : "h3";
   const { t } = useLocale();
   const href = citablePath(hadith, book);
   const inBook = isCategoryBook(book) ? null : inBookText(hadith.inBookReference || inBookReference, t);
@@ -65,17 +69,17 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
             {referenceText(hadith, book, t)}
           </Link>
           {inBook && <span className={styles.inBook}>{inBook}</span>}
-          <GradeBadge grades={hadith.grades} gradeText={hadith.gradeText} />
+          <GradeBadge grades={namedGrades(hadith, book)} gradeText={hadith.gradeText} />
         </div>
       </header>
 
       {hadith.title && (
-        <h3 className={styles.title} dir="auto">
+        <Title className={styles.title} dir="auto">
           {/* HadeethEnc titles are in the language of its translation */}
           <Link href={href}>
             <Highlighted text={cleanText(hadith.title)} field={hadith.translation && hadith.translation.languageCode} />
           </Link>
-        </h3>
+        </Title>
       )}
 
       {/* Arabic and translation side by side when the card is wide enough
@@ -86,7 +90,7 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
           <ArabicText text={hadith.arabic} />
         </div>
         <div className={styles.translationCol}>
-          <HadithTranslations hadith={hadith} compact collapsible />
+          <HadithTranslations hadith={hadith} book={book} compact collapsible />
         </div>
       </div>
 
@@ -132,8 +136,8 @@ export function HadithCardSkeleton({ count = 3 }) {
 }
 
 // A list of cards that switches to skeletons while the next page loads.
-// When cards show HadeethEnc's linked translations, what that label means is
-// said once, above the list (LinkedTranslationNote). `picker`: the
+// When cards show the topic collection's linked translations, what that label
+// means is said once, above the list (LinkedTranslationNote). `picker`: the
 // translations chip above the list ({ translations, book }) for lists
 // without a reader bar; the collection is the cards' own when they share one.
 export function HadithList({ hadiths, loading, renderCard, skeletonCount = 4, picker }) {

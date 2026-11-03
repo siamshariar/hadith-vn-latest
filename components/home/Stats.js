@@ -3,8 +3,8 @@ import { useLocale } from "../../contexts/LocaleContext";
 import styles from "./Stats.module.scss";
 
 // Figures come straight from /hadith/home `totals`; nothing is hardcoded.
-// "Readable" = own translations + linked HadeethEnc translations in the
-// reader's language (Arabic is the original, so it has no such figure).
+// "Readable" = own translations + the topic collection's linked translations
+// in the reader's language (Arabic is the original, so it has no such figure).
 export default function Stats({ totals }) {
   const { t, lang, formatNumber, languageName } = useLocale();
   if (!totals) return null;
@@ -18,7 +18,7 @@ export default function Stats({ totals }) {
       key: "readable",
       value: own + linked,
       label: t("readableIn", { language: languageName(lang) }),
-      note: linked > 0 ? t("readableBreakdown", { own: formatNumber(own), linked: formatNumber(linked) }) : null,
+      note: linked > 0 ? t("readableOwnAndTopic", { own: formatNumber(own), linked: formatNumber(linked) }) : null,
       wide: true,
     });
   }

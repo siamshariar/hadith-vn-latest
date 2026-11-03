@@ -11,18 +11,18 @@
   font-size: 56px;
   font-weight: 600;
   line-height: 1;
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 .title {
   font-size: 22px;
   font-weight: 600;
-  color: var(--txt11);
+  color: var(--text);
 }
 
 .message {
   max-width: 420px;
-  color: var(--txt12);
+  color: var(--text-secondary);
 }
 
 .links {
@@ -37,26 +37,26 @@
     align-items: center;
     min-height: 44px;
     padding: 0 16px;
-    border: 1px solid var(--bdr11);
+    border: 1px solid var(--hairline);
     border-radius: 6px;
-    color: var(--txt11);
+    color: var(--text);
 
     &:hover,
     &:focus-visible {
-      border-color: var(--theme-color);
-      color: var(--main-color);
+      border-color: var(--accent);
+      color: var(--link);
     }
   }
 
   .primary {
-    background: var(--btn-bg);
-    border-color: var(--btn-bg);
-    color: var(--btn-txt);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
 
     &:hover,
     &:focus-visible {
-      background: var(--btn-bg-hover);
-      color: var(--btn-txt);
+      background: var(--accent-hover);
+      color: var(--on-accent);
     }
   }
 }

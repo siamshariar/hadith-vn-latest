@@ -4,12 +4,12 @@ import Link from "next/link";
 import Container from "../core/container";
 import BackIcon from "../icons/NavigateBefore";
 import SearchIcon from "../icons/Search";
-import InterfaceSwitcher from "../core/InterfaceSwitcher";
+import LanguageMenu from "../core/LanguageMenu";
 import { useLocale } from "../../contexts/LocaleContext";
 import styles from "./Header.module.scss";
 
 // Header of the plain text pages (phones and tablets): back, the page
-// title, search (after the interface menu of an international site).
+// title, the language menu (the globe) and search.
 // `titleKey` is an interface string (lib/i18n).
 export default function HeaderMobile({ title, titleKey }) {
   const router = useRouter();
@@ -38,7 +38,7 @@ export default function HeaderMobile({ title, titleKey }) {
           </div>
 
           <div className={styles.right}>
-            <InterfaceSwitcher variant="phone" />
+            <LanguageMenu variant="phone" />
             <Link href="/search" className={styles.icon} aria-label={t("search")}>
               <SearchIcon />
             </Link>

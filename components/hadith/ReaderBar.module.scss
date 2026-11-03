@@ -10,9 +10,9 @@
   // full width of the page column, over its side padding
   margin: 0 -16px 12px;
   padding: 0 4px 0 16px;
-  border-bottom: 1px solid var(--bdr11);
-  background: var(--bg11);
-  transition: top 0.2s ease;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--canvas);
+  transition: top 0.2s var(--ease);
 }
 
 .where {
@@ -21,7 +21,7 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.3;
   white-space: nowrap;
@@ -30,11 +30,11 @@
     display: inline-flex;
     align-items: center;
     min-height: 32px;
-    color: var(--txt12);
+    color: var(--text-secondary);
 
     &:hover,
     &:focus-visible {
-      color: var(--main-color);
+      color: var(--link);
       text-decoration: underline;
     }
   }
@@ -51,7 +51,7 @@
 
 .separator {
   flex: 0 0 auto;
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 // The part that gives way when space runs out.
@@ -80,10 +80,10 @@
     min-width: 0;
     height: 36px;
     padding: 0 26px 0 8px;
-    border: 1px solid var(--bdr11);
-    border-radius: 8px;
-    background: var(--bg11);
-    color: var(--txt11);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text);
     font: inherit;
     font-size: 14px;
     font-weight: 500;
@@ -91,12 +91,17 @@
     cursor: pointer;
     appearance: none;
 
+    // 16px on touch screens: iOS zooms the page into a smaller field
+    @media (pointer: coarse) {
+      font-size: var(--text-base);
+    }
+
     &:hover {
-      border-color: var(--theme-color);
+      border-color: var(--accent);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--theme-color);
+      outline: 2px solid var(--accent);
       outline-offset: -2px;
     }
   }
@@ -108,8 +113,8 @@
     top: 50%;
     width: 7px;
     height: 7px;
-    border-right: 2px solid var(--txt12);
-    border-bottom: 2px solid var(--txt12);
+    border-right: 2px solid var(--text-secondary);
+    border-bottom: 2px solid var(--text-secondary);
     transform: translateY(-70%) rotate(45deg);
     pointer-events: none;
   }
@@ -121,7 +126,7 @@
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
-  color: var(--txt11);
+  color: var(--text);
   font-size: 14px;
   font-weight: 600;
   text-overflow: ellipsis;
@@ -165,12 +170,12 @@
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: var(--tap);
+  height: var(--tap);
   border: 0;
-  border-radius: 50%;
+  border-radius: 50%; // icon-only: a circle, as everywhere
   background: transparent;
-  color: var(--txt12);
+  color: var(--text-secondary);
   cursor: pointer;
 
   svg {
@@ -181,8 +186,8 @@
 
   &:hover,
   &:focus-visible {
-    background: var(--bg22);
-    color: var(--main-color);
+    background: var(--hover);
+    color: var(--ink);
   }
 }
 
@@ -196,6 +201,13 @@
   .bar {
     margin: 0 0 16px;
     padding: 0 0 0 4px;
+  }
+}
+
+// Less motion: the bar moves up with the header at once instead of sliding.
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
   }
 }
 

@@ -1,13 +1,18 @@
+// Hadith text: the Arabic, the translations and their labels, grades, and the
+// boxes that set apart a text that is not the hadith's own translation.
+// docs/hadith-design-system.md, "Reading".
+
 // ---------------------------------------------------------------- Arabic
 
 // 24px on phones, 28px on desktops at the default size (--fs-arabic: 28px,
-// changed in the reader settings).
+// changed in the reader settings). Line-height 2: vowelled text, stacked
+// harakat never touch. Never letter-spaced (it breaks the joining).
 .arabic {
   font-family: var(--font-arabic);
   font-size: calc(var(--fs-arabic) * 0.86);
   font-weight: 400;
-  line-height: 1.9;
-  color: var(--txt00);
+  line-height: var(--leading-arabic);
+  color: var(--ink);
   text-align: right;
   white-space: pre-line;
   overflow-wrap: anywhere;
@@ -33,30 +38,29 @@
 .translation {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
-// "TIẾNG ANH · Muhsin Khan · eng-bukhari ↗" above each translation.
+// "English · Muhsin Khan" above each translation. No case change or tracking:
+// the label may be in any script.
 .labelRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 6px;
+  gap: var(--space-1) 6px;
   min-width: 0;
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: var(--leading-snug);
 }
 
 .label {
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
 }
 
 .creditSep {
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 .creditName {
@@ -64,68 +68,47 @@
   overflow-wrap: anywhere;
 }
 
-.credit {
-  display: contents;
-}
-
-// The edition code, linked to the source file (24px tall: a tap target).
-.creditCode {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  color: var(--main-color);
-  overflow-wrap: anywhere;
-
-  &:is(a) {
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 2px;
-  }
-
-  &:is(a):hover,
-  &:is(a):focus-visible {
-    text-decoration-thickness: 2px;
-  }
-}
-
+// A status, so a pill: the English shown because the reader's language has none.
 .fallbackBadge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
+  padding: 2px var(--space-2);
   border: 1px solid var(--notice-bdr);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--notice-bg);
   color: var(--notice-txt);
   font-weight: 500;
 }
 
 .author {
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 .fallbackNote {
-  padding: 8px 12px;
-  border-left: 3px solid var(--notice-bdr);
-  border-radius: 4px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--notice-bdr);
+  border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 .translationText {
   font-family: var(--font-trans);
   font-size: calc(var(--fs-trans) * 0.92);
-  line-height: 1.7;
-  color: var(--txt11);
+  line-height: var(--leading-reading);
+  color: var(--text);
   white-space: pre-line;
   overflow-wrap: anywhere;
+  text-wrap: pretty; // no single word left on a paragraph's last line
 }
 
 // "Narrated 'Umar bin Al-Khattab:" on its own line (HadithText).
 .narrator {
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: var(--space-1);
+  color: var(--ink);
   font-weight: 600;
 }
 
@@ -144,26 +127,29 @@
 }
 
 .missing {
-  padding: 10px 12px;
+  padding: var(--space-3);
   border: 1px dashed var(--notice-bdr);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 // ---------------------------------------------------------------- grades
+
+// The grades are shown as the source states them, all in one neutral style:
+// the design never colour-codes authenticity.
 
 // First grade and its grader, next to the citation (GradeBadge).
 .gradeBadge {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0 4px;
+  gap: 0 var(--space-1);
   max-width: 100%;
-  padding: 2px 10px;
-  border-radius: 999px;
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-pill);
   background: var(--grade-bg);
   color: var(--grade-txt);
   font-size: 13px;
@@ -189,8 +175,8 @@
   display: inline-flex;
   align-items: baseline;
   gap: 2px;
-  padding: 3px 10px;
-  border-radius: 999px;
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-pill);
   background: var(--grade-bg);
   color: var(--grade-txt);
   font-size: 13px;
@@ -198,7 +184,7 @@
 }
 
 .chipPrimary {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .chipGrader {
@@ -206,10 +192,12 @@
 }
 
 .sectionTitle {
-  margin-bottom: 10px;
-  color: var(--txt11);
-  font-size: 16px;
-  font-weight: 500;
+  margin-bottom: var(--space-3);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  line-height: var(--leading-tight);
 }
 
 .gradesFull {
@@ -217,79 +205,82 @@
 }
 
 .gradeText {
-  margin-bottom: 10px;
+  margin-bottom: var(--space-3);
   color: var(--grade-txt);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: var(--text-base);
+  font-weight: 600;
 }
 
+// one ruled row per grader: name, then the grade as stated
 .graderList {
   display: grid;
-  gap: 6px;
+  border-top: 1px solid var(--hairline);
 
   li {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 4px 16px;
-    padding: 8px 12px;
-    border-radius: 6px;
-    background: var(--grade-bg);
-    color: var(--grade-txt);
+    gap: var(--space-1) var(--space-4);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--hairline);
+    color: var(--text);
     font-size: 15px;
   }
 }
 
 .graderName {
-  color: var(--txt12);
+  color: var(--text-secondary);
 }
 
 .graderGrade {
-  font-weight: 500;
+  color: var(--grade-txt);
+  font-weight: 600;
 }
 
-// ---------------------------------------------------------------- linked translation (HadeethEnc)
+// ---------------------------------------------------------------- linked translation (topic collection)
 
 .translations {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
+// Another text than the hadith's own translation: boxed and labelled, never
+// merged with anything else (lib/translations).
 .linked {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--bdr11);
-  border-inline-start: 3px solid var(--theme-color);
-  border-radius: 6px;
-  background: var(--accent-soft);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--accent-wash);
 }
 
 .linkedBadge {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border: 1px solid var(--theme-color);
-  border-radius: 999px;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
   color: var(--grade-txt);
   font-weight: 500;
 }
 
 .linkedNote {
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
 
   a {
-    color: var(--main-color);
+    color: var(--link);
     font-weight: 500;
     white-space: nowrap;
 
     &:hover,
     &:focus-visible {
       text-decoration: underline;
+      text-underline-offset: 2px;
     }
   }
 }
@@ -298,26 +289,27 @@
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  color: var(--main-color);
+  color: var(--link);
   font-size: 13px;
   font-weight: 500;
 
   &:hover,
   &:focus-visible {
     text-decoration: underline;
+    text-underline-offset: 2px;
   }
 }
 
 // Above a list (LinkedTranslationNote).
 .linkedListNote {
-  margin-bottom: 16px;
-  padding: 10px 12px;
-  border-inline-start: 3px solid var(--theme-color);
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--txt11);
-  font-size: 14px;
-  line-height: 1.55;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--accent-wash);
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
 }
 
 .fallbackDetails {
@@ -325,9 +317,10 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 0;
-    color: var(--txt12);
-    font-size: 14px;
+    min-height: 32px;
+    padding: var(--space-1) 0;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
     cursor: pointer;
     list-style: none;
 
@@ -335,30 +328,39 @@
       display: none;
     }
 
+    // a drawn chevron (no glyph standing in for an icon)
     &::before {
-      content: "▸";
-      transition: transform 0.2s ease;
+      content: "";
+      flex: 0 0 auto;
+      width: 6px;
+      height: 6px;
+      margin-inline-end: 2px;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(-45deg);
+      transition: transform var(--duration) var(--ease);
     }
 
     &:hover,
     &:focus-visible {
-      color: var(--main-color);
+      color: var(--link);
     }
   }
 
   &[open] summary {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
 
     &::before {
-      transform: rotate(90deg);
+      transform: rotate(45deg);
     }
   }
 }
 
-.sourceLink {
-  color: var(--main-color);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+// "Source: HadeethEnc.com" (SourceLine): small and muted, last under the text it credits.
+.sourceLine {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
 }
 
 // ---------------------------------------------------------------- extra translations
@@ -367,36 +369,36 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .extra {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
-  padding-top: 12px;
-  border-top: 1px solid var(--bdr11);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
 
-  // HadeethEnc's translation of the same wording: the tinted box of .linked
+  // the topic collection's translation of the same wording: the box of .linked
   &.linked {
-    padding-top: 10px;
+    padding-top: var(--space-3);
   }
 }
 
 .extraBody {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   min-width: 0;
 }
 
-// "Chưa có bản dịch বাংলা cho hadith này"
+// "No Bengali translation of this hadith yet"
 .extraMissing {
-  padding-top: 10px;
-  border-top: 1px dashed var(--bdr11);
-  color: var(--txt13);
-  font-size: 14px;
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--hairline);
+  color: var(--muted);
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -412,7 +414,7 @@
 
     .labelRow {
       position: relative;
-      min-height: 44px;
+      min-height: var(--tap);
     }
 
     .labelRow a {
@@ -425,21 +427,21 @@
       flex: 0 0 auto;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
+      width: var(--tap);
+      height: var(--tap);
       margin: -6px -10px -6px auto;
       padding: 0;
       border: 0;
-      border-radius: 50%;
+      border-radius: var(--radius-md);
       background: transparent;
-      color: var(--txt12);
+      color: var(--text-secondary);
       cursor: pointer;
 
       svg {
         width: 22px;
         height: 22px;
         fill: currentColor;
-        transition: transform 0.2s ease;
+        transition: transform var(--duration) var(--ease);
       }
 
       // the tap area: the whole row
@@ -454,7 +456,7 @@
       }
 
       &:focus-visible::after {
-        border-radius: 6px;
+        border-radius: var(--radius-sm);
         outline: 2px solid var(--focus-ring);
         outline-offset: 2px;
       }
@@ -465,7 +467,7 @@
     }
 
     &[data-open="true"] {
-      gap: 8px;
+      gap: var(--space-2);
 
       .extraToggle svg {
         transform: rotate(180deg);
@@ -474,17 +476,23 @@
   }
 
   .extra.collapsible {
-    padding-top: 4px;
+    padding-top: var(--space-1);
   }
 
   .extra.linked.collapsible {
-    padding-top: 4px;
-    padding-bottom: 4px;
+    padding-top: var(--space-1);
+    padding-bottom: var(--space-1);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .extraToggle svg {
+  .extraToggle svg,
+  .fallbackDetails summary::before {
     transition: none;
   }
+}
+
+// the chevron's own baseline: the summary is a flex row of glyph and words
+.fallbackDetails summary::before {
+  align-self: center;
 }

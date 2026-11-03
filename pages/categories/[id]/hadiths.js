@@ -50,8 +50,8 @@ export default function CategoryHadiths({ data, books, direct, filtered, counts,
   return (
     <>
       <Meta
-        title={`${t("hadithsInCategory")}: ${category.title}`}
-        description={`${category.title}: ${pagination.total} hadiths.`}
+        title={t("labelValue", { label: t("hadithsInCategory"), value: category.title })}
+        description={`${category.title}: ${t("hadithCount", { count: pagination.total })}.`}
         url={`${server}${pageHref(basePath, query, pagination.page)}`}
         image={shareImage}
         type="website"
@@ -61,16 +61,16 @@ export default function CategoryHadiths({ data, books, direct, filtered, counts,
         <Breadcrumbs items={crumbs} />
 
         <header className={styles.header}>
-          <p className={styles.eyebrow}>{t("hadithsInCategory")}</p>
           <h1 className={styles.title}>{category.title}</h1>
           {category.titleArabic && (
             <p className={styles.titleArabic} dir="rtl" lang="ar">
               {category.titleArabic}
             </p>
           )}
+          <p className={styles.subtitle}>{t("hadithsInCategory")}</p>
           <p className={styles.meta}>
             <span>
-              {formatNumber(allCount)} {t("hadiths")}
+              {t("hadithCount", { count: allCount })}
             </span>
             {lang !== "ar" && translatedCount != null && (
               <span>{t("countTranslated", { count: formatNumber(translatedCount), language })}</span>
@@ -145,7 +145,7 @@ export default function CategoryHadiths({ data, books, direct, filtered, counts,
             hadiths={hadiths}
             loading={loading}
             picker={{ translations }}
-            renderCard={(hadith) => <HadithCard key={hadith.id} hadith={hadith} book={books[hadith.bookSlug]} />}
+            renderCard={(hadith) => <HadithCard key={hadith.id} hadith={hadith} book={books[hadith.bookSlug]} headingLevel={2} />}
           />
         )}
 

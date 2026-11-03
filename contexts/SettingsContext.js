@@ -100,8 +100,9 @@ const SettingsContextProvider = ({ children }) => {
   };
 
   const initSettings = (settings) => {
-    // init theme
+    // init theme (pages/_document.js already set it before the first paint)
     document.body.setAttribute("class", settings.theme);
+    document.documentElement.setAttribute("data-theme", settings.theme);
 
     applyTypography(settings);
   };
@@ -184,6 +185,7 @@ const SettingsContextProvider = ({ children }) => {
 
   const changeTheme = (theme) => {
     document.body.setAttribute("class", theme);
+    document.documentElement.setAttribute("data-theme", theme);
     const newSettings = { ...settings, ["theme"]: theme };
     saveToLocalStorage(newSettings);
     setSettings(newSettings);
@@ -229,11 +231,19 @@ const SettingsContextProvider = ({ children }) => {
     setSettings(newSettings);
   };
 
+  // Returns the settings it replaced, for an undo (components/settings).
   const resetSettings = () => {
+    const previous = settings;
     initSettings(defaultSettings);
     saveToLocalStorage(defaultSettings);
     setSettings(defaultSettings);
-    // redirectAfterChangeVerseMode(defaultSettings.verseMode);
+    return previous;
+  };
+
+  const restoreSettings = (saved) => {
+    initSettings(saved);
+    saveToLocalStorage(saved);
+    setSettings(saved);
   };
 
   return (
@@ -250,6 +260,7 @@ const SettingsContextProvider = ({ children }) => {
         fontFamilyArabic: settings.fontFamily?.arabic ?? defaultSettings.fontFamily.arabic,
         changeFontFamilyArabic,
         fontFamilyTranslation: settings.fontFamily?.translation ?? defaultSettings.fontFamily.translation,
+        changeFontFamilyTranslation,
         verseMode: settings.verseMode,
         changeVerseMode,
         activeVerse: settings.activeVerse,
@@ -264,6 +275,7 @@ const SettingsContextProvider = ({ children }) => {
         changeTextOrder: (value) => changeReader({ textOrder: value === "translation" ? "translation" : "arabic" }),
         resetReader,
         resetSettings,
+        restoreSettings,
       }}
     >
       {children}

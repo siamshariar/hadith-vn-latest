@@ -5,13 +5,32 @@ import Document, { Html, Head, Main, NextScript } from "next/document";
 import { ServerStyleSheets } from "@mui/styles";
 
 import { GA_TRACKING_ID } from "../lib/gtag";
-import { INTERFACE_DIRECTION, INTERFACE_LANGUAGE, INTERNATIONAL, isInterfaceLanguage } from "../lib/language";
+import { SITE_INTERFACE, interfaceDirection, isInterfaceLanguage } from "../lib/language";
 import { accentGradient } from "../lib/sites";
+import { fontStacks } from "../lib/settings";
 
 // The site's ribbon (header, hero bar, menu: --brand-ribbon in styles/_variables.scss) from
 // its accent colours (config/countries.json); without one, the stylesheet's neutral one.
 const ribbon = accentGradient();
 const ribbonStyle = ribbon ? { "--brand-ribbon": ribbon } : undefined;
+
+// The reader's saved settings (localStorage "settings", lib/settings.js) where
+// styles/_variables.scss and SettingsContext expect them: the theme on <html
+// data-theme> and <body class>, and the reading typography that SettingsContext's
+// applyTypography sets (sizes, faces, Arabic shown, text order). Settings saved
+// before version 3 wait for SettingsContext's migration.
+const SETTINGS_SCRIPT = `try{
+var s=JSON.parse(localStorage.getItem("settings")||"null")||{},h=document.documentElement,c=h.style;
+var t=s.theme==="dark"?"dark":"light";h.setAttribute("data-theme",t);document.body.className=t;
+if(s.version===3||s.version===4){
+var z=s.fontSize||{},f=s.fontFamily||{},r=s.reader||{},k=${JSON.stringify(fontStacks)};
+if(z.arabic>0)c.setProperty("--fs-arabic",z.arabic+"px");
+if(z.translation>0)c.setProperty("--fs-trans",z.translation+"px");
+if(k.hasOwnProperty(f.arabic))c.setProperty("--font-arabic",k[f.arabic]);
+if(k.hasOwnProperty(f.translation))c.setProperty("--font-trans",k[f.translation]);
+if(r.showArabic===false)h.setAttribute("data-arabic","hidden");
+if(r.textOrder==="translation")h.setAttribute("data-text-order","translation");
+}}catch(e){}`;
 
 class CustomDocument extends Document {
   static async getInitialProps(ctx) {
@@ -20,14 +39,13 @@ class CustomDocument extends Document {
   }
 
   render() {
-    // The deployment's interface language (lib/language.js), whatever the content
-    // language: content blocks carry their own lang and dir. An international site's
-    // pages say which interface the reader got (lib/api loadPage); its static pages are
-    // in the default one until LocaleContext switches them.
+    // The interface language, which follows the content language (lib/language.js
+    // interfaceFor), and its direction: each page says which interface it is in (lib/api
+    // loadPage, loadStaticPage). Content blocks carry their own lang and dir.
     const pageProps = (this.props.__NEXT_DATA__ && this.props.__NEXT_DATA__.props && this.props.__NEXT_DATA__.props.pageProps) || {};
-    const lang = INTERNATIONAL && isInterfaceLanguage(pageProps.uiLang) ? pageProps.uiLang : INTERFACE_LANGUAGE;
+    const lang = isInterfaceLanguage(pageProps.uiLang) ? pageProps.uiLang : SITE_INTERFACE;
     return (
-      <Html lang={lang} dir={INTERFACE_DIRECTION} style={ribbonStyle}>
+      <Html lang={lang} dir={interfaceDirection(lang)} style={ribbonStyle}>
         <Head>
           {/* Global Site Tag (gtag.js) - Google Analytics, only when an ID is configured
               (next.config.js accepts letters, digits and dashes only) */}
@@ -52,6 +70,10 @@ class CustomDocument extends Document {
           )}
         </Head>
         <body>
+          {/* The reader's settings before the first paint (SettingsContext applies
+              them again once it loads), so a dark page never flashes light and the
+              text does not reflow at a saved size. */}
+          <script dangerouslySetInnerHTML={{ __html: SETTINGS_SCRIPT }} />
           <Main />
           <NextScript />
           <script> </script>

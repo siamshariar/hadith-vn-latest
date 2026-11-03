@@ -9,14 +9,16 @@
   // left: 0;
   width: 100%;
 }
+// viewport-fit=cover: in landscape the page clears the phone's notch and rounded
+// corners (the insets are 0 everywhere else)
 .body {
   display: flex;
   width: 100%;
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   padding-top: 54px;
   height: 100%;
-  background-color: var(--bg11);
+  background-color: var(--canvas);
   min-height: 100vh;
 }
 .sidebar {
@@ -40,7 +42,9 @@
 }
 .footer {
   display: block;
-  border-top: 1px solid var(--bdr11);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  border-top: 1px solid var(--hairline);
 }
 .layout3 {
   &.wrapper {
@@ -78,9 +82,8 @@
     display: flex;
     width: 100%;
     padding-top: 64px;
-    background-color: transparent;
     height: 100%;
-    background-color: var(--bg11);
+    background-color: var(--canvas);
     min-height: calc(100vh - 72px);
   }
   .sidebar {
@@ -89,8 +92,7 @@
     width: 400px;
     height: auto;
     max-height: 100vh;
-    background: var(--bg11);
-    // box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.1);
+    background: var(--canvas);
     box-shadow: none;
     display: block;
     align-self: start;
@@ -98,7 +100,7 @@
     top: 64px;
     z-index: 9;
     left: 0;
-    border-right: 1px solid var(--bdr11);
+    border-right: 1px solid var(--hairline);
   }
   .content {
     display: flex;
@@ -115,7 +117,7 @@
   }
   .footer {
     display: block;
-    border-top: 1px solid var(--bdr11);
+    border-top: 1px solid var(--hairline);
   }
   .layout3 {
     .body {
@@ -124,10 +126,11 @@
       padding-right: 32px;
     }
     .content {
-      background-color: var(--bg11);
       margin: 32px auto;
       min-height: calc(100vh - 201px);
-      border-radius: 8px;
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-lg);
+      background-color: var(--surface);
       max-width: 980px;
       width: 100%;
     }

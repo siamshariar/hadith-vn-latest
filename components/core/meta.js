@@ -1,12 +1,31 @@
+import { useContext } from "react";
 import Head from "next/head";
 import { useLocale } from "../../contexts/LocaleContext";
+import { SettingsContext } from "../../contexts/SettingsContext";
 import { site } from "../../lib/sites";
+import { config } from "../../lib/config";
+
+// The browser's bar (and an installed app's status bar) continues the header: the
+// page colour of the reader's theme (styles/_variables --canvas).
+const BAR_COLOUR = { light: "#F5F6F1", dark: "#181A17" };
+
+// The browser fetches from the API too (the sidebar, the translation picker): its
+// connection opens while the page is still loading.
+const API_ORIGIN = (() => {
+  try {
+    return new URL(config.apiBaseUrl).origin;
+  } catch (error) {
+    return null;
+  }
+})();
 
 // The page's <head>: title "{page} | {siteHeading} | {siteName}" (or `fullTitle` as it
 // is), description, social cards. Site name and og:locale are the deployment's
 // (config/countries.json); on an international site og:locale is the reader's interface.
 export default function Meta(props) {
   const { t, ogLocale } = useLocale();
+  const settings = useContext(SettingsContext);
+  const barColour = settings && settings.theme === "dark" ? BAR_COLOUR.dark : BAR_COLOUR.light;
   const title = props.fullTitle || props.title;
 
   return (
@@ -16,9 +35,10 @@ export default function Meta(props) {
       <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
       <meta name="description" content={props.description || ""} />
       <meta httpEquiv="X-UA-Compatible" content="ie=edge" />
+      {API_ORIGIN && <link rel="preconnect" href={API_ORIGIN} crossOrigin="anonymous" />}
 
       {/* Android phone */}
-      <meta name="theme-color" content="#173A1D" />
+      <meta name="theme-color" content={barColour} />
       <meta name="mobile-web-app-capable" content="yes" />
 
       {/* iOS phone */}
@@ -27,7 +47,7 @@ export default function Meta(props) {
       <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
       {/* Windows phone */}
-      <meta name="msapplication-navbutton-color" content="#173A1D" />
+      <meta name="msapplication-navbutton-color" content={barColour} />
       <meta name="msapplication-TileColor" content="#2B5797" />
       {/* <meta name="msapplication-TileImage" content="ms-icon-144x144.png`} /> */}
       {/* <meta name="msapplication-config" content="browserconfig.xml" /> */}

@@ -1,12 +1,8 @@
-// The hero (styles/_variables --hero-*): #F3F7F1 to white with a faint dot
-// grid in light, #16301D to the page in dark; the heading in the brand
-// green (#EEF3EC in dark) over a 56x4 bar of the logo's gradient.
+// Home masthead (docs/hadith-design-system.md, "Home"): the site's heading in the
+// display serif, the tagline, then search, on the page's own paper. No band, texture
+// or ornament: the logo carries the brand.
 .banner {
-  padding: 28px 0 30px;
-  background-color: var(--brand-50);
-  background-image: radial-gradient(var(--hero-dot) 1px, transparent 1.5px), var(--hero-bg);
-  background-size: 20px 20px, 100% 100%;
-  border-bottom: 1px solid var(--bdr11);
+  padding: var(--space-6) 0 var(--space-5);
 }
 
 .heading {
@@ -14,51 +10,42 @@
   flex-direction: column;
   align-items: center;
   max-width: 760px;
-  margin: 0 auto 22px;
+  margin: 0 auto var(--space-5);
   text-align: center;
 }
 
 .siteTitle {
-  color: var(--hero-title);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-}
-
-// decoration only: never behind or under text
-.titleBar {
-  display: block;
-  width: 56px;
-  height: 4px;
-  margin-top: 12px;
-  border-radius: 2px;
-  background: var(--brand-ribbon);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 400;
+  line-height: var(--leading-tight);
 }
 
 .tagline {
-  margin-top: 12px;
-  color: var(--hero-text);
-  font-size: 15px;
-  line-height: 1.55;
+  max-width: 60ch;
+  margin-top: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
 }
 
-// The search card itself is the card (home/search.module.scss).
+// The search form is its own field (home/search.module.scss).
 .panel {
   max-width: 720px;
   margin: 0 auto;
 }
 
-// hadith of the day
+// Hadith of the day: the page's one feature block, a field of the card tone. Its
+// heading is a section heading like the others; the hadith's own title follows as
+// the lead paragraph (no label above a heading).
 .daily {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px 16px;
-  border: 1px solid var(--bdr11);
-  border-inline-start: 4px solid var(--theme-color);
-  border-radius: 10px;
-  background-color: var(--bg11);
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  border-radius: var(--radius-lg);
+  background-color: var(--surface-card);
 }
 
 .top {
@@ -66,42 +53,47 @@
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 4px 12px;
+  gap: var(--space-1) var(--space-4);
 }
 
-.eyebrow {
-  color: var(--main-color);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.sectionHeading {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 400;
+  line-height: var(--leading-tight);
 }
 
 .citation {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  color: var(--txt12);
+  color: var(--link);
   font-size: var(--text-sm);
+  font-weight: 500;
 
   &:hover,
   &:focus-visible {
-    color: var(--main-color);
+    color: var(--link-hover);
     text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
 
+// the hadith's title: content, set as the lead paragraph in the reading face
 .title {
-  color: var(--txt11);
+  max-width: var(--measure);
+  color: var(--ink);
+  font-family: var(--font-trans);
   font-size: var(--text-md);
   font-weight: 600;
-  line-height: 1.45;
+  line-height: var(--leading-normal);
 }
 
 .text {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .footer {
@@ -109,46 +101,48 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: var(--space-2) var(--space-3);
 }
 
 .more {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  min-height: 44px;
+  gap: var(--space-1);
+  min-height: var(--tap);
   margin-left: auto;
-  color: var(--main-color);
+  color: var(--link);
   font-size: var(--text-base);
   font-weight: 600;
   white-space: nowrap;
 
   &:hover,
   &:focus-visible {
+    color: var(--link-hover);
     text-decoration: underline;
+    text-underline-offset: 3px;
   }
 }
 
 @media only screen and (min-width: 1024px) {
-  // The fixed 64px header lies over the top of the hero.
+  // The fixed 64px header lies over the top of the masthead.
   .banner {
-    padding: 116px 0 56px;
+    padding: calc(64px + var(--space-7)) 0 var(--space-6);
   }
   .heading {
-    margin-bottom: 30px;
+    margin-bottom: var(--space-6);
   }
   .siteTitle {
-    font-size: 40px;
-  }
-  .titleBar {
-    margin-top: 16px;
+    font-size: 2.75rem;
   }
   .tagline {
-    margin-top: 14px;
-    font-size: 17px;
+    margin-top: var(--space-4);
+    font-size: var(--text-md);
   }
   .daily {
-    padding: 24px 32px;
+    padding: var(--space-6) var(--space-7);
+  }
+  .sectionHeading {
+    font-size: var(--text-2xl);
   }
   .title {
     font-size: var(--text-lg);

@@ -1,0 +1,23 @@
+// Out of sight until it has keyboard focus, then a plain button-like link in the
+// top corner, above the fixed headers.
+.skip {
+  position: fixed;
+  top: var(--space-2);
+  left: calc(var(--space-2) + env(safe-area-inset-left, 0px));
+  z-index: 10000;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+  transform: translateY(calc(-100% - var(--space-4)));
+
+  &:focus,
+  &:focus-visible {
+    transform: none;
+    color: var(--on-accent);
+  }
+}

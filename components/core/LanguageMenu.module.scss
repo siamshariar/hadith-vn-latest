@@ -1,0 +1,358 @@
+// The language menu of the header (LanguageMenu.js). Written with logical properties
+// (inline-start / -end) so that it needs nothing more for a right-to-left interface.
+
+.button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+
+  svg {
+    flex: 0 0 auto;
+    fill: currentColor;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+// "🌐 Tiếng Việt ▾": a secondary button like the reading bar's translations chip,
+// 44px tall, radius 8px (docs/hadith-design-system.md: never a pill).
+.desktop {
+  height: 44px;
+  padding-block: 0;
+  padding-inline: 12px 14px;
+  border: 1px solid var(--control-edge);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  transition: border-color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-secondary);
+  }
+
+  &[aria-expanded="true"] {
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+}
+
+@media (hover: hover) {
+  .desktop:hover {
+    border-color: var(--accent);
+    background: var(--accent-wash);
+  }
+
+  .phone:hover,
+  .close:hover {
+    background: var(--hover);
+  }
+
+  .menu:hover {
+    color: var(--link);
+
+    svg {
+      fill: var(--link);
+    }
+  }
+}
+
+// A long name ("Bahasa Melayu") is cut rather than pushing the header icons away.
+.name {
+  max-width: 11em;
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+}
+
+// ▾
+.caret {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  margin: 0 2px 3px 2px;
+  border-right: 2px solid var(--text-secondary);
+  border-bottom: 2px solid var(--text-secondary);
+  transform: rotate(45deg);
+}
+
+// The globe alone: a 44 x 44 tap area around a 24px glyph, like the other
+// phone header icons (components/mobile/Header.module.scss).
+.phone {
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--text-secondary);
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  transition: background-color var(--duration) var(--ease);
+
+  &:active {
+    background: var(--accent-wash);
+  }
+}
+
+// A row of the phone menu (components/mobile/MobileNav.js), like its links.
+.menu {
+  width: 100%;
+  min-height: 44px;
+  padding: 0;
+  color: var(--text);
+  font-size: var(--text-sm);
+  line-height: 1.3;
+  text-align: start;
+  white-space: normal;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    margin-inline-end: 8px;
+    fill: var(--text);
+  }
+}
+
+.text {
+  color: inherit;
+}
+
+// ---------------------------------------------------------------- the panel
+
+.paper {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  background: var(--surface) !important;
+  background-image: none !important;
+  color: var(--text) !important;
+}
+
+// Desktop: under the button, the filter on top and the list scrolling below it. A menu:
+// radius 8px and the floating shadow.
+.popover {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  max-height: min(560px, calc(100vh - 96px)) !important;
+  margin-top: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+
+// Phones and tablets: a full-height sheet, however short the list (MUI's paper is as tall
+// as its content), clear of a landscape phone's notch.
+.sheet {
+  height: 100% !important;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+}
+
+.head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block: 6px;
+  padding-inline: 16px 6px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.title {
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
+
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  &:focus-visible {
+    background: var(--hover);
+    color: var(--text);
+  }
+}
+
+.searchRow {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  inset-inline-start: 24px;
+  display: flex;
+  transform: translateY(-50%);
+  pointer-events: none;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--muted);
+  }
+}
+
+.search {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding-block: 0;
+  padding-inline: 42px 12px;
+  border: 1px solid var(--control-edge);
+  border-radius: var(--radius-md); // a field: 8px
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 16px; // no zoom on focus in iOS Safari
+  appearance: none;
+
+  &::placeholder {
+    color: var(--muted);
+  }
+
+  &:focus-visible {
+    border-color: var(--accent);
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 4px 0 calc(8px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+}
+
+// One language: its own name, then its name in the interface and its count; a check on the
+// current one.
+.item {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px !important;
+  padding: 8px 16px !important;
+  white-space: normal !important;
+
+  // the current language: the selected tint
+  &:global(.Mui-selected),
+  &:global(.Mui-selected:hover) {
+    background: var(--accent-tint) !important;
+  }
+}
+
+// Fills the row, so that the check sits at its end; each line as wide as its text, so
+// that a right-to-left name starts where the others do.
+.names {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+}
+
+.native {
+  color: var(--text);
+  font-family: var(--font-trans);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+// Amiri's Arabic is small for its size: as the hadith text does (--font-arabic)
+.arabic {
+  font-family: var(--font-arabic);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sub {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+// "Interface in Tiếng Việt": quiet, under the current language without a catalog. Not
+// italic: most scripts here have no italic, and a slanted Bengali or Arabic is a distortion.
+.note {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.check {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--accent);
+  }
+}
+
+.empty {
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.loading {
+  padding: 8px 16px;
+}
+
+@media print {
+  .button {
+    display: none !important;
+  }
+}

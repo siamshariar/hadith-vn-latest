@@ -1,64 +1,62 @@
+// How to cite the hadith: reference cells (label above value), the grades as the
+// source states them, then "report an error". docs/hadith-design-system.md,
+// "Reference".
 .reference {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--bdr11);
+  gap: var(--space-4);
+  color: var(--text);
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
-  color: var(--txt11);
 }
 
+// cells side by side as wide as they fit, each a tile in the card tone (a step in
+// tone, not a rule)
 .rows {
   display: grid;
-  gap: 4px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-2);
 }
 
-// term : value, aligned in a column on wider screens
 .row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0 8px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
 
   dd {
     min-width: 0;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 500;
     overflow-wrap: anywhere;
   }
 
   a {
-    color: var(--main-color);
+    color: var(--link);
     text-decoration: underline;
     text-underline-offset: 2px;
   }
 }
 
 .term {
-  color: var(--txt12);
-
-  &::after {
-    content: ":";
-  }
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 500;
 }
 
-.gradeText .term::after {
-  content: none;
-}
-
-// Wider screens: one two-column grid for all rows, so values line up.
-@media only screen and (min-width: 600px) {
-  .rows {
-    grid-template-columns: max-content minmax(0, 1fr);
-    gap: 4px 16px;
-  }
-  .row {
-    display: contents;
-  }
+.gradeText .term {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .grades {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .gradeText strong {
@@ -66,6 +64,7 @@
   font-weight: 600;
 }
 
+// grader and grade, ruled across
 .gradeTable {
   width: 100%;
   max-width: 560px;
@@ -74,21 +73,26 @@
 
   th,
   td {
-    padding: 6px 10px;
-    border: 1px solid var(--bdr11);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--hairline);
     text-align: start;
     vertical-align: top;
   }
 
   th {
-    background: var(--bg12);
-    color: var(--txt12);
-    font-weight: 500;
+    border-bottom-color: var(--control-edge);
+    background: var(--surface-soft);
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  td:first-child {
+    color: var(--text);
   }
 
   td:last-child {
     color: var(--grade-txt);
-    font-weight: 500;
+    font-weight: 600;
   }
 }
 
@@ -100,8 +104,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 44px;
-  color: var(--txt12);
+  min-height: var(--tap);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 
   svg {
@@ -112,12 +116,13 @@
 
   &:hover,
   &:focus-visible {
-    color: var(--main-color);
+    color: var(--link);
     text-decoration: underline;
+    text-underline-offset: 2px;
   }
 }
 
-// "Muhsin Khan · eng-bukhari ↗ · HadeethEnc"
+// "Muhsin Khan", or the link to the topic collection's hadith
 .credit {
   display: flex;
   flex-wrap: wrap;

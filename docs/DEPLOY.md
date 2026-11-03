@@ -33,25 +33,51 @@ Setting it only at `npm start` has no effect.
 | `NEXT_PUBLIC_CONTACT_EMAIL` | no | The address readers write to. Default: the country's `contactEmail`. |
 | `GOOGLE_ANALYTICS_ID` | no | GA4 measurement ID (`G-…`). Empty: no analytics. |
 | `ALLOW_LOCAL_BUILD` | no | `1` lets a **local test build** use local or http addresses. Never set it for a build you deploy. |
+| `NAMES_FIXTURE` | no | `1` (with `ALLOW_LOCAL_BUILD=1` only) replaces the book names with the end-to-end suite's few (`scripts/e2e/fixtures/names`). For test builds; never deploy one. |
 
 The country decides:
 
-- the default content language (the reader can pick another; the cookie `hadith_lang`
-  and `?lang=` override it);
-- the interface language, which is the same for every reader of that site;
-- `<html lang>`, `og:locale`, and the default site name, logo, ribbon colours (`accent`) and
-  contact email.
+- the default content language (the reader can pick another with the language menu, the
+  globe in the header, or in the settings; the cookie `hadith_lang` keeps it and `?lang=`
+  overrides it for one view);
+- its own interface language (`ui`), for its default content language;
+- the default site name, logo, accent colours (`accent`) and contact email. The accent
+  belongs to the logo: the interface draws it only under the wordmark of an edition without
+  a logo (docs/hadith-design-system.md).
 
-The international edition (`ac`) is the exception: there both languages follow the reader
-(section 2.1).
+**The interface follows the content language.** For the country's own `language` it is the
+country's `ui` (so `kr` keeps a Korean interface over its English content); for any other
+language it is that language's catalog when `lib/locales` has one, else the country's `ui`
+again. A Bengali reader of hadith.vn gets the Bengali interface, and the book names in
+Bengali (`lib/names/bn.json`); an Indonesian reader gets Indonesian hadiths in the
+Vietnamese interface, and the language menu says so. `<html lang>`, `og:locale` and dates
+follow the interface.
 
-The interface is the country's `ui` language when `lib/locales` has a catalog for it.
-Today that is Vietnamese (vn), Bengali (bd) and English (usa). Every other country gets
-the English interface. There is **no right-to-left interface yet**, so `sa` (ar), `pk`
-(ur) and `iq` (ku) get the English, left-to-right interface even after a catalog is
-added, until the layout supports RTL. Their content (Arabic, Urdu, Kurdish) is still
-shown right to left, because each text block carries its own `dir`.
-`npm run check:sites` prints which interface each country gets.
+A country's `ui` is used when `lib/locales` has that catalog, else English.
+`npm run check:sites` prints which interface each country gets. There is **no right-to-left
+interface yet**: the catalogs of `ar`, `ur` and `ku` can be registered, but they stay unused
+(their readers, `sa`, `pk` and `iq` included, get the English or the site's left-to-right
+interface) until `RTL_INTERFACES` in `lib/i18n.js` is turned on, once the layout supports RTL.
+Their content (Arabic, Urdu, Kurdish) is still shown right to left, because each text block
+carries its own `dir`.
+
+Interface catalogs and names:
+
+- `lib/locales/<code>.js`, one per interface language, registered by one line in
+  `lib/locales/index.js`: en, vi, bn, ru, ja, zh, ko, fr, de, pt, da, km, tl, ar, ur, ku. Those
+  marked "draft" there were drafted by an AI and need a native speaker's review. Only English
+  is in the scripts every page loads: each page gets its catalog with its data, and the 404
+  and 500 pages, built once in the country's interface, load the reader's in the browser.
+  Check them with `npm run i18n:missing`; a string a catalog lacks is shown in English.
+- `lib/names/<code>.json`: the book names of one content language that a source attests
+  (a Wikidata label, or the API's Arabic name), with that source in `bookSources`; applied to
+  what the API returns. A book a file does not have, or a language without a file, keeps the
+  API's (English) name. Chapters always keep the API's names.
+- The topic collection (HadeethEnc's hadiths by category) is named by the interface, not by a
+  source: the catalog string `topicCollection` ("Hadiths by Topic", "Hadith theo chủ đề" …),
+  wherever the book's name is shown.
+- The lists of categories (home page, category tree, sidebar) leave out the categories with
+  nothing in the content language, except in Arabic; their pages still open by their URL.
 
 ### 2.1 The international edition (ac)
 
@@ -59,20 +85,18 @@ shown right to left, because each text block carries its own `dir`.
 Quran team's Quran.ac. Its entry has `"international": true` and no `localization`: the Quran
 database has no `ac` localization or country, and the site does not need one.
 
-- **Content language**, for each request: `?lang=`, then the `hadith_lang` cookie, then the
-  best match of the browser's `Accept-Language` among the API's 72 hadith languages (`bn-BD`
-  gives `bn`, `zh-TW` gives `zh`, `fil` gives `tl`), then English.
-- **Interface**, for each request: the `hadith_ui` cookie (set by the globe menu in the
-  header), then the best `Accept-Language` match among the catalogs (Vietnamese, English,
-  Bengali; right-to-left ones are still left out), then English. `<html lang>`, `og:locale`
-  (`en_US`, `vi_VN`, `bn_BD`) and dates follow it. The statically built pages (about,
-  contact, 404 …) are built in English and switch to the reader's interface in the browser.
+- **Content language**, for each request: `?lang=`, then the `hadith_lang` cookie (set by the
+  language menu), then the best match of the browser's `Accept-Language` among the API's 72
+  hadith languages (`bn-BD` gives `bn`, `zh-TW` gives `zh`, `fil` gives `tl`), then English.
+- **Interface**: the content language's catalog when there is one, else English, as on every
+  site (section 2). `<html lang>`, `og:locale` (`en_US`, `vi_VN`, `bn_BD`) and dates follow
+  it. The 404 and 500 pages are built in English and switch in the browser.
 - **Translations:** until the reader chooses (no `hadith_tr` cookie, no `?tr=`), English is
   shown under any other content language. The translations panel lists every language.
 - **Home page:** "Hadith in all languages" and a directory of every language, linking to
   `/?lang=xx`.
 - **Brand:** `public/img/logo_ac.png` and `logo_ac_dark.png` (rebuilt by
-  `python3 scripts/logo-ac.py`), the teal-blue-indigo ribbon, and `s_logo_ac.png` as the
+  `python3 scripts/logo-ac.py`) in its teal-blue-indigo accent, and `s_logo_ac.png` as the
   share image.
 
 Pages depend on the request's `Accept-Language` and cookies, so the site sends
@@ -412,27 +436,34 @@ browsers; set `PLAYWRIGHT_CORE` to the installed package.
       API reachable: it serves the site once per country (on port 3001, from a temporary
       worktree) and checks the interface language, og:locale, site name, book names,
       category titles and the translations shown against the API. "0 failed check(s)".
-      For `ac` it checks readers whose browsers ask for en-US, bn-BD, vi-VN, fr-FR and ur-PK
+      For each country it also picks another language in the language menu (Bengali; English
+      on bd) and checks that the content and the interface follow and that it is kept. For
+      `ac` it checks readers whose browsers ask for en-US, bn-BD, vi-VN, fr-FR and ur-PK
       instead (content and interface languages, `<html lang>`, the English shown beside other
-      languages, the language directory against `/hadith/languages`), then the globe menu,
-      `?lang=`, the cookies and a directory link.
-- [ ] The interface catalog has been reviewed by a native speaker. `lib/locales/bn.js`
-      was drafted by an AI and needs this before the bd launch, and before ac (which offers
-      the Bengali interface) too.
-- [ ] End-to-end suite: `BASE=<vn site> BASE_BD=<bd site> BASE_AC=<ac site> PLAYWRIGHT_CORE=…
-      npm run test:e2e`. All tests pass. The Vietnamese suite runs against a vn site;
-      `scripts/e2e/country.js` runs against `BASE_BD` and `scripts/e2e/international.js`
-      against `BASE_AC` (each is skipped when its variable is not set).
+      languages, the language directory against `/hadith/languages`), then the language menu,
+      `?lang=`, the cookies and a directory link. With `NAMES_FIXTURE=1` the servers and the
+      checks use the e2e suite's names.
+- [ ] The interface catalogs have been reviewed by native speakers. Those drafted by an AI
+      (marked "draft" in `lib/locales/index.js`) need this before any site offers them, and
+      every site offers every registered catalog to the readers who pick its language.
+- [ ] End-to-end suite, against test builds made with `NAMES_FIXTURE=1` (and
+      `ALLOW_LOCAL_BUILD=1`): `NAMES_FIXTURE=1 BASE=<vn site> BASE_BD=<bd site>
+      BASE_AC=<ac site> PLAYWRIGHT_CORE=… npm run test:e2e`. All tests pass. The Vietnamese
+      suite runs against a vn site, with the API's names (the fixture has Bengali names only,
+      which `scripts/e2e/language.js` checks); `scripts/e2e/country.js` runs against `BASE_BD`
+      and `scripts/e2e/international.js` against `BASE_AC` (each is skipped when its variable
+      is not set).
 - [ ] Responsive audit of the main pages, Chromium at every viewport and WebKit at phone and
       tablet sizes: `BASE=<site> node scripts/responsive-audit/audit.js <out> --engine=chromium`,
       then `python3 scripts/responsive-audit/summarize.py <out>/results-chromium.json`.
-      No horizontal overflow. For ac, also with the browser in another language and the globe
-      menu open: `--locale=bn-BD --click='button[data-interface]'`.
+      No horizontal overflow. Also with the language menu open, `--click='button[data-language-menu]'`,
+      and for ac with the browser in another language, `--locale=bn-BD`.
 - [ ] `https://<domain>/robots.txt` names `https://<domain>/sitemap.xml`. The sitemap lists
       `https://<domain>/…` URLs. Submit it in Google Search Console.
 - [ ] `curl -sI https://<domain>/` shows HSTS and the other headers, with no `X-Powered-By`.
       `/_next/image` answers 403, and an unknown URL answers 404 with the site's page.
 - [ ] Titles end in the right site name. `og:locale` is the country's (e.g. `bn_BD`), and
-      `<html lang>` is the interface language (on ac, the reader's: `en_US`, `vi_VN`, `bn_BD`).
+      `<html lang>` is the interface language; both follow a reader who picks another language
+      that has a catalog (`en_US`, `vi_VN`, `bn_BD` …).
 - [ ] The contact address (`NEXT_PUBLIC_CONTACT_EMAIL` or the country's `contactEmail`) is
       read by someone.

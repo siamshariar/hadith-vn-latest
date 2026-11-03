@@ -1,7 +1,7 @@
 .breadcrumbs {
   margin-bottom: 12px;
   font-size: 13px;
-  color: var(--txt12);
+  color: var(--text-secondary);
 
   ol {
     display: flex;
@@ -16,10 +16,12 @@
     min-width: 0;
   }
 
+  // the separator is drawn, not read: the list already says where each step is
   li + li::before {
     content: "›";
+    content: "›" / "";
     margin: 0 8px;
-    color: var(--txt13);
+    color: var(--muted);
   }
 
   a {
@@ -27,18 +29,29 @@
     display: inline-flex;
     align-items: center;
     min-height: 32px;
-    color: var(--txt12);
-    transition: color 0.2s ease;
+    color: var(--text-secondary);
+    transition: color var(--duration) var(--ease);
 
-    &:hover,
     &:focus-visible {
-      color: var(--main-color);
+      color: var(--link);
+      text-decoration: underline;
+    }
+
+    // 44px where the screen is touched
+    @media (pointer: coarse) {
+      min-height: var(--tap);
+    }
+  }
+
+  @media (hover: hover) {
+    a:hover {
+      color: var(--link);
       text-decoration: underline;
     }
   }
 
   span[aria-current] {
-    color: var(--txt11);
+    color: var(--text);
     font-weight: 500;
   }
 }

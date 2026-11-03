@@ -8,7 +8,7 @@
   pointer-events: none;
   transform: scaleX(0);
   transform-origin: left center;
-  background: var(--theme-color);
+  background: var(--accent);
   opacity: 0;
   transition: opacity 0.2s ease;
 }

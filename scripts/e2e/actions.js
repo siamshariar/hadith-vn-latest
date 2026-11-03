@@ -4,54 +4,69 @@
 // lists live in localStorage and must survive a reload.
 'use strict';
 
-const { api, assert, cleanText, lettered, loc, meta, readClipboard, sleep, stored, spec, until, waitForH1, waitForText, writeClipboard } = require('./harness');
+const {
+  api,
+  assert,
+  bookName,
+  cleanText,
+  interfaceStrings,
+  lettered,
+  loc,
+  meta,
+  readClipboard,
+  sleep,
+  spec,
+  stored,
+  translatorOf,
+  until,
+  waitForH1,
+  waitForText,
+  writeClipboard,
+} = require('./harness');
 
 const BUKHARI = 'sahih-al-bukhari';
 
 // The copied texts, from the API data, in the format the site promises
-// (lib/citation): labels as on the page, the name an edition gives quoted as
-// given ("không nêu tên" when none, never "translator"), grades with their
-// grader names.
-const credit = (entry) => [entry.author || 'không nêu tên', entry.edition.code].join(' · ');
+// (lib/citation): labels as on the page, the translator when the source names
+// one, grades with their grader names (the topic collection's own grade
+// without one), and HadeethEnc's source line when its content is copied.
+const SOURCE_LINE = 'Nguồn: HadeethEnc.com';
+const label = (text, entry) => [text, translatorOf(entry.author, entry.edition)].filter(Boolean).join(' · ');
 
-function expectedCitation(hadith, permalink, site) {
+function expectedCitation(hadith, permalink, site, name = hadith.book.name) {
   const book = hadith.book;
-  const henc = book.source === 'hadeethenc';
-  const lines = [`${henc ? 'HadeethEnc' : book.name} ${lettered(hadith.referenceNumber)}`];
-  if (!henc && hadith.inBookReference) {
+  const topic = book.source === 'hadeethenc';
+  const lines = [`${name} ${lettered(hadith.referenceNumber)}`];
+  if (!topic && hadith.inBookReference) {
     lines.push(`Vị trí trong sách: Chương ${hadith.inBookReference.chapterNo}, Hadith ${hadith.inBookReference.position}`);
   }
   const own = hadith.translation;
   const linked = own && !own.isFallback ? null : hadith.linkedTranslation;
-  if (linked) {
-    lines.push(
-      `Bản dịch tiếng Việt theo HadeethEnc · ${credit(linked)} - ${linked.edition.sourceUrl} - ${site}/hadiths/${linked.hadithId}`
-    );
-  }
+  if (linked) lines.push(`${label('Bản dịch tiếng Việt từ bộ hadith theo chủ đề', linked)} - ${site}/hadiths/${linked.hadithId}`);
   if (own) {
-    const label = own.isFallback ? 'Bản dịch tiếng Anh' : `Bản dịch ${own.languageCode === 'vi' ? 'tiếng Việt' : own.languageCode}`;
-    lines.push(`${label} · ${credit(own)} - ${own.edition.sourceUrl}`);
+    const text = own.isFallback ? 'Bản dịch tiếng Anh' : `Bản dịch ${own.languageCode === 'vi' ? 'tiếng Việt' : own.languageCode}`;
+    lines.push(label(text, own));
   }
+  if (topic || linked) lines.push(SOURCE_LINE);
   lines.push(permalink);
   return lines.join('\n');
 }
 
-function expectedText(hadith, permalink) {
+function expectedText(hadith, permalink, name = hadith.book.name) {
   const book = hadith.book;
-  const parts = [`${book.source === 'hadeethenc' ? 'HadeethEnc' : book.name} ${lettered(hadith.referenceNumber)}`];
+  const topic = book.source === 'hadeethenc';
+  const parts = [`${name} ${lettered(hadith.referenceNumber)}`];
   if (hadith.title) parts.push(cleanText(hadith.title));
   parts.push(`[Nguyên văn tiếng Ả Rập]\n${cleanText(hadith.arabic)}`);
   const own = hadith.translation;
   const linked = own && !own.isFallback ? null : hadith.linkedTranslation;
-  if (linked) parts.push(`[Bản dịch tiếng Việt theo HadeethEnc · ${credit(linked)}]\n${cleanText(linked.text)}`);
-  if (own) {
-    const label = own.isFallback ? 'Bản dịch tiếng Anh' : 'Bản dịch tiếng Việt';
-    parts.push(`[${label} · ${credit(own)}]\n${cleanText(own.text)}`);
-  }
+  if (linked) parts.push(`[${label('Bản dịch tiếng Việt từ bộ hadith theo chủ đề', linked)}]\n${cleanText(linked.text)}`);
+  if (own) parts.push(`[${label(own.isFallback ? 'Bản dịch tiếng Anh' : 'Bản dịch tiếng Việt', own)}]\n${cleanText(own.text)}`);
   const grades = [];
   if (hadith.gradeText) grades.push(hadith.gradeText);
-  hadith.grades.forEach((g) => grades.push(`${g.graderName}: ${g.grade}`));
+  if (!topic) hadith.grades.forEach((g) => grades.push(`${g.graderName}: ${g.grade}`));
   if (grades.length) parts.push(`Đánh giá độ xác thực: ${grades.join('; ')}`);
+  if (topic || linked) parts.push(SOURCE_LINE);
   parts.push(permalink);
   return parts.join('\n\n');
 }
@@ -81,16 +96,18 @@ module.exports = spec(module, 'hadith actions', (h) => {
       const henc = await api(`/hadiths/${cases[1].linkedTranslation.hadithId}${loc()}`);
       cases.push(henc);
       const { page } = await h.open(t, null);
+      const vi = await interfaceStrings('vi');
       for (const hadith of cases) {
+        const name = bookName('vi', hadith.book, vi); // the topic collection: by the interface
         const citable = `/books/${hadith.book.slug}/hadiths/${lettered(hadith.referenceNumber)}`;
         await h.goto(page, citable);
         const { canonical } = await meta(page);
         const site = canonical.slice(0, canonical.length - citable.length);
         assert.equal(canonical, `${site}${citable}`, 'canonical is the citable URL');
         const header = page.locator('article > header');
-        assert.equal(await copyFrom(page, header, 'Copy tất cả'), expectedText(hadith, canonical), `${citable}: copied text`);
+        assert.equal(await copyFrom(page, header, 'Copy tất cả'), expectedText(hadith, canonical, name), `${citable}: copied text`);
         await sleep(300);
-        assert.equal(await copyFrom(page, header, 'Copy trích dẫn'), expectedCitation(hadith, canonical, site), `${citable}: copied citation`);
+        assert.equal(await copyFrom(page, header, 'Copy trích dẫn'), expectedCitation(hadith, canonical, site, name), `${citable}: copied citation`);
         await sleep(300);
         assert.equal(await copyFrom(page, header, 'Copy liên kết'), canonical, `${citable}: copied link`);
       }

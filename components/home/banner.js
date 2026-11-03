@@ -3,13 +3,11 @@ import Container from "../core/container";
 import Grades from "../hadith/Grades";
 import { ArabicText, HadithTranslations } from "../hadith/HadithText";
 import { useLocale } from "../../contexts/LocaleContext";
-import { cleanText, hadithPath } from "../../lib/hadith";
+import { cleanText, hadithPath, namedGrades } from "../../lib/hadith";
 import { referenceText } from "../../lib/citation";
 import styles from "./banner.module.scss";
 
-// The hero, light as the reference sites have it: the site's heading in the
-// brand green over a short bar of the logo's gradient (decoration only), the
-// tagline, then the search card.
+// The masthead: the site's heading, the tagline, then the search form.
 export function Hero({ children }) {
   const { t } = useLocale();
   return (
@@ -19,7 +17,6 @@ export function Hero({ children }) {
           <h1 id="site-heading" className={styles.siteTitle}>
             {t("siteHeading")}
           </h1>
-          <span className={styles.titleBar} aria-hidden="true" />
           <p className={styles.tagline}>{t("siteTagline")}</p>
         </div>
         <div className={styles.panel}>{children}</div>
@@ -38,7 +35,7 @@ export default function DailyHadith({ hadith }) {
   return (
     <article className={styles.daily} aria-labelledby="daily-hadith">
       <div className={styles.top}>
-        <h2 id="daily-hadith" className={styles.eyebrow}>
+        <h2 id="daily-hadith" className={styles.sectionHeading}>
           {t("dailyHadith")}
         </h2>
         <Link href={href} className={styles.citation}>
@@ -58,7 +55,7 @@ export default function DailyHadith({ hadith }) {
       </div>
 
       <div className={styles.footer}>
-        <Grades grades={hadith.grades} gradeText={hadith.gradeText} />
+        <Grades grades={namedGrades(hadith)} gradeText={hadith.gradeText} />
         <Link href={href} className={styles.more}>
           {t("readMore")} <span aria-hidden="true">→</span>
         </Link>

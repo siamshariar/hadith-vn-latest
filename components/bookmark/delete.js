@@ -35,12 +35,12 @@ export default function DeleteBookmark({ open, closer, bookmarkKey }) {
       }}
     >
       <Fade in={open} timeout={250}>
-        <div className={styles.content}>
+        <div className={styles.content} role="dialog" aria-modal="true" aria-labelledby="bookmark-delete-title">
           <button type="button" className={styles.close} onClick={closer(false)} aria-label={t("close")} title={t("close")}>
             <CloseIcon />
           </button>
 
-          <h2 className={styles.title}>{t("deleteFolderTitle")}</h2>
+          <h2 id="bookmark-delete-title" className={styles.title}>{t("deleteFolderTitle")}</h2>
           <div className={styles.title_desc}>{t("deleteFolderText", { name: name.current })}</div>
 
           <div className={styles.buttons}>

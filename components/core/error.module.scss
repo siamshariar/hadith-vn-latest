@@ -7,22 +7,22 @@
   gap: 8px;
   width: 100%;
   padding: 40px 16px;
-  border: 1px dashed var(--bdr13);
-  border-radius: 10px;
-  background: var(--bg11);
-  color: var(--txt12);
+  border: 1px dashed var(--control-edge);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-secondary);
 }
 
 .compact {
   padding: 20px 12px;
   border-style: solid;
-  border-color: var(--bdr11);
+  border-color: var(--hairline);
 }
 
 .icon {
   width: 36px;
   height: 36px;
-  fill: var(--txt13);
+  fill: var(--muted);
 }
 
 .error .icon {
@@ -30,7 +30,7 @@
 }
 
 .title {
-  color: var(--txt11);
+  color: var(--text);
   font-size: 18px;
   font-weight: 500;
 }
@@ -47,34 +47,36 @@
 }
 
 .emptyText a {
-  color: var(--main-color);
+  color: var(--link);
   text-decoration: underline;
 }
 
 .detail {
   font-size: 13px;
-  color: var(--txt13);
+  color: var(--muted);
 }
 
 .retry {
+  min-height: var(--tap);
   margin-top: 8px;
-  padding: 8px 20px;
+  padding: 0 20px;
   border: 0;
-  border-radius: 6px;
-  background: var(--theme-color);
-  color: #fff;
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--on-accent);
   font: inherit;
   font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: background-color var(--duration) var(--ease);
 
   &:hover,
   &:focus-visible {
-    opacity: 0.9;
+    background: var(--accent-hover);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--theme-color);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 }

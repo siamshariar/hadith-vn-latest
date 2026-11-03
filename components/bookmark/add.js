@@ -85,11 +85,11 @@ export default function AddBookmark({ open, closer, entry }) {
       }}
     >
       <Fade in={open} timeout={250}>
-        <div className={styles.content}>
+        <div className={styles.content} role="dialog" aria-modal="true" aria-labelledby="bookmark-add-title">
           <button type="button" className={styles.close} onClick={handleClose} aria-label={t("close")} title={t("close")}>
             <CloseIcon />
           </button>
-          <h2 className={styles.title}>{t("bookmark")}</h2>
+          <h2 id="bookmark-add-title" className={styles.title}>{t("bookmark")}</h2>
           <div className={styles.input_area}>
             <label className={styles.sub_title} htmlFor="bookmark-folder">
               {t("chooseFolder")}
@@ -109,6 +109,7 @@ export default function AddBookmark({ open, closer, entry }) {
             <input
               type="text"
               name="create"
+              autoComplete="off"
               placeholder={t("folderName")}
               aria-label={t("folderName")}
               onChange={(e) => handleCreateNewFolder(e.target.value)}

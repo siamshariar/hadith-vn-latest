@@ -9,6 +9,7 @@ import HeaderMobile from "../mobile/HeaderSecondary";
 import FooterWeb from "../web/Footer";
 import Sidebar from "../sidebar";
 import ScrollFrame from "./ScrollFrame";
+import SkipLink from "../core/SkipLink";
 import styles from "./Layout.module.scss";
 
 // Pages pass what the sidebar should show: the category tree (default) or
@@ -29,6 +30,7 @@ const Layout = ({
         <BookmarkContextProvider>
           <SidenavContextProvider>
             <div className={styles.wrapper}>
+              <SkipLink />
               <div className={styles.header}>
                 <HeaderWeb page={null} />
                 <HeaderMobile

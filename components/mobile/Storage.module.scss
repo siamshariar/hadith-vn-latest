@@ -34,7 +34,7 @@
   right: 0;
   width: 1px;
   height: 13px;
-  background-color: #999;
+  background-color: var(--disabled);
   transform: translateY(-50%);
 }
 .tab:last-child::after {
@@ -51,13 +51,13 @@
   height: 24px;
   margin-bottom: 0 !important;
   margin-right: 8px;
-  fill: var(--txt11);
+  fill: var(--text);
 }
 
 // tabs in the site's colours (MUI's default is blue), 44px tall
 .tab {
   min-height: 44px !important;
-  color: var(--txt12) !important;
+  color: var(--text-secondary) !important;
   font: inherit !important;
   font-size: var(--text-sm) !important;
   font-weight: 500 !important;
@@ -65,9 +65,9 @@
 }
 
 .tab[aria-selected="true"] {
-  color: var(--main-color) !important;
+  color: var(--link) !important;
 
   svg {
-    fill: var(--main-color);
+    fill: var(--link);
   }
 }

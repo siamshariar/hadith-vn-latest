@@ -1,10 +1,10 @@
 // Reading settings (the gear of the reader bar): font sizes, hiding the
-// Arabic, translation first; the Settings dialog and page (content language,
-// fonts, theme); the theme toggle, and legible text in the dark theme. Each
-// takes effect at once and is still there after a reload.
+// Arabic, translation first; the Settings dialog and page (the language, which
+// the interface follows, fonts, theme); the theme toggle, and legible text in
+// the dark theme. Each takes effect at once and is still there after a reload.
 'use strict';
 
-const { BASE, api, assert, loc, norm, sleep, stored, spec, until, waitForH1, waitForText } = require('./harness');
+const { BASE, api, assert, interfaceStrings, loc, norm, sleep, stored, spec, until, waitForH1, waitForText } = require('./harness');
 
 const BUKHARI = 'sahih-al-bukhari';
 const fontSize = (locator) => locator.first().evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
@@ -166,15 +166,15 @@ module.exports = spec(module, 'settings', (h) => {
     if (h.desktop) {
       await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
       await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ bản dịch', { exact: true }) }).last();
+      settings = page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ', { exact: true }) }).last();
     } else {
       // the phone header of content pages
       await page.getByRole('link', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ bản dịch' });
+      settings = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ' });
     }
-    await settings.getByRole('combobox', { name: 'Ngôn ngữ bản dịch' }).waitFor({ state: 'visible' });
+    await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).waitFor({ state: 'visible' });
     assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
-    assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ bản dịch' }).inputValue(), 'vi');
+    assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).inputValue(), 'vi');
 
     const before = await fontSize(arabicText(page));
     await settings.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
@@ -187,6 +187,14 @@ module.exports = spec(module, 'settings', (h) => {
       async () => /PDMSIslam/.test(await arabicText(page).evaluate((el) => getComputedStyle(el).fontFamily)),
       'Arabic font applied'
     );
+    // the translation's font too (its setter was once missing from the settings context)
+    await settings.getByText('Chọn phông chữ bản dịch').click();
+    await settings.getByRole('radio', { name: 'Times New Roman' }).check();
+    await until(
+      async () => /TimesNewRoman/.test(await translationText(page).first().evaluate((el) => getComputedStyle(el).fontFamily)),
+      'translation font applied'
+    );
+    assert.equal((await stored(page, 'settings')).fontFamily.translation, 'TimesNewRoman');
 
     await settings.getByText('Chọn giao diện').click();
     await settings.getByRole('button', { name: 'Tối', exact: true }).click();
@@ -202,16 +210,17 @@ module.exports = spec(module, 'settings', (h) => {
     if (h.desktop) {
       await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
       await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ bản dịch', { exact: true }) }).last();
+      settings = page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ', { exact: true }) }).last();
     } else {
       await page.getByRole('link', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ bản dịch' });
+      settings = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ' });
     }
     await settings.getByRole('button', { name: 'Đặt lại', exact: true }).click();
     await until(async () => (await page.evaluate(() => document.body.className)) === 'light', 'light again');
     const reset = await stored(page, 'settings');
     assert.equal(reset.fontSize.arabic, 28);
     assert.equal(reset.fontFamily.arabic, 'Amiri');
+    assert.equal(reset.fontFamily.translation, 'BeVietnamPro');
     if (h.desktop) {
       await page.keyboard.press('Escape');
     } else {
@@ -226,7 +235,7 @@ module.exports = spec(module, 'settings', (h) => {
       const { page, response } = await h.open(t, '/settings');
       assert.equal(response.status(), 200);
       await waitForH1(page, 'Cài đặt');
-      await page.getByRole('combobox', { name: 'Ngôn ngữ bản dịch' }).waitFor();
+      await page.getByRole('combobox', { name: 'Ngôn ngữ' }).waitFor();
       await page.getByRole('button', { name: 'Tăng cỡ chữ bản dịch' }).click();
       assert.equal((await stored(page, 'settings')).fontSize.translation, 19);
       if (h.phone) {
@@ -234,14 +243,14 @@ module.exports = spec(module, 'settings', (h) => {
         await h.goto(page, `/books/${BUKHARI}`);
         await page.getByRole('button', { name: 'Mở menu' }).click();
         await page.locator('.MuiDrawer-paper').getByRole('link', { name: 'Cài đặt', exact: true }).click();
-        const dialog = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ bản dịch' });
+        const dialog = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ' });
         // the menu closes: while open it hides the rest of the page from
         // assistive technology and keeps the keyboard focus to itself
         await page.locator('.MuiDrawer-paper').waitFor({ state: 'detached' });
-        const language = dialog.getByRole('combobox', { name: 'Ngôn ngữ bản dịch' });
+        const language = dialog.getByRole('combobox', { name: 'Ngôn ngữ' });
         await language.waitFor({ state: 'visible' });
         await language.focus();
-        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Ngôn ngữ bản dịch', 'focus reaches the settings');
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Ngôn ngữ', 'focus reaches the settings');
         assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}`);
         await dialog.getByRole('button', { name: 'Quay lại' }).click();
         await until(async () => !(await dialog.isVisible()), 'settings dialog closed');
@@ -250,23 +259,31 @@ module.exports = spec(module, 'settings', (h) => {
     { smoke: true }
   );
 
-  h.test('content language preference: saved in a cookie, the pages follow it', async (t) => {
+  h.test('the language: saved in a cookie, the pages and their interface follow it', async (t) => {
     const en = await api(`/books/bukhari/hadiths/1${loc('en')}`);
+    const tr = await interfaceStrings('en');
     const { page, context } = await h.open(t, '/settings');
-    await page.getByRole('combobox', { name: 'Ngôn ngữ bản dịch' }).selectOption('en');
+    const select = page.getByRole('combobox', { name: 'Ngôn ngữ' });
+    // every language of the API, Arabic (the original) included; the list loads in the browser
+    const total = (await api('/languages')).length;
+    await until(async () => (await select.locator('option').count()) === total, `the ${total} languages listed`);
+    await select.selectOption('en');
     await until(async () => (await context.cookies()).some((c) => c.name === 'hadith_lang' && c.value === 'en'), 'cookie saved');
+    // the settings page itself, at once
+    await waitForH1(page, tr('settingsTitle'));
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
     await h.goto(page, `/books/${BUKHARI}/hadiths/1`);
-    // English content; the interface is the site's (Vietnamese), whatever the content language
+    // English content, and the English interface (a catalog exists for it)
     const squash = (value) => String(value || '').replace(/\s+/g, '');
     await until(
       async () => squash(await page.locator('section[class*="translationBlock"] div[lang="en"]').first().innerText()) === squash(en.translation.text),
       'the English translation is shown'
     );
-    assert.equal(await page.evaluate(() => document.documentElement.lang), 'vi');
-    assert.ok((await page.title()).endsWith(' | Hadith tiếng Việt | Hadith.vn'), 'Vietnamese title');
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
+    assert.ok((await page.title()).endsWith(` | ${tr('siteHeading')} | Hadith.vn`), `English title: ${await page.title()}`);
 
     await h.goto(page, '/settings');
-    await page.getByRole('combobox', { name: 'Ngôn ngữ bản dịch' }).selectOption('vi');
+    await page.getByRole('combobox', { name: tr('language') }).selectOption('vi');
     await until(async () => (await context.cookies()).some((c) => c.name === 'hadith_lang' && c.value === 'vi'), 'cookie back to vi');
     await h.goto(page, '/');
     await waitForH1(page, 'Hadith tiếng Việt');

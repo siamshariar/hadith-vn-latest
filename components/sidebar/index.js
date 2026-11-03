@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo, useContext } from "react";
+import { useState, useEffect, useId, useMemo, useContext } from "react";
 import Link from "next/link";
 import Skeleton from "react-loading-skeleton";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
+import Collapse from "@mui/material/Collapse";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CloseIcon from "@mui/icons-material/Close";
 import Scrollbar from "../core/scrollbar";
@@ -14,7 +12,7 @@ import SearchIcon from "../icons/Search";
 import { SettingsContext } from "../../contexts/SettingsContext";
 import { useLocale } from "../../contexts/LocaleContext";
 import useApi from "../../hooks/useApi";
-import { buildCategoryTree, getBook, getBooks, getCategories } from "../../lib/api";
+import { buildCategoryTree, getBook, getBooks, getCategories, readableCategories } from "../../lib/api";
 import {
   UNASSIGNED_CHAPTER,
   bookPath,
@@ -33,17 +31,33 @@ const fold = (value) =>
     .replace(/đ/gi, "d")
     .toLowerCase();
 
-const accordionClasses = {
-  root: styles.acc_root,
-  expanded: styles.acc_expanded,
-};
-const summaryClasses = {
-  root: styles.summary_root,
-  expanded: styles.summary_expanded,
-  expandIconWrapper: styles.summary_icon,
-  content: styles.summary_content,
-};
-const detailClasses = { root: styles.detail_root };
+// A branch of the tree: its link, then a separate toggle for what is under it
+// (the disclosure pattern; a link inside the toggle's button would be a control
+// inside a control). The toggle names what it shows: "Books of Sahih al-Bukhari".
+function Branch({ id, open, onToggle, label, link, children }) {
+  return (
+    <div>
+      <div className={styles.branch}>
+        {link}
+        <button
+          type="button"
+          className={styles.toggle}
+          aria-expanded={open ? "true" : "false"}
+          aria-controls={id}
+          aria-label={label}
+          onClick={onToggle}
+        >
+          <ExpandMoreIcon />
+        </button>
+      </div>
+      <Collapse in={open} unmountOnExit>
+        <div id={id} className={styles.branchBody}>
+          {children}
+        </div>
+      </Collapse>
+    </div>
+  );
+}
 
 function SidebarSkeleton() {
   return (
@@ -65,7 +79,6 @@ function CategoryLink({ category, active, level, parent }) {
     <Link
       href={categoryHref(category)}
       className={`${styles.list} ${active ? styles.active : ""} ${parent ? styles.parent : ""}`}
-      onClick={(e) => e.stopPropagation()}
       aria-current={active ? "page" : undefined}
       style={{ paddingLeft: `${5 + level * 4}px` }}
     >
@@ -91,16 +104,19 @@ function branchTo(categories, selectedId) {
 
 // `initial`: { categories, partial } from the server. A partial list (the
 // top level and the open branch) paints at once; the full list, needed for
-// the other branches and the filter, follows in the background.
+// the other branches and the filter, follows in the background. Only the
+// categories with something to read in the language (lib/api
+// readableCategories), like the server's.
 function CategoryTree({ selectedCategoryId, filter, initial, enabled }) {
   const { lang, t } = useLocale();
+  const treeId = useId();
   const partial = Boolean(initial && initial.partial);
   const { data, error, retry } = useApi(`categories:${lang}`, () => getCategories(lang), {
     enabled: enabled && (!initial || partial),
   });
   const categories = useMemo(
-    () => (Array.isArray(data) && data.length ? data : (initial && initial.categories) || []),
-    [initial, data]
+    () => (Array.isArray(data) && data.length ? readableCategories(data, lang) : (initial && initial.categories) || []),
+    [initial, data, lang]
   );
   const tree = useMemo(() => buildCategoryTree(categories), [categories]);
   // Server-provided data renders the open branch on the first paint.
@@ -141,29 +157,21 @@ function CategoryTree({ selectedCategoryId, filter, initial, enabled }) {
         return <CategoryLink key={category.id} category={category} active={active} level={level} />;
       }
       return (
-        <div key={category.id} className={`${styles.tree_item} ${active ? styles.selected : ""}`}>
-          <Accordion
-            expanded={expanded.has(category.id)}
-            onChange={() => toggle(category.id)}
-            classes={accordionClasses}
-            disableGutters
-            slotProps={{ transition: { unmountOnExit: true } }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />} classes={summaryClasses}>
-              <CategoryLink category={category} active={active} level={level} parent />
-            </AccordionSummary>
-            <AccordionDetails classes={detailClasses}>
-              <div className={styles.sub_item}>
-                {/* children not in the partial list yet: the full list is on its way */}
-                {category.children.length ? (
-                  renderNodes(category.children, level + 1)
-                ) : (
-                  <Skeleton count={3} height={18} style={{ marginBottom: 8 }} />
-                )}
-              </div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
+        <Branch
+          key={category.id}
+          id={`${treeId}-${category.id}`}
+          open={expanded.has(category.id)}
+          onToggle={() => toggle(category.id)}
+          label={`${t("subcategories")}: ${category.title}`}
+          link={<CategoryLink category={category} active={active} level={level} parent />}
+        >
+          {/* children not in the partial list yet: the full list is on its way */}
+          {category.children.length ? (
+            renderNodes(category.children, level + 1)
+          ) : (
+            <Skeleton count={3} height={18} style={{ marginBottom: 8 }} />
+          )}
+        </Branch>
       );
     });
 
@@ -200,6 +208,7 @@ function BookChapters({ book, selectedChapterNo, active, initial }) {
 
 function BookTree({ selectedBookSlug, selectedChapterNo, filter, initial, enabled }) {
   const { lang, t } = useLocale();
+  const treeId = useId();
   const initialBooks = initial && initial.books;
   const initialChapters = (initial && initial.chapters) || {};
   const { data, error, retry } = useApi(`books:${lang}`, () => getBooks(lang), {
@@ -226,7 +235,7 @@ function BookTree({ selectedBookSlug, selectedChapterNo, filter, initial, enable
 
   const query = fold(filter);
   const visible = query
-    ? books.filter((book) => fold(book.name).includes(query) || fold(book.nameArabic).includes(query))
+    ? books.filter((book) => [book.name, book.nameEnglish, book.nameArabic].some((name) => fold(name).includes(query)))
     : books;
   if (!visible.length) return <div className={styles.empty}>{t("noHadiths")}</div>;
 
@@ -241,38 +250,32 @@ function BookTree({ selectedBookSlug, selectedChapterNo, filter, initial, enable
   return visible.map((book) => {
     const active = book.slug === selectedBookSlug;
     const isOpen = expanded.has(book.slug);
+    const current = active && selectedChapterNo == null;
     return (
-      <Accordion
+      <Branch
         key={book.slug}
-        expanded={isOpen}
-        onChange={() => toggle(book.slug)}
-        classes={accordionClasses}
-        disableGutters
-        slotProps={{ transition: { unmountOnExit: true } }}
-      >
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} classes={summaryClasses}>
+        id={`${treeId}-${book.slug}`}
+        open={isOpen}
+        onToggle={() => toggle(book.slug)}
+        label={t("chaptersOf", { name: shortBookName(book) })}
+        link={
           <Link
             href={bookPath(book)}
-            className={`${styles.list} ${active && selectedChapterNo == null ? styles.active : ""} ${styles.parent}`}
-            onClick={(e) => e.stopPropagation()}
+            className={`${styles.list} ${current ? styles.active : ""} ${styles.parent}`}
+            aria-current={current ? "page" : undefined}
           >
             <span>{shortBookName(book)}</span>
             <span className={styles.count}> ({book.totalHadith})</span>
           </Link>
-        </AccordionSummary>
-        <AccordionDetails classes={detailClasses}>
-          <div className={styles.sub_item}>
-            {isOpen && (
-              <BookChapters
-                book={book}
-                selectedChapterNo={selectedChapterNo}
-                active={active}
-                initial={initialChapters[book.slug]}
-              />
-            )}
-          </div>
-        </AccordionDetails>
-      </Accordion>
+        }
+      >
+        <BookChapters
+          book={book}
+          selectedChapterNo={selectedChapterNo}
+          active={active}
+          initial={initialChapters[book.slug]}
+        />
+      </Branch>
     );
   });
 }
@@ -330,14 +333,22 @@ export default function Sidebar({
             </button>
           )}
           <input
-            type="text"
+            type="search"
             name="filter"
             value={search}
             placeholder={isBooksMode ? t("books") : t("categories")}
             aria-label={isBooksMode ? t("books") : t("categories")}
             className={styles.input}
             autoComplete="off"
+            spellCheck={false}
+            enterKeyHint="search"
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape" || !search) return;
+              e.preventDefault();
+              e.stopPropagation();
+              setSearch("");
+            }}
           />
         </div>
       </div>

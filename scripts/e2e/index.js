@@ -24,6 +24,11 @@
 //                     (NEXT_PUBLIC_COUNTRY_CODE=ac), e.g. http://127.0.0.1:3002:
 //                     international.js tests it; skipped without it
 //   SITE_NAME_AC      that instance's NEXT_PUBLIC_SITE_NAME, if it has one
+// provenance.js checks that no page of BASE, BASE_BD and BASE_AC names a data source.
+//   NAMES_FIXTURE=1   the instances were built with NAMES_FIXTURE=1 (docs/DEPLOY.md):
+//                     book names from scripts/e2e/fixtures/names (Bengali
+//                     only), which language.js checks; without it the names
+//                     expected come from lib/names
 // One area only: node --test scripts/e2e/search.js
 // Some tests:    node --test --test-name-pattern="go to hadith" scripts/e2e/
 // Each profile runs its tests one at a time in a fresh browser context per
@@ -43,9 +48,12 @@ run([
   require('./translations'),
   require('./actions'),
   require('./settings'),
+  require('./keyboard'),
   require('./brand'),
   require('./errors'),
   require('./platform'),
   require('./country'),
   require('./international'),
+  require('./provenance'),
+  require('./language'),
 ]);

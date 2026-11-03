@@ -8,7 +8,7 @@
 .page_item {
   display: block;
   margin-bottom: 10px;
-  background-color: var(--bg11);
+  background-color: var(--surface);
   //border-radius: 8px;
   //box-shadow: 0px 7px 13px rgba(71, 88, 114, 0.3);
   //padding: 22px;
@@ -21,13 +21,13 @@
 .page_item h2 {
   font-size: 20px;
   margin-bottom: 12px;
-  color: var(--txt00);
+  color: var(--ink);
   font-weight: bold;
 }
 
 .page_item p {
   font-size: 16px;
-  color: var(--txt11);
+  color: var(--text);
 }
 
 @media only screen and (min-width: 1024px) {
@@ -36,12 +36,12 @@
     justify-content: center;
     align-items: center;
     margin-bottom: 32px;
-    background: var(--bg12);
+    background: var(--canvas);
     padding: 8px;
     border-radius: 8px;
     text-align: center;
     font-size: 22px;
-    color: var(--txt11);
+    color: var(--text);
     font-weight: normal;
   }
 

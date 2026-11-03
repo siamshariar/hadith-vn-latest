@@ -5,8 +5,7 @@
 // --locale: the browser's language (Accept-Language), default vi-VN; the international site
 // (ac) picks its content and interface from it. --click: a control to click on each page before
 // it is inspected (its first visible match; a page without one is inspected as it is, and its
-// result says clicked: false), e.g. --click='button[data-interface]' opens the interface menu of
-// the ac site.
+// result says clicked: false), e.g. --click='button[data-language-menu]' opens the language menu.
 // playwright-core is not a project dependency: point PLAYWRIGHT_CORE at an installed copy
 // (its browsers come from ~/.cache/ms-playwright).
 const pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
@@ -197,6 +196,8 @@ async function runEngine(name) {
           if (clicked) {
             await target.click();
             await page.waitForTimeout(600); // the menu's opening transition
+            // a list the control loads when it opens (the language menu)
+            await page.waitForLoadState('networkidle').catch(() => {});
           }
         }
         const data = { ...(await page.evaluate(inspect)), ...(CLICK ? { clicked } : {}) };

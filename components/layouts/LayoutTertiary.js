@@ -6,6 +6,7 @@ import HeaderWeb from "../web/Header";
 import HeaderMobile from "../mobile/HeaderContent";
 import FooterWeb from "../web/Footer";
 import ScrollFrame from "./ScrollFrame";
+import SkipLink from "../core/SkipLink";
 import styles from "./Layout.module.scss";
 
 const Layout = ({ children }) => {
@@ -17,6 +18,7 @@ const Layout = ({ children }) => {
             {/* <ArabicDialog /> */}
 
             <div className={`${styles.wrapper} ${styles.layout3}`}>
+              <SkipLink />
               <div className={styles.header}>
                 <HeaderWeb page={null} />
                 <HeaderMobile

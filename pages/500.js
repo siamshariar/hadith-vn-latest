@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { loadStaticPage } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
@@ -6,8 +7,9 @@ import styles from "../components/content/NotFound.module.scss";
 
 // A server error (an exception while a page was rendered), inside the site's header and
 // footer like the not-found page, so the reader can carry on. Next.js pre-renders it at
-// build time, in the deployment's interface language; it calls no API. API failures do
-// not come here: those pages show their own error state with a retry button.
+// build time, in the site's interface language, and the browser switches it to the
+// reader's; it calls no API. API failures do not come here: those pages show their own
+// error state with a retry button.
 export default function ServerErrorPage() {
   const { t } = useLocale();
 
@@ -45,6 +47,7 @@ ServerErrorPage.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };
 
+// The site's interface and its catalog (lib/api loadStaticPage).
 export async function getStaticProps() {
-  return { props: { contentTitle: "500" } };
+  return loadStaticPage({ contentTitle: "500" });
 }

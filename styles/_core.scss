@@ -6,11 +6,107 @@
 
 // custom styles
 body {
-  font-family: var(--font-ui-family), "Segoe UI", sans-serif;
+  font-family: var(--font-ui);
   font-size: 16px;
-  line-height: 1.5;
-  color: var(--txt11);
-  background: var(--bg12);
+  line-height: var(--leading-normal);
+  color: var(--text);
+  background: var(--canvas);
+  text-rendering: optimizeLegibility;
+}
+
+// Light text on dark surfaces renders heavier than dark on light; macOS thins it back.
+body.dark {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(44, 94, 53, 0.2);
+}
+
+// The parts of the browser the page did not draw take the palette too: the text
+// caret and, on desktop, the scrollbars.
+input,
+textarea {
+  caret-color: var(--accent);
+}
+
+@media only screen and (min-width: 1024px) {
+  html {
+    scrollbar-color: var(--control-edge) transparent;
+  }
+}
+
+// Headings wrap into balanced lines, in every script.
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+// No double-tap delay on controls; pinch zoom stays.
+a,
+button,
+input,
+select,
+textarea,
+label,
+summary,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+// A form's submit button while the page it asked for loads (hooks/useSubmitBusy):
+// the label stays and a small ring turns beside it.
+button[aria-busy="true"] {
+  cursor: progress;
+
+  &::after {
+    content: "";
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 0.9em;
+    height: 0.9em;
+    margin-inline-start: 0.5em;
+    border: 2px solid currentColor;
+    border-inline-end-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.12em;
+    animation: busy-turn 0.7s linear infinite;
+  }
+}
+
+@keyframes busy-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes busy-fade {
+  to {
+    opacity: 0.3;
+  }
+}
+
+// Readers who ask for less motion: travel (slides, turns, shifts) is removed where it
+// is styled, in each module and for MUI's sheets (styles/_reset); colour and opacity
+// changes stay, so feedback is never lost: the busy ring fades instead of turning.
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  button[aria-busy="true"]::after {
+    animation: busy-fade 0.8s ease-in-out infinite alternate;
+  }
+
+  .react-loading-skeleton::after {
+    animation: none;
+  }
+}
+
+.dark ::selection {
+  background: rgba(168, 213, 176, 0.3);
 }
 
 @media print {
@@ -41,7 +137,7 @@ body {
   text-align: right;
   font-family: PDMSIslam;
   font-weight: 400;
-  color: var(--txt00);
+  color: var(--ink);
   font-size: 36px;
 }
 
@@ -50,7 +146,7 @@ body {
   font-size: 18px;
   line-height: 1.6;
   font-weight: 400;
-  color: var(--txt11);
+  color: var(--text);
 }
 
 // Height of the fixed header, for sticky bars below it (`top:
@@ -73,9 +169,15 @@ body {
   }
 }
 
-// In-page links (#hadith-12) land below the header, not under it.
+// In-page links (#hadith-12) and keyboard focus land below the header, not under
+// it; on the reading pages below the sticky reading bar too (44px,
+// components/hadith/ReaderBar).
 html {
   scroll-padding-top: calc(var(--header-offset) + 8px);
+}
+
+html:has([data-reader-bar]) {
+  scroll-padding-top: calc(var(--header-offset) + 44px + 8px);
 }
 
 // The main region takes focus after "back to top"; it is not a control.
@@ -95,7 +197,7 @@ main[tabindex="-1"]:focus {
 }
 
 .viewport_surah {
-  background-color: var(--bg11);
+  background-color: var(--surface);
 }
 
 @media only screen and (min-width: 1024px) {
@@ -139,9 +241,8 @@ main[tabindex="-1"]:focus {
 
   .content_wrapper {
     padding: 32px;
-    box-shadow: var(--bs21);
     border-radius: 8px;
-    background-color: var(--bg11);
+    background-color: var(--surface);
     width: 100%;
   }
 }
@@ -150,7 +251,7 @@ main[tabindex="-1"]:focus {
   padding: 0 15px 15px;
   max-width: 599px;
   margin: 0 auto;
-  background: var(--bg11);
+  background: var(--surface);
 }
 
 // conditional view
@@ -172,7 +273,7 @@ main[tabindex="-1"]:focus {
 
 // highlighted
 .highlight {
-  background-color: rgba(160, 232, 175, 0.1) !important;
+  background-color: var(--accent-wash) !important;
   transition: background-color 250ms ease-in-out;
 }
 
@@ -200,8 +301,8 @@ main[tabindex="-1"]:focus {
 
 // loading skeletons (react-loading-skeleton) follow the theme
 .react-loading-skeleton {
-  --base-color: var(--bdr11);
-  --highlight-color: var(--bg12);
+  --base-color: var(--hairline);
+  --highlight-color: var(--canvas);
 }
 
 .visually_hidden {
@@ -234,10 +335,6 @@ summary:focus-visible,
 mark {
   padding: 0 1px;
   border-radius: 2px;
-  background: #fde68a;
+  background: var(--mark-bg);
   color: inherit;
-}
-
-.dark mark {
-  background: #6b5a2a;
 }

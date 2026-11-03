@@ -51,7 +51,7 @@ export default function Share({ open, closer, url, title }) {
       }}
     >
       <Fade in={open} timeout={100} style={{ transitionDelay: "0ms" }}>
-        <div className={styles.modal}>
+        <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="share-title">
           <button type="button" className={styles.close} onClick={closer(false)} aria-label={t("close")} title={t("close")}>
             <CloseIcon />
           </button>
@@ -63,7 +63,7 @@ export default function Share({ open, closer, url, title }) {
           <div className={styles.lists}>
             <div className={styles.item}>
               <EmailShareButton
-                aria-label="Email"
+                aria-label={t("email")}
                 url={url}
                 onShareWindowClose={closer(false)}
                 subject={title}

@@ -88,6 +88,14 @@ function checkProductionUrls() {
   }
 }
 
+// NAMES_FIXTURE=1 replaces the book and chapter names (lib/names) with the end-to-end suite's
+// few (scripts/e2e/fixtures/names): for test builds, never for a site that is deployed.
+function checkNamesFixture() {
+  if (process.env.NAMES_FIXTURE === "1" && process.env.ALLOW_LOCAL_BUILD !== "1") {
+    fail("NAMES_FIXTURE=1 is for test builds only.", "Unset it, or add ALLOW_LOCAL_BUILD=1 for a local test build that is never deployed.");
+  }
+}
+
 // GOOGLE_ANALYTICS_ID goes into an inline script (pages/_document.js): an ID only.
 function checkAnalyticsId() {
   const id = process.env.GOOGLE_ANALYTICS_ID;
@@ -100,6 +108,7 @@ module.exports = (phase) => {
   if (phase === PHASE_PRODUCTION_BUILD) {
     checkCountry({ required: true });
     checkAnalyticsId();
+    checkNamesFixture();
     if (process.env.ALLOW_LOCAL_BUILD === "1") {
       console.warn("[hadith] ALLOW_LOCAL_BUILD=1: the site and API URL checks are skipped. Do not deploy this build.");
     } else {
@@ -114,9 +123,11 @@ module.exports = (phase) => {
     reactStrictMode: true,
     poweredByHeader: false,
     // The analytics ID is read in the browser too (route-change page views),
-    // so it is inlined at build time; empty means no analytics.
+    // so it is inlined at build time; empty means no analytics. So is
+    // NAMES_FIXTURE, which leaves the other names out of the build (lib/names.js).
     env: {
       GOOGLE_ANALYTICS_ID: process.env.GOOGLE_ANALYTICS_ID || "",
+      NAMES_FIXTURE: process.env.NAMES_FIXTURE === "1" ? "1" : "",
     },
     images: {
       // The site's images are small static files (logos), so next/image serves

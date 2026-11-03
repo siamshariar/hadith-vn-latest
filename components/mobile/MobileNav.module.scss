@@ -12,6 +12,7 @@
 .paper {
   -ms-overflow-style: none; // IE and edge
   scrollbar-width: none; // firefox
+  padding-left: env(safe-area-inset-left, 0px); // a landscape phone's notch
 }
 
 .wrapper {
@@ -32,27 +33,15 @@
   overflow-y: auto;
   padding-top: 0;
   padding-bottom: 20px;
-  background: var(--bg11);
+  background: var(--canvas);
 }
 
-// The logo on the hero's light tint (dark green in the dark theme), over the
-// ribbon of the logo's gradient.
+// The logo on the page's paper, closed by a hairline like the header.
 .menu_top {
   position: relative;
-  padding: 24px 16px 28px;
-  margin-bottom: 18px;
-  background: var(--band-bg);
-  background: linear-gradient(160deg, var(--band-bg) 0%, var(--band-bg2) 100%);
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: var(--brand-ribbon);
-  }
+  padding: 24px 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
 }
 
 // for center logo
@@ -69,7 +58,7 @@
 // }
 // .logo span {
 //   display: block;
-//   color: var(--txt11);
+//   color: var(--text);
 //   text-align: center;
 //   margin-top: 10px;
 //   font-size: 14px;
@@ -88,14 +77,14 @@ ul.menu li {
 }
 
 ul.menu li a {
-  color: var(--txt11);
+  color: var(--text);
   line-height: 44px;
   padding: 0;
   font-size: 14px;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  transition: all 250ms ease;
+  transition: color var(--duration) var(--ease);
 }
 
 .icon {
@@ -108,20 +97,22 @@ ul.menu li a {
 .icon svg {
   width: 18px;
   height: 18px;
-  fill: var(--txt11);
-  transition: all 250ms ease;
+  fill: var(--text);
+  transition: fill var(--duration) var(--ease);
 }
 
 .text {
   color: inherit;
 }
 
-ul.menu li a:hover {
-  color: var(--main-color);
-}
+@media (hover: hover) {
+  ul.menu li a:hover {
+    color: var(--link);
+  }
 
-ul.menu li a:hover .icon svg {
-  fill: var(--main-color);
+  ul.menu li a:hover .icon svg {
+    fill: var(--link);
+  }
 }
 
 hr.menu_hr {
@@ -129,7 +120,7 @@ hr.menu_hr {
   background: none;
   margin: 14px auto;
   border: none;
-  border-top: 1px solid var(--bdr11);
+  border-top: 1px solid var(--hairline);
 }
 
 @media only screen and (min-width: 1024px) {

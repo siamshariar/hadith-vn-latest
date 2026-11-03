@@ -1,13 +1,29 @@
 // Several translations at once: the translations panel (add languages, order
 // them, make one the main language), the hadith_tr cookie and the ?tr= share
 // link, the extra languages rendered on the server in lists and on the hadith
-// page (the hadith's own translation, HadeethEnc's translation of the same
-// wording labelled as HadeethEnc's, or one line saying there is none),
-// phones folding them in lists, the copy menu, and labels that never call a
-// name the translator. Expected texts come from the API's ?translations=.
+// page (the hadith's own translation, the topic collection's translation of
+// the same wording labelled as such, or one line saying there is none),
+// phones folding them in lists, the copy menu, and translators named only
+// when the source names one. Expected texts come from the API's ?translations=.
 'use strict';
 
-const { BASE, api, assert, cleanText, lettered, loc, meta, norm, readClipboard, spec, until, waitForText, writeClipboard } = require('./harness');
+const {
+  BASE,
+  api,
+  assert,
+  cleanText,
+  interfaceStrings,
+  loc,
+  meta,
+  norm,
+  readClipboard,
+  spec,
+  translatorOf,
+  until,
+  viNumber,
+  waitForText,
+  writeClipboard,
+} = require('./harness');
 
 const BUKHARI = 'sahih-al-bukhari';
 const squash = (value) => String(value || '').replace(/\s+/g, '');
@@ -87,10 +103,11 @@ module.exports = spec(module, 'translations', (h) => {
       const listed = await dialog.locator('ul li').evaluateAll((items) => items.map((li) => li.dataset.language));
       assert.equal(listed[0], 'en', 'English first among the others');
       assert.ok(!listed.includes('vi') && !listed.includes('ar'), 'neither the main language nor Arabic is offered');
-      // the edition line: the name the source gives, the source, the count for this collection
+      // the edition line: the translator when the source names one, and the count for this collection
       const editions = await api('/editions');
-      const ben = editions.find((e) => e.code === 'ben-bukhari');
-      assert.equal(norm(await row('bn').locator('span[class*="edition"]').textContent()), `không nêu tên · Fawaz · ${String(ben.totalHadith).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} hadith`);
+      const count = (code) => viNumber(editions.find((e) => e.code === code).totalHadith);
+      assert.equal(norm(await row('bn').locator('span[class*="edition"]').textContent()), `${count('ben-bukhari')} hadith`);
+      assert.equal(norm(await row('en').locator('span[class*="edition"]').textContent()), `Muhsin Khan · ${count('eng-bukhari')} hadith`);
 
       await check('bn').check();
       await check('ur').check();
@@ -183,33 +200,35 @@ module.exports = spec(module, 'translations', (h) => {
   });
 
   h.test(
-    'a language with no text gets one line; HadeethEnc\'s linked translation is labelled as such',
+    'a language with no text gets one line; the topic collection\'s linked translation is labelled as such',
     async (t) => {
+      // ?lang=en: English content, so an English interface (it follows the content language)
+      const en = await interfaceStrings('en');
+      const vietnamese = { language: en.language('vi') };
       // Bukhari 1 has no Vietnamese text of any kind
       const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1?lang=en&tr=vi`);
       const block = page.locator('section[class*="translationBlock"]');
-      await waitForText(block.locator('p[data-language="vi"]'), 'Chưa có bản dịch tiếng Việt cho hadith này');
+      await waitForText(block.locator('p[data-language="vi"]'), en('extraMissing', vietnamese));
       assert.equal(await block.locator('div[data-language="vi"]').count(), 0);
 
-      // Bukhari 3: only HadeethEnc's translation of the same wording
+      // Bukhari 3: only the topic collection's translation of the same wording
       const three = await api(`/books/bukhari/hadiths/3${loc('en')}${withTr(['vi'])}`);
       const entry = three.translations.find((item) => item.languageCode === 'vi');
-      assert.ok(entry && entry.linked, 'the API links Bukhari 3 to HadeethEnc');
+      assert.ok(entry && entry.linked, 'the API links Bukhari 3 to the topic collection');
       await h.goto(page, `/books/${BUKHARI}/hadiths/3?lang=en&tr=vi`);
       const linked = page.locator('section[class*="translationBlock"] div[data-language="vi"]');
-      await waitForText(linked.locator('span[class*="linkedBadge"]'), 'Bản dịch tiếng Việt theo HadeethEnc');
-      assert.equal(await linked.getByRole('link', { name: /Xem giải thích đầy đủ/ }).getAttribute('href'), `/hadiths/${entry.linked.hadithId}`);
-      assert.equal(norm(await linked.locator('span[class*="creditName"]').textContent()), entry.author);
-      assert.equal(norm(await linked.locator('a[class*="creditCode"]').textContent()), `${entry.edition.code} ↗ (nguồn, mở trong thẻ mới)`);
-      assert.match(norm(await linked.locator('p[class*="linkedNote"]').textContent()), /^HadeethEnc dịch phần lời văn được trích/);
-      // the reference block names HadeethEnc's hadith too
-      const rows = await page.locator('section[aria-label="Tham chiếu"] dl > div').evaluateAll((items) =>
+      await waitForText(linked.locator('span[class*="linkedBadge"]'), en('topicTranslation', vietnamese));
+      assert.equal(await linked.getByRole('link', { name: en('linkedTranslationLink') }).getAttribute('href'), `/hadiths/${entry.linked.hadithId}`);
+      assert.equal(norm(await linked.locator('p[class*="linkedNote"]').textContent()), norm(en('topicTranslationNote')));
+      // the source names no translator; no edition, no link out; its source line closes it
+      assert.equal(await linked.locator('[class*="creditName"]').count(), 0);
+      assert.equal(await linked.locator('a[href^="http"]').count(), 0);
+      assert.deepEqual((await linked.locator('p[data-source-line]').allTextContents()).map(norm), [en('sourceLine', { source: 'HadeethEnc.com' })]);
+      // the reference block links to the topic collection's hadith
+      const rows = await page.locator(`section[aria-label="${en('refLabel')}"] dl > div`).evaluateAll((items) =>
         items.map((row) => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.replace(/\s+/g, ' ').trim()])
       );
-      assert.deepEqual(rows[rows.length - 1], [
-        'Bản dịch tiếng Việt theo HadeethEnc',
-        `${entry.author} · ${entry.edition.code} ↗ (nguồn, mở trong thẻ mới) · HadeethEnc`,
-      ]);
+      assert.deepEqual(rows[rows.length - 1], [en('topicTranslation', vietnamese), `${en('linkedTranslationLink')} →`]);
     },
     { smoke: true }
   );
@@ -259,13 +278,15 @@ module.exports = spec(module, 'translations', (h) => {
       const reference = 'Sahih al-Bukhari 1';
       const own = hadith.translation; // the English fallback
       const extra = (code) => hadith.translations.find((item) => item.languageCode === code);
-      const credit = (entry) => [entry.author || 'không nêu tên', entry.edition.code].join(' · ');
+      // the label, then the translator when the source names one
+      const label = (text, entry) => [text, translatorOf(entry.author, entry.edition)].filter(Boolean).join(' · ');
       const arabic = `[Nguyên văn tiếng Ả Rập]\n${cleanText(hadith.arabic)}`;
       const translations = [
-        `[Bản dịch tiếng Anh · ${credit(own)}]\n${cleanText(own.text)}`,
-        `[Bản dịch ${await nameOf('bn')} · ${credit(extra('bn'))}]\n${cleanText(extra('bn').text)}`,
-        `[Bản dịch ${await nameOf('ur')} · ${credit(extra('ur'))}]\n${cleanText(extra('ur').text)}`,
+        `[${label('Bản dịch tiếng Anh', own)}]\n${cleanText(own.text)}`,
+        `[${label(`Bản dịch ${await nameOf('bn')}`, extra('bn'))}]\n${cleanText(extra('bn').text)}`,
+        `[${label(`Bản dịch ${await nameOf('ur')}`, extra('ur'))}]\n${cleanText(extra('ur').text)}`,
       ];
+      assert.equal(translations[0].split('\n')[0], '[Bản dịch tiếng Anh · Muhsin Khan]');
 
       assert.equal(await copyFrom(page, header, 'Copy tiếng Ả Rập'), [reference, arabic, canonical].join('\n\n'));
       assert.equal(await copyFrom(page, header, 'Copy bản dịch'), [reference, ...translations, canonical].join('\n\n'));
@@ -276,9 +297,9 @@ module.exports = spec(module, 'translations', (h) => {
         [
           reference,
           `Vị trí trong sách: Chương ${hadith.inBookReference.chapterNo}, Hadith ${hadith.inBookReference.position}`,
-          `Bản dịch tiếng Anh · ${credit(own)} - ${own.edition.sourceUrl}`,
-          `Bản dịch ${await nameOf('bn')} · ${credit(extra('bn'))} - ${extra('bn').edition.sourceUrl}`,
-          `Bản dịch ${await nameOf('ur')} · ${credit(extra('ur'))} - ${extra('ur').edition.sourceUrl}`,
+          label('Bản dịch tiếng Anh', own),
+          label(`Bản dịch ${await nameOf('bn')}`, extra('bn')),
+          label(`Bản dịch ${await nameOf('ur')}`, extra('ur')),
           canonical,
         ].join('\n')
       );
@@ -289,35 +310,47 @@ module.exports = spec(module, 'translations', (h) => {
   }
 
   h.test(
-    'labels never call a name the translator (Nawawi: the compiler\'s name)',
+    'translators: named when the source names one, never the compiler (Nawawi) or the publisher',
     async (t) => {
+      const referenceRows = (page) =>
+        page.locator('section[aria-label="Tham chiếu"] dl > div').evaluateAll((items) =>
+          items.map((row) => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.replace(/\s+/g, ' ').trim()])
+        );
+      // 40 Hadith Nawawi: the source gives the compiler's name, which is not shown
       const nawawi = await api(`/hadiths/35983${loc()}${withTr(['bn'])}`);
       assert.equal(nawawi.translation.author, 'Imam Nawawi', 'the source gives the compiler');
       const { page } = await h.open(t, '/hadiths/35983?tr=bn');
-      const text = await page.locator('main').innerText();
-      assert.ok(!/Người dịch|Translator/i.test(text), 'no "Người dịch" on the hadith page');
-      // the extra Bengali text: "বাংলা · Imam Nawawi · ben-nawawi ↗", the name quoted as given
-      const bengali = page.locator('section[class*="translationBlock"] div[data-language="bn"] span[class*="creditName"]');
-      assert.equal(norm(await bengali.textContent()), 'Imam Nawawi');
-      assert.equal(await bengali.getAttribute('title'), 'Tên trong nguồn');
-      const rows = await page.locator('section[aria-label="Tham chiếu"] dl > div').evaluateAll((items) =>
-        items.map((row) => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.replace(/\s+/g, ' ').trim()])
-      );
-      const english = rows.find(([term]) => term === 'Bản dịch tiếng Anh');
-      assert.ok(english, `the English row: ${JSON.stringify(rows)}`);
-      assert.equal(english[1], 'Imam Nawawi · eng-nawawi ↗ (nguồn, mở trong thẻ mới)');
-      // a source that names nobody
-      const unnamed = await api(`/books/bukhari/hadiths/1${loc()}${withTr(['bn'])}`);
-      assert.equal(unnamed.translations[0].author, null);
+      assert.ok(!/Imam Nawawi/.test(await page.locator('main').innerText()), 'the compiler is not named as a translator');
+      assert.equal(await page.locator('section[class*="translationBlock"] [class*="creditName"]').count(), 0, 'no translator to name');
+      // Sahih al-Bukhari: the English edition names Muhsin Khan, the Bengali one nobody
+      const bukhari = await api(`/books/bukhari/hadiths/1${loc()}${withTr(['bn'])}`);
+      assert.equal(bukhari.translation.author, 'Muhsin Khan');
+      assert.equal(bukhari.translations[0].author, null);
       await h.goto(page, `/books/${BUKHARI}/hadiths/1?tr=bn`);
-      assert.equal(norm(await page.locator('section[class*="translationBlock"] div[data-language="bn"] span[class*="creditName"]').textContent()), 'không nêu tên');
-      // the collection's editions and the sources page
+      const block = page.locator('section[class*="translationBlock"]');
+      assert.equal(norm(await block.locator('div[class*="labelRow"]').first().textContent()), 'Bản dịch tiếng Anh · Muhsin Khan');
+      assert.equal(norm(await block.locator('div[data-language="bn"] div[class*="labelRow"]').textContent()), await nameOf('bn'));
+      assert.deepEqual((await referenceRows(page)).slice(2), [['Bản dịch tiếng Anh', 'Muhsin Khan']], 'one translator row');
+      // the collection pages
       await h.goto(page, '/books/40-hadith-nawawi');
-      assert.ok(!/Người dịch/.test(await page.locator('main').innerText()));
+      assert.ok(!/Imam Nawawi/.test(await page.locator('main').innerText()));
+      await h.goto(page, `/books/${BUKHARI}`);
+      await page.locator('header details summary').click();
+      const english = page.locator('header details li').filter({ hasText: 'Muhsin Khan' });
+      assert.equal(await english.count(), 1, 'the English translation names its translator');
+      // the data & method page: translators by language, as the API names them
+      const editions = await api('/editions');
+      const named = [...new Set(editions.map((e) => translatorOf(e.author, e)).filter(Boolean))].sort();
+      assert.deepEqual(named, ['Abdul Hamid Siddiqui', 'Abdullah Nirsha And Editors Of Daura.com', 'Muhsin Khan']);
       await h.goto(page, '/sources');
-      const head = await page.locator('section[aria-labelledby="sources-translators"] thead th').allTextContents();
-      assert.deepEqual(head.map(norm), ['Ngôn ngữ', 'Bộ sưu tập', 'Tên trong nguồn', 'Ấn bản']);
-      assert.ok(!/Người dịch/.test(await page.locator('main').innerText()), 'no "Người dịch" on the sources page');
+      const table = page.locator('section[aria-labelledby="sources-translators"]');
+      assert.deepEqual((await table.locator('thead th').allTextContents()).map(norm), ['Ngôn ngữ', 'Bộ sưu tập', 'Người dịch', 'Số hadith']);
+      assert.equal(await table.locator('tbody tr').count(), editions.length, 'one row per translation');
+      const cells = await table.locator('tbody tr').evaluateAll((rows) =>
+        rows.map((row) => [...row.querySelectorAll('td')][1].textContent.trim())
+      );
+      assert.deepEqual([...new Set(cells.filter(Boolean))].sort(), named);
+      assert.ok(!/Imam Nawawi|Shah Waliullah/.test(await page.locator('main').innerText()));
     },
     { smoke: true }
   );

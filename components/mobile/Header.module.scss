@@ -1,26 +1,17 @@
-// White with the colour logo (the dark one in the dark theme); its bottom
-// 4px are the ribbon of the logo's gradient, which is decoration only.
+// The colour logo (the dark one in the dark theme) on the page's own paper,
+// closed by a hairline.
 .header {
   display: block;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  background: var(--bg11);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--canvas);
   z-index: 99;
-  box-shadow: var(--bs21);
-  transition: transform 200ms ease-out;
-
-  &::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: var(--brand-ribbon);
-    pointer-events: none;
-  }
+  transition: transform 200ms var(--ease);
 }
 
 // Slides away while reading down (components/layouts/ScrollFrame); stays
@@ -35,14 +26,13 @@
   }
 }
 
-// 50px above the 4px ribbon
+// 53px above the 1px hairline
 .wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 4px;
-  height: 54px;
-  padding-bottom: 4px;
+  height: 53px;
 }
 
 .left,
@@ -75,7 +65,7 @@
   margin-right: -10px;
 }
 
-// The interface menu (international site) leaves the content pages' header
+// The language menu leaves the content pages' header
 // below 360px, where it would not fit beside back, menu, logo, search and
 // settings; the menu drawer has it too.
 @media (max-width: 359px) {
@@ -90,7 +80,7 @@
   min-width: 0;
   margin-left: 4px;
   overflow: hidden;
-  color: var(--txt00);
+  color: var(--ink);
   font-size: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -108,18 +98,19 @@
   border: 0;
   border-radius: 50% !important;
   background: transparent;
-  color: var(--txt12);
+  color: var(--text-secondary);
   cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
 
   &:active {
-    background: var(--accent-soft);
+    background: var(--accent-wash);
   }
 }
 
 .icon svg {
   width: 24px;
   height: 24px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
 
 
@@ -139,9 +130,9 @@
   min-height: 44px;
   padding: 0 4px 0 10px;
   border: 0;
-  border-radius: 22px;
+  border-radius: var(--radius-md); // a button: never a pill
   background: transparent;
-  color: var(--txt11);
+  color: var(--text);
   font: inherit;
   font-size: 16px;
   cursor: pointer;
@@ -149,7 +140,19 @@
   svg {
     width: 24px;
     height: 24px;
-    fill: var(--txt12);
+    fill: var(--text-secondary);
+  }
+
+  &:active {
+    background: var(--accent-wash);
+  }
+}
+
+// Tablets with a mouse or trackpad use this header too.
+@media (hover: hover) {
+  .icon:hover,
+  .categoryButton:hover {
+    background: var(--hover);
   }
 }
 

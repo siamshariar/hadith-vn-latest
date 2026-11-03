@@ -1,82 +1,64 @@
+// Design tokens of the hadith site: docs/hadith-design-system.md (the system) and
+// docs/design-system-selection.md (why it looks this way). Light theme on :root; the
+// dark theme on body.dark (SettingsContext), with html[data-theme] for the page itself.
+//
+// Components use the semantic tokens (--canvas, --text, --accent ...). The older names
+// further down (--bg11, --txt11, --main-color ...) are aliases of them, so styles written
+// before this system follow both themes too.
+
 :root {
-  --clr11: #1db296;
-  --bg21: #eff1f2;
-  --bdr12: #eff1f2;
-  --cbg: #fff;
-  --snib: #e7e7e9;
-  --snbs: #1db296;
+  // ---- surfaces: bone paper with a faint lean to the brand green (hue ~72°), low in
+  // chroma so it reads as paper, not as a yellow cream. Depth comes from these tone
+  // steps, and from hairlines where structure needs a line, not from shadows.
+  --canvas: #f5f6f1; // the page
+  --surface: #ffffff; // cards, inputs, menus: the reading surface
+  --surface-soft: #edefe8; // quiet bands, wells, table heads, tags
+  --surface-card: #e7e9e0; // feature blocks (hadith of the day), reference cells
+  --surface-strong: #dfe1d6; // pressed
+  --hover: #ebede5; // hover fill on canvas and surface
+  --hairline: #dcded4; // dividers and card edges (decorative)
+  --hairline-soft: #e4e6dd; // dividers inside a card
+  --control-edge: #86887e; // edges that identify a control: inputs, outlined buttons (3.3:1)
 
-  --theme-color: #1f7ef9;
+  // ---- text (contrast on --canvas)
+  --ink: #141413; // headings, Arabic (17.0:1)
+  --text: #2c2e2a; // reading text and primary labels (12.9:1)
+  --text-secondary: #55574f; // labels, icons, metadata (6.8:1)
+  --muted: #5f6159; // captions, counts (5.8:1; 5.1:1 on --surface-card)
+  --disabled: #86887e; // disabled labels and decorative marks only (3.3:1)
 
-  --main-color: #1f7ef9; // main theme color
-  --txt00: #000000; // arabic text color
-  --txt11: #2e3031; // bold text
-  --txt12: #5c635d; // normal text (6.2:1 on white)
-  --txt13: #5e6b60; // light text, green-grey (5.6:1 on white)
+  // ---- brand: the logo's green. It carries every action, link and focus ring; nothing
+  // else is coloured. Inline links in running text are underlined: green and text are
+  // 1.4:1 apart, too close to tell by colour alone.
+  --accent: #173a1d; // buttons, active marks, focus (11.7:1)
+  --accent-hover: #245232;
+  --on-accent: #f5f6f1; // text on --accent (11.7:1)
+  --link: #2c5e35; // links (7.0:1)
+  --link-hover: #173a1d;
+  --accent-tint: #e2ebdf; // selected and current backgrounds
+  --accent-wash: rgba(23, 58, 29, 0.06); // the faintest tint: target and highlight rows
 
-  --bg11: #ffffff; // main bg: cards, header
-  --bg12: #f4f6f3; // page: a faint green-grey
-  --bg21: #444444;
-  --bg22: #ecf1eb; // icon bg (hover)
+  // ---- states
+  --notice-bg: #eee6d1; // a fallback or missing translation: sand, not a yellow cream
+  --notice-bdr: #d6c08a;
+  --notice-txt: #6b4c00; // 6.4:1
+  --error-txt: #b3261e; // 6.2:1; also the fill of a destructive button (white text 6.5:1)
+  --error-hover: #8f1e18;
+  --switch-knob: #ffffff; // both themes; the knob of a switch that is on takes --on-accent
+  --error-bg: #fbeceb;
+  --grade-bg: #e2ebdf; // grades: one neutral style for every grade, never colour-coded
+  --grade-txt: #173a1d;
+  --mark-bg: #f6e3a8; // search matches
 
-  --bdr11: #e8e8ea;
-  --bdr12: #e8e8ea;
-  --bdr13: #cfcfcf;
-  --bdr14: #eff1f2;
+  // ---- elevation: only for layers that float over the page (menus, dialogs, sheets)
+  --shadow-float: 0 1px 2px rgba(20, 20, 19, 0.06), 0 12px 32px -8px rgba(20, 20, 19, 0.2);
+  --scrim: rgba(20, 20, 19, 0.45);
 
-  --bs11: 0 5px 30px rgba(0, 0, 0, 0.2); // card shadow 1
-  --bs21: 0 2px 4px -2px rgba(0, 0, 0, 0.06); // header, footer etc.
-
-  --scrollbar-thumb: #a8a8a8;
-
-  --hbnc1: #e80013;
-  --hbnc2: #fce802;
-
-  // ---- brand, from the logo: "Hadith" #173A1D, then the country part in its
-  // accent (".vn": #DB241E -> #F1E416, the flag; ".ac": #0D9488 -> #4F46E5).
-  // The green scale carries text and controls (900 on white: 12.7:1; 600,
-  // the hover shade: 7.6:1); the accent gradient is decoration only, never
-  // text (vn's stops reach 1.3-4.9:1).
-  --brand-900: #173a1d;
-  --brand-800: #1f4a27;
-  --brand-600: #2c5e35;
-  --brand-500: #3e7a49;
-  --brand-100: #e3ede2;
-  --brand-50: #f3f7f1;
-  // The ribbon (header, hero bar, menu): the site's accent, set on <html> from
-  // config/countries.json (pages/_document.js); this neutral one, the brand greens,
-  // for a site without one.
-  --brand-ribbon: linear-gradient(90deg, #1f4a27, #3e7a49 50%, #a8d5b0);
-  --brand-ink: #173a1d; // text in the brand colour: headings, the wordmark
-
-  --theme-color: #173a1d; // accents, borders, switches (white text on it: 12.7:1)
-  --main-color: #173a1d; // links and accent text
-  --main-color-hover: #2c5e35;
-  --bsc11: #173a1d;
-  --sidebar-icon-color: rgba(0, 0, 0, 0.54);
-  --snsic: #173a1d;
-
-  // primary buttons
-  --btn-bg: #173a1d;
-  --btn-bg-hover: #2c5e35;
-  --btn-txt: #ffffff;
-
-  // home hero: light, the brand green for text, dots for texture
-  --hero-bg: linear-gradient(#f3f7f1, #ffffff);
-  --hero-dot: rgba(23, 58, 29, 0.08);
-  --hero-title: #173a1d;
-  --hero-text: #3d4f40;
-  --hero-card-bg: #ffffff;
-  --hero-card-bdr: #7c8f80; // 3.4:1 on white: the field's edge is visible
-
-  // brand band (menu drawer top): kept light, like the hero
-  --band-bg: #f3f7f1;
-  --band-bg2: #ffffff;
-  --band-txt: #173a1d;
-  --band-muted: #3d4f40;
-  --band-line: rgba(23, 58, 29, 0.12);
-
-  // type scale (interface)
+  // ---- type. Families come from next/font (pages/_app.js); the reading faces from
+  // the reader's settings (SettingsContext). Letter-spacing is 0 everywhere: tracking
+  // breaks Arabic joining and Bengali conjuncts, and any string may be in any script.
+  --font-ui: var(--font-ui-family), "Segoe UI", sans-serif;
+  --font-display: var(--font-display-family), Georgia, serif;
   --text-xs: 0.75rem; // 12
   --text-sm: 0.875rem; // 14
   --text-base: 1rem; // 16
@@ -84,168 +66,152 @@
   --text-lg: 1.25rem; // 20
   --text-xl: 1.5rem; // 24
   --text-2xl: 1.875rem; // 30
-  --leading-tight: 1.3;
-  --leading-normal: 1.55;
-  --reading-width: 72ch;
+  --text-3xl: 2.25rem; // 36
+  --leading-tight: 1.25; // display
+  --leading-snug: 1.4; // titles, labels
+  --leading-normal: 1.6; // interface text
+  --leading-reading: 1.75; // translations (Bengali vowel signs need >= 1.7)
+  --leading-arabic: 2; // vowelled Arabic: stacked harakat never touch
+  --measure: 70ch; // longest comfortable line of reading text
 
-  // reading typography (overridden from the reader's settings)
+  // ---- space (4px base) and shape
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-xs: 4px; // inline marks
+  --radius-sm: 6px; // small controls, chips
+  --radius-md: 8px; // buttons, inputs, tabs
+  --radius-lg: 12px; // cards, panels
+  --radius-xl: 16px; // sheets, large panels
+  --radius-pill: 999px; // status badges only, never actions
+  --tap: 44px; // smallest touch target
+
+  // ---- motion
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration: 160ms;
+
+  // ---- reading typography (overridden from the reader's settings)
   --fs-arabic: 28px;
   --fs-trans: 18px;
   --font-arabic: var(--font-amiri-family), "Noto Naskh Arabic", "Traditional Arabic", serif;
   --font-trans: var(--font-ui-family), var(--font-amiri-family), "Segoe UI", sans-serif;
 
-  --focus-ring: #173a1d;
-
-  // hadith content states
-  --accent-soft: rgba(23, 58, 29, 0.07); // light tint of the brand green
-  --notice-bg: #fff7e3; // fallback translation / missing translation
-  --notice-bdr: #f0d58c;
-  --notice-txt: #6f4e00;
-  --grade-bg: #e8f0e6;
-  --grade-txt: #173a1d;
-  --error-txt: #b3261e;
+  // The site's accent (config/countries.json), set on <html> by pages/_document.js. It
+  // belongs to the logo; the interface draws it once, under a wordmark that has no logo.
+  --brand-ribbon: linear-gradient(90deg, #1f4a27, #3e7a49 50%, #a8d5b0);
+  --brand-ink: #173a1d; // the wordmark
 }
 
-// Dark theme: green-tinted rather than navy, from the brand green. Page
-// #111712, cards #1A221C; text #E4EAE3 (13.9:1) and #C3CEC5 (10:1);
-// links #A8D5B0 (9.9:1 on cards); primary buttons the logo's gold with the
-// dark green on it (7.8:1).
-.dark {
-  --bg11: #1a221c;
-  --bg12: #111712;
-  --bg21: #222b24;
-  --bg22: #26322a;
-  --txt00: #f1f5ef;
-  --txt11: #e4eae3;
-  --txt12: #c3cec5;
-  --txt13: #a3b1a6;
-  --bdr11: #2c3a2f;
-  --bdr12: #2c3a2f;
-  --bdr13: #5f7263; // 3.2:1 on cards: control edges
-  --bdr14: #2c3a2f;
-  --bs11: 0 3px 15px rgba(0, 0, 0, 0.45);
-  --bs21: 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-  --cbg: #1a221c;
-  --snib: #6e7d71;
-  --snbs: #7f8f83;
-  --scrollbar-thumb: #4c5d50;
+// Dark theme: the same paper family at night (olive-black, hue ~100°), the brand green
+// lightened for text, buttons and focus. On <html> too, for what resolves there (the
+// page's scrollbar).
+.dark,
+html[data-theme="dark"] {
+  --canvas: #181a17;
+  --surface: #1f211e;
+  --surface-soft: #1c1e1b;
+  --surface-card: #262823;
+  --surface-strong: #2e302b;
+  --hover: #292b26;
+  --hairline: #353831;
+  --hairline-soft: #2c2e29;
+  --control-edge: #70736a; // 3.4:1 on --surface
 
-  --hbnc1: #16301d;
-  --hbnc2: #8a968c;
+  --ink: #f1f2ec; // 15.6:1
+  --text: #e3e5dc; // 13.8:1
+  --text-secondary: #bfc2b7; // 9.7:1
+  --muted: #9ea195; // 6.7:1
+  --disabled: #70736a;
 
-  --brand-100: rgba(168, 213, 176, 0.14);
-  --brand-50: #16301d;
-  --brand-ink: #eef3ec;
+  --accent: #a8d5b0; // buttons and focus (10.9:1)
+  --accent-hover: #c6e6cb;
+  --on-accent: #10261a; // 9.8:1 on --accent
+  --link: #a8d5b0;
+  --link-hover: #c6e6cb;
+  --accent-tint: rgba(168, 213, 176, 0.12);
+  --accent-wash: rgba(168, 213, 176, 0.07);
 
-  // white text on it 5.2:1, against the page 3.5:1 (borders, switches)
-  --theme-color: #357a43;
-  --main-color: #a8d5b0;
-  --main-color-hover: #c6e6cb;
-  --bsc11: #2c3a2f;
-  --sidebar-icon-color: #a3b1a6;
-  --snsic: #a8d5b0;
-
-  --btn-bg: #ecb918;
-  --btn-bg-hover: #f1cb45;
-  --btn-txt: #16301d;
-
-  --hero-bg: linear-gradient(#16301d, #111712);
-  --hero-dot: rgba(238, 243, 236, 0.07);
-  --hero-title: #eef3ec;
-  --hero-text: #b7c4b9;
-  --hero-card-bg: #1a221c;
-  --hero-card-bdr: #6f8273;
-
-  --band-bg: #16301d;
-  --band-bg2: #1a221c;
-  --band-txt: #eef3ec;
-  --band-muted: #b7c4b9;
-  --band-line: rgba(238, 243, 236, 0.1);
-
-  --accent-soft: rgba(168, 213, 176, 0.1);
-  --notice-bg: #3a3420;
-  --notice-bdr: #6b5a2a;
+  --notice-bg: #2f2a1c;
+  --notice-bdr: #5c4f2a;
   --notice-txt: #f3dfa6;
-  --grade-bg: #22322a;
-  --grade-txt: #cfe3d1;
   --error-txt: #f2b8b5;
-  --focus-ring: #ecb918;
+  --error-hover: #f7d0ce;
+  --error-bg: #3a2120;
+  --grade-bg: rgba(168, 213, 176, 0.12);
+  --grade-txt: #cfe3d1;
+  --mark-bg: #6b5a2a;
+
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -8px rgba(0, 0, 0, 0.7);
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  --brand-ink: #eef3ec;
 }
 
-.blue {
-  --clr11: #1db296;
-  --bg21: #eff1f2;
-  --bdr12: #eff1f2;
-  --cbg: #fff;
-  --snib: #e7e7e9;
-  --snbs: #1db296;
-
-  --theme-color: #1f7ef9;
-
-  --main-color: #1f7ef9; // main theme color
-  --txt00: #000000; // arabic text color
-  --txt11: #2e3031; // bold text
-  --txt12: #666666; // normal text
-  --txt13: #9eabbe; // light text
-
-  --bg11: #ffffff; // main bg
-  --bg12: #f4f4f4; // main bg rev
-  --bg21: #444444;
-  --bg22: #eeeeee; // icon bg
-
-  --bdr11: #e8e8ea;
-  --bdr12: #e8e8ea;
-  --bdr13: #cfcfcf;
-  --bdr14: #eff1f2;
-
-  --bs11: 0 5px 30px rgba(0, 0, 0, 0.2); // card shadow 1
-  --bs21: 0 2px 4px -2px rgba(0, 0, 0, 0.06); // header, footer etc.
-
-  --scrollbar-thumb: #a8a8a8;
+// The page behind the app: native controls and scrollbars in the reader's theme, and no
+// light flash before body.dark is set (pages/_document.js sets data-theme first).
+html {
+  color-scheme: light;
+  background: #f5f6f1;
 }
-.orange {
-  --bg11: #232a3b;
-  --bg12: #293145;
-  --bg21: #25262c;
-  --bg22: #313a55;
-  --txt00: #ffffff;
-  --txt11: rgba(226, 232, 240, 1);
-  --txt12: #ffffff;
-  --bdr11: #313a55;
-  --bdr12: #313a55;
-  --bs11: 0px 3px 15px #293145;
-  --cbg: #33363c;
-  --snib: #888888;
-  --snbs: #737c84;
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  background: #181a17;
 }
-.red {
-  --clr11: #1db296;
-  --bg21: #eff1f2;
-  --bdr12: #eff1f2;
-  --cbg: #fff;
-  --snib: #e7e7e9;
-  --snbs: #1db296;
 
-  --theme-color: #1f7ef9;
+// ---- derived tokens: named for their use, re-declared per theme so each resolves
+// against that theme's values.
+:root,
+.dark {
+  --focus-ring: var(--accent);
+  --scrollbar-thumb: var(--control-edge);
+}
 
-  --main-color: #1f7ef9; // main theme color
-  --txt00: #000000; // arabic text color
-  --txt11: #2e3031; // bold text
-  --txt12: #666666; // normal text
-  --txt13: #9eabbe; // light text
-
-  --bg11: #ffffff; // main bg
-  --bg12: #f4f4f4; // main bg rev
-  --bg21: #444444;
-  --bg22: #eeeeee; // icon bg
-
-  --bdr11: #e8e8ea;
-  --bdr12: #e8e8ea;
-  --bdr13: #cfcfcf;
-  --bdr14: #eff1f2;
-
-  --bs11: 0 5px 30px rgba(0, 0, 0, 0.2); // card shadow 1
-  --bs21: 0 2px 4px -2px rgba(0, 0, 0, 0.06); // header, footer etc.
-
-  --scrollbar-thumb: #a8a8a8;
+// ---- aliases: the names used before this system, re-declared per theme so each
+// resolves against that theme's tokens. Nothing on this branch uses them any more;
+// they stay for code on other branches until those merge. Do not use them.
+:root,
+.dark {
+  --bg11: var(--surface);
+  --bg12: var(--canvas);
+  --bg22: var(--hover);
+  --cbg: var(--surface);
+  --txt00: var(--ink);
+  --txt11: var(--text);
+  --txt12: var(--text-secondary);
+  --txt13: var(--muted);
+  --bdr11: var(--hairline);
+  --bdr12: var(--hairline);
+  --bdr13: var(--control-edge);
+  --bdr14: var(--hairline-soft);
+  --bs21: none;
+  --main-color: var(--link);
+  --main-color-hover: var(--link-hover);
+  --theme-color: var(--accent);
+  --accent-soft: var(--accent-wash);
+  --btn-bg: var(--accent);
+  --btn-bg-hover: var(--accent-hover);
+  --btn-txt: var(--on-accent);
+  --bsc11: var(--hairline);
+  --snsic: var(--link);
+  --sidebar-icon-color: var(--text-secondary);
+  --clr11: var(--link);
+  --brand-50: var(--surface-soft);
+  --brand-100: var(--accent-tint);
+  --hero-bg: var(--canvas);
+  --hero-dot: transparent;
+  --hero-title: var(--ink);
+  --hero-text: var(--text-secondary);
+  --hero-card-bg: var(--surface);
+  --hero-card-bdr: var(--control-edge);
+  --band-bg: var(--surface-soft);
+  --band-bg2: var(--surface);
+  --band-txt: var(--ink);
+  --band-muted: var(--text-secondary);
+  --band-line: var(--hairline);
 }

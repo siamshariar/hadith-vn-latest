@@ -1,22 +1,12 @@
-// Collection page (pages/books/[bookId]): intro block and chapter list.
+// Collection page (pages/books/[bookId]): intro block and chapter list. The intro
+// is the page's header, on the paper: the name in the display serif, the figures
+// on a ruled strip (as on the home page), the translations folded under it.
 
 .intro {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 20px;
-  padding: 16px;
-  border: 1px solid var(--bdr11);
-  border-radius: 10px;
-  background: var(--bg11);
-}
-
-.eyebrow {
-  color: var(--txt13);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
 }
 
 .titleRow {
@@ -26,25 +16,28 @@
 }
 
 .title {
-  color: var(--txt11);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.3;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 400;
+  line-height: var(--leading-tight);
 }
 
 .titleArabic {
-  color: var(--txt00);
+  color: var(--ink);
   font-family: var(--font-arabic);
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1.6;
 }
 
-// figures: value over label, like the home stats
+// figures: value over label, one strip ruled by hairlines
 .facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 1px;
+  margin-top: var(--space-3);
+  border-block: 1px solid var(--hairline);
+  background: var(--hairline);
 }
 
 .fact {
@@ -53,56 +46,54 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--bg12);
+  padding: var(--space-3) var(--space-4);
+  background: var(--canvas);
 
   dt {
     order: 1;
-    color: var(--txt12);
+    color: var(--text-secondary);
     font-size: 13px;
-    line-height: 1.35;
+    line-height: var(--leading-snug);
   }
 }
 
 .factValue {
   order: 0;
-  color: var(--txt11);
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.25;
-  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 400;
+  line-height: var(--leading-tight);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .factNote {
   order: 2;
-  color: var(--txt13);
-  font-size: 12px;
-  line-height: 1.4;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
 }
 
 .factReadable {
   flex-basis: 180px;
-  background: var(--accent-soft);
 
   .factValue {
-    color: var(--main-color);
+    color: var(--accent);
   }
 }
 
-// translation editions (/hadith/editions), folded
+// the translations by language (/hadith/editions), folded
 .editions {
-  margin-top: 8px;
-  border-top: 1px solid var(--bdr11);
+  margin-top: var(--space-1);
 
   summary {
     display: flex;
     align-items: center;
     gap: 6px;
-    min-height: 44px;
-    color: var(--main-color);
+    min-height: var(--tap);
+    color: var(--link);
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     list-style: none;
 
@@ -120,7 +111,12 @@
       border-right: 2px solid currentColor;
       border-bottom: 2px solid currentColor;
       transform: rotate(-45deg);
-      transition: transform 0.15s ease;
+      transition: transform var(--duration) var(--ease);
+    }
+
+    &:hover {
+      text-decoration: underline;
+      text-underline-offset: 3px;
     }
   }
 
@@ -131,70 +127,54 @@
 
 .editionsNote {
   margin-bottom: 6px;
-  color: var(--txt12);
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .editionList {
-  border-top: 1px solid var(--bdr11);
+  border-top: 1px solid var(--hairline);
 }
 
+// the language, then its translator when the source names one
 .edition {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "language source"
-    "translator translator";
+    "language"
+    "translator";
   align-items: center;
-  gap: 0 12px;
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--bdr11);
-  font-size: 14px;
+  gap: 0 var(--space-3);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  font-size: var(--text-sm);
   line-height: 1.45;
 }
 
 .editionCurrent {
-  background: var(--accent-soft);
+  background: var(--accent-tint);
 }
 
 .editionLanguage {
   grid-area: language;
-  color: var(--txt11);
+  color: var(--ink);
   font-weight: 500;
 }
 
 .editionTag {
-  color: var(--txt13);
+  color: var(--muted);
   font-weight: 400;
 }
 
 .editionTranslator {
   grid-area: translator;
-  color: var(--txt12);
+  min-width: 0;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
 }
 
-.editionSource {
-  grid-area: source;
-  font-size: 13px;
-
-  a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-    color: var(--main-color);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-}
-
-.muted {
-  color: var(--txt13);
-  font-style: italic;
-}
-
-// chapters
+// chapters: a contents page
 .chapterList {
-  border-top: 1px solid var(--bdr11);
+  border-top: 1px solid var(--hairline);
 }
 
 .chapterRow {
@@ -204,19 +184,22 @@
     "no name range"
     "no name count";
   align-items: center;
-  gap: 0 12px;
+  gap: 0 var(--space-3);
   min-height: 56px;
-  padding: 9px 8px;
-  border-bottom: 1px solid var(--bdr11);
-  color: var(--txt11);
-  transition: background-color 0.15s ease;
+  padding: 9px var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--text);
+  transition: background-color var(--duration) var(--ease);
 
   &:hover,
   &:focus-visible {
-    background: var(--accent-soft);
+    background: var(--hover);
 
     .chapterName {
-      color: var(--main-color);
+      color: var(--link);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
     }
   }
 }
@@ -229,14 +212,16 @@
 
 .chapterNo {
   grid-area: no;
-  color: var(--txt12);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-variant-numeric: lining-nums tabular-nums;
   text-align: center;
 }
 
 .chapterName {
   grid-area: name;
+  color: var(--ink);
   font-size: var(--text-base);
   font-weight: 500;
   line-height: 1.35;
@@ -244,7 +229,7 @@
 
 .chapterArabic {
   grid-area: arabic;
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-family: var(--font-arabic);
   font-size: 19px;
   line-height: 1.5;
@@ -253,8 +238,8 @@
 
 .chapterRange {
   grid-area: range;
-  color: var(--txt11);
-  font-size: 14px;
+  color: var(--text);
+  font-size: var(--text-sm);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -263,7 +248,7 @@
 
 .chapterCount {
   grid-area: count;
-  color: var(--txt13);
+  color: var(--muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -276,12 +261,12 @@
     flex-wrap: wrap;
     align-items: baseline;
     justify-content: space-between;
-    gap: 4px 24px;
+    gap: var(--space-1) var(--space-5);
   }
 
   .edition {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) auto;
-    grid-template-areas: "language translator source";
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    grid-template-areas: "language translator";
   }
 
   // one dense line per chapter: number | name | range | count
@@ -289,7 +274,7 @@
     grid-template-columns: 44px minmax(0, 1fr) 120px 92px;
     grid-template-areas: "no name range count";
     min-height: 44px;
-    padding: 10px 12px;
+    padding: 10px var(--space-3);
   }
 
   .withArabic .chapterRow {
@@ -302,17 +287,22 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .editions summary::before {
+    transition: none;
+  }
+}
+
 @media only screen and (min-width: 1024px) {
   .intro {
-    margin-bottom: 24px;
-    padding: 20px 24px;
+    margin-bottom: var(--space-6);
   }
 
   .title {
-    font-size: 28px;
+    font-size: 2.125rem;
   }
 
   .titleArabic {
-    font-size: 28px;
+    font-size: 30px;
   }
 }

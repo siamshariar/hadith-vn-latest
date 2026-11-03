@@ -25,6 +25,7 @@ export default function ScrollFrame() {
     const root = document.documentElement;
     const phone = window.matchMedia(PHONE);
     let last = Math.max(window.scrollY, 0);
+    let hash = window.location.hash;
     let frame = 0;
 
     const update = () => {
@@ -34,10 +35,17 @@ export default function ScrollFrame() {
       if (!phone.matches || y <= HEADER_HEIGHT) {
         root.classList.remove(HIDDEN);
         last = y;
+      } else if (window.location.hash !== hash) {
+        // A jump to an in-page target (#hadith-12; the URL changes before the scroll),
+        // not reading: the header keeps its state, so the target stays where the
+        // browser put it, clear of the header and the reading bar (html's
+        // scroll-padding, styles/_core).
+        last = y;
       } else if (Math.abs(delta) >= MIN_DELTA) {
         root.classList.toggle(HIDDEN, delta > 0);
         last = y;
       }
+      hash = window.location.hash;
       const readingDown = phone.matches && root.classList.contains(HIDDEN);
       setShowTop(y > window.innerHeight * 1.5 && !readingDown);
     };
@@ -46,13 +54,22 @@ export default function ScrollFrame() {
     };
     // A new page always starts with the header in view.
     const reveal = () => root.classList.remove(HIDDEN);
+    // The router's own scroll after a navigation (to the top, or to a pin's
+    // #hadith-12) is not reading either.
+    const arrived = () => {
+      hash = null;
+    };
 
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     router.events.on("routeChangeStart", reveal);
+    router.events.on("routeChangeComplete", arrived);
+    router.events.on("hashChangeComplete", arrived);
     return () => {
       window.removeEventListener("scroll", onScroll);
       router.events.off("routeChangeStart", reveal);
+      router.events.off("routeChangeComplete", arrived);
+      router.events.off("hashChangeComplete", arrived);
       if (frame) window.cancelAnimationFrame(frame);
       reveal();
     };

@@ -2,25 +2,39 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { useRouter } from "next/router";
 import {
   DEFAULT_LANGUAGE,
-  INTERFACE_DIRECTION,
-  INTERFACE_LANGUAGE,
-  INTERFACE_LOCALE,
   INTERNATIONAL,
-  browserInterfaceLanguage,
-  isInterfaceLanguage,
+  SITE_INTERFACE,
+  browserLanguages,
+  interfaceDirection,
+  interfaceFor,
+  interfaceLocale,
+  interfaceOgLocale,
   isRtlLanguage,
+  matchLanguage,
   normalizeLanguage,
   readLanguageCookie,
   writeLanguageCookie,
 } from "../lib/language";
-import { INTERNATIONAL_KEYS, catalogLocale, formatNumber, languageName, translate } from "../lib/i18n";
+import {
+  INTERNATIONAL_KEYS,
+  catalogCodes,
+  formatNumber,
+  languageName,
+  loadCatalog,
+  loadedCatalog,
+  registerCatalog,
+  translate,
+} from "../lib/i18n";
 import { site } from "../lib/sites";
 
 export const LocaleContext = createContext(null);
 
-// The interface language is the deployment's (lib/language.js), the same on the server
-// and in the browser, whatever the content language. On an international site it is the
-// reader's: the server picks it for each page (`pageUi`, lib/api loadPage).
+// The interface follows the content language (lib/language.js interfaceFor). A server-rendered
+// page comes with both (`pageLang`, `pageUi`: lib/api loadPage) and with the catalog of its
+// interface (`uiCatalog`; English is in the bundle), so it renders in them at once. The static
+// pages (404, 500) are built in the site's interface: once mounted they take the reader's
+// language (that of the page before, else the saved one; an international site also tries the
+// browser's languages) and load its catalog.
 
 // A language's name from the API's language object ({ code, name, nativeName }): its
 // English name in the English interface, its own name in the others.
@@ -36,20 +50,21 @@ function nameOf(ui, code, fallback, info) {
 // t() of an interface. It fills in the site name and the name of the country's content
 // language ("Hadith tiếng Việt", "বাংলা হাদিস"; callers' variables win). An international
 // site reads the keys of INTERNATIONAL_KEYS (lib/i18n.js) in place of the ones that name it.
+// Kept once the interface's catalog is there.
 const translators = {};
 function translatorFor(ui) {
-  if (!translators[ui]) {
-    const siteVars = { site: site.siteName, siteLanguage: nameOf(ui, site.language, null, null) };
-    translators[ui] = (key, vars) =>
-      translate(ui, (INTERNATIONAL && INTERNATIONAL_KEYS[key]) || key, vars ? { ...siteVars, ...vars } : siteVars);
-  }
-  return translators[ui];
+  if (translators[ui]) return translators[ui];
+  const siteVars = { site: site.siteName, siteLanguage: nameOf(ui, site.language, null, null) };
+  const t = (key, vars) =>
+    translate(ui, (INTERNATIONAL && INTERNATIONAL_KEYS[key]) || key, vars ? { ...siteVars, ...vars } : siteVars);
+  if (loadedCatalog(ui)) translators[ui] = t;
+  return t;
 }
 
-// BCP 47 locale (Intl date formats) and og:locale: the deployment's; on an international
-// site those of the reader's catalog (en_US, vi_VN, bn_BD).
-const localeOf = (ui) => (INTERNATIONAL ? catalogLocale(ui) : INTERFACE_LOCALE);
-const ogLocaleOf = (ui) => (INTERNATIONAL ? catalogLocale(ui).replace("-", "_") : site.ogLocale);
+// BCP 47 locale (Intl date formats) and og:locale of an interface: the country's for its own
+// `ui`, else the catalog's (en_US, vi_VN, bn_BD).
+const localeOf = (ui) => interfaceLocale(ui, (loadedCatalog(ui) || {}).locale);
+const ogLocaleOf = (ui) => interfaceOgLocale(ui, (loadedCatalog(ui) || {}).locale);
 
 // Text direction of content in `code`, when known.
 function directionOf(code, info) {
@@ -59,71 +74,84 @@ function directionOf(code, info) {
   return "auto";
 }
 
-// `pageLang` is the content language a server-rendered page was fetched in
-// (from `?lang=`, the preference cookie or the country's default) and `languageInfo`
-// the API's description of it ({ code, name, nativeName, direction }). On an
-// international site, `pageUi` is the interface the server chose for the reader and
-// `pagePreferred` their content language without a one-off ?lang=. Static pages have
-// none of these and read the cookies after mounting.
-export default function LocaleProvider({ pageLang, pageUi, pagePreferred, languageInfo, children }) {
+// `pageLang` is the content language a server-rendered page was fetched in (from `?lang=`,
+// the preference cookie, on an international site the browser's languages, or the country's
+// default), `pageUi` its interface with `uiCatalog`, `pagePreferred` the content language
+// without a one-off ?lang=, and `languageInfo` the API's description of the content language
+// ({ code, name, nativeName, direction }). Static pages only have `pageUi` and `uiCatalog`.
+export default function LocaleProvider({ pageLang, pageUi, pagePreferred, uiCatalog, languageInfo, children }) {
+  // Before anything renders with it.
+  registerCatalog(uiCatalog);
   const router = useRouter();
-  const [preferred, setPreferred] = useState(null);
-  // International site: the interface and preference of the last server-rendered page,
-  // for the static pages (about, 404 ...) opened after it. A static page opened first was
-  // rendered in the default interface: once mounted it takes the reader's (cookie, else
-  // browser languages).
-  const [lastUi, setLastUi] = useState(null);
-  const [lastPreferred, setLastPreferred] = useState(null);
+  const staticPage = !pageLang;
+  // The saved preference (hadith_lang), read once mounted.
+  const [saved, setSaved] = useState(null);
+  // The language of the last server-rendered page: a static page opened after it stays in it.
+  const [lastLang, setLastLang] = useState(null);
+  // International site, static page opened first: the browser's languages among the catalogs.
+  const [browserLang, setBrowserLang] = useState(null);
+  const [, setCatalogsLoaded] = useState(0);
 
   useEffect(() => {
-    setPreferred(readLanguageCookie());
+    setSaved(readLanguageCookie());
+    if (INTERNATIONAL) setBrowserLang(matchLanguage(browserLanguages(), catalogCodes));
   }, []);
 
   useEffect(() => {
-    if (!INTERNATIONAL) return;
-    if (isInterfaceLanguage(pageUi)) setLastUi(pageUi);
-    else setLastUi((current) => current || browserInterfaceLanguage());
-  }, [pageUi]);
+    if (pageLang) setLastLang(pageLang);
+  }, [pageLang]);
+
+  const lang = normalizeLanguage(pageLang || lastLang || saved || browserLang || DEFAULT_LANGUAGE);
+  const wantedUi = !staticPage && pageUi ? pageUi : interfaceFor(lang);
+  // Until the wanted catalog has loaded (a static page), the one the page came with.
+  const ui = loadedCatalog(wantedUi) ? wantedUi : loadedCatalog(pageUi) ? pageUi : "en";
 
   useEffect(() => {
-    if (INTERNATIONAL && pagePreferred) setLastPreferred(pagePreferred);
-  }, [pagePreferred]);
+    if (loadedCatalog(wantedUi)) return undefined;
+    let active = true;
+    loadCatalog(wantedUi)
+      .then(() => active && setCatalogsLoaded((count) => count + 1))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [wantedUi]);
 
-  const ui = !INTERNATIONAL ? INTERFACE_LANGUAGE : isInterfaceLanguage(pageUi) ? pageUi : lastUi || INTERFACE_LANGUAGE;
-
-  // A static page that switched interface: its <html lang> too (pages/_document.js).
+  // <html lang> and dir (pages/_document.js) when the interface changes in the browser.
   useEffect(() => {
-    if (INTERNATIONAL && document.documentElement.lang !== ui) document.documentElement.lang = ui;
+    const root = document.documentElement;
+    const dir = interfaceDirection(ui);
+    if (root.lang !== ui) root.lang = ui;
+    if (root.dir !== dir) root.dir = dir;
   }, [ui]);
 
-  const saved = INTERNATIONAL ? pagePreferred || preferred || lastPreferred : preferred;
-  const lang = normalizeLanguage(pageLang || saved || DEFAULT_LANGUAGE);
-  // The saved preference (cookie), not a one-off ?lang= override. On an international
-  // site it can also come from the browser's languages, and is null while not known yet
-  // (a static page opened first).
-  const preferredLang = INTERNATIONAL
-    ? saved
-      ? normalizeLanguage(saved)
-      : null
-    : normalizeLanguage(preferred || DEFAULT_LANGUAGE);
+  // The saved preference, not a one-off ?lang= override. On an international site it can
+  // also come from the browser's languages, and is null while not known yet (a static page).
+  const preferred = pagePreferred || saved || (INTERNATIONAL ? null : DEFAULT_LANGUAGE);
+  const preferredLang = preferred ? normalizeLanguage(preferred) : null;
 
   const setLanguage = useCallback(
     (code) => {
       const next = normalizeLanguage(code);
       writeLanguageCookie(next);
-      setPreferred(next);
+      setSaved(next);
+      if (staticPage) {
+        // Nothing to fetch: the page switches here (its catalog loads above).
+        setLastLang(next);
+        return;
+      }
       // Re-run getServerSideProps in the new language; drop a `?lang=` override.
       const { lang: _ignored, ...query } = router.query;
       router.replace({ pathname: router.pathname, query }, undefined, { scroll: false });
     },
-    [router]
+    [router, staticPage]
   );
 
   // Saves the preference only, for a link that opens a page in that language itself.
   const rememberLanguage = useCallback((code) => {
     const next = normalizeLanguage(code);
     writeLanguageCookie(next);
-    setPreferred(next);
+    setSaved(next);
   }, []);
 
   const value = useMemo(() => {
@@ -132,7 +160,7 @@ export default function LocaleProvider({ pageLang, pageUi, pagePreferred, langua
       lang,
       preferredLang,
       ui,
-      dir: INTERFACE_DIRECTION,
+      dir: interfaceDirection(ui),
       locale: localeOf(ui), // BCP 47, for Intl date formats
       ogLocale: ogLocaleOf(ui),
       languageInfo: info,
@@ -153,12 +181,12 @@ export function useLocale() {
   const context = useContext(LocaleContext);
   if (context) return context;
   // Outside the provider (should not happen): default language, no switching.
-  const ui = INTERFACE_LANGUAGE;
+  const ui = loadedCatalog(SITE_INTERFACE) ? SITE_INTERFACE : "en";
   return {
     lang: DEFAULT_LANGUAGE,
     preferredLang: DEFAULT_LANGUAGE,
     ui,
-    dir: INTERFACE_DIRECTION,
+    dir: interfaceDirection(ui),
     locale: localeOf(ui),
     ogLocale: ogLocaleOf(ui),
     languageInfo: null,

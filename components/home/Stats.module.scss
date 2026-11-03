@@ -1,65 +1,59 @@
+// The figures, as one quiet line of facts under the hadith of the day (the reader's
+// language first): read like a book's colophon, not a row of big numbers, which is
+// the stock "hero metric" template.
 .stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  max-width: 920px;
-  margin: 12px auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-5);
+  max-width: 1100px;
+  margin: var(--space-4) auto 0;
+  padding: 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
 }
 
 .item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 12px 8px;
-  border: 1px solid var(--bdr11);
-  border-radius: 8px;
-  background: var(--bg11);
-  text-align: center;
-}
-
-// The figure for the reader's language leads the row.
-.wide {
-  grid-column: 1 / -1;
-  border-color: var(--theme-color);
-  background: var(--accent-soft);
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-1);
+  min-width: 0;
 }
 
 .number {
   order: -1;
-  color: var(--main-color);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.2;
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.wide .number {
+  color: var(--accent);
 }
 
 .label {
-  color: var(--txt12);
-  font-size: 13px;
+  color: var(--text-secondary);
 }
 
+// "(37,681 translated + 8 from the topic collection)"
 .note {
-  color: var(--txt13);
-  font-size: 12px;
-}
+  color: var(--muted);
+  font-size: var(--text-xs);
 
-@media only screen and (min-width: 600px) {
-  .stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
+  &::before {
+    content: "(";
   }
-  .number {
-    font-size: 26px;
+
+  &::after {
+    content: ")";
   }
 }
 
 @media only screen and (min-width: 1024px) {
   .stats {
-    grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr));
-    max-width: 1100px;
-  }
-  .wide {
-    grid-column: auto;
+    margin-top: var(--space-5);
+    font-size: var(--text-base);
   }
 }

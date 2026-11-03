@@ -21,7 +21,7 @@ export default function Bookmark() {
     <>
       <Meta
         title={t("savedLists")}
-        description={`${t("bookmarks")}, ${t("pins").toLowerCase()}, ${t("lastRead").toLowerCase()}.`}
+        description={t("savedListsDescription")}
         url={`${server}/bookmarks`}
         image={shareImage}
         type="website"

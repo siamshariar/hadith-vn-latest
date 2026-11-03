@@ -1,9 +1,10 @@
-// The brand: a white header with the colour logo on every page, the home
-// page included (the dark logo in the dark theme), the ribbon of the logo's
-// gradient under it, the light hero (green-tinted in the dark theme) with the
-// search card, the hadith of the day and the figures right after the search,
-// and computed colours that keep text readable in both themes. "Báo lỗi"
-// writes to the site's contact address.
+// The brand (docs/hadith-design-system.md): the header on the page's own paper,
+// closed by a hairline, with the colour logo on every page (the dark logo in the
+// dark theme) and no ribbon; the masthead on the same paper, its heading in the
+// display serif, no texture or ornament; the brand green on the search button;
+// the hadith of the day and the figures right after the search; and computed
+// colours that keep text readable in both themes. "Báo lỗi" writes to the
+// site's contact address.
 'use strict';
 
 const path = require('node:path');
@@ -42,8 +43,9 @@ function brandColours() {
   return {
     body: css(document.body, 'backgroundColor'),
     header: css(header, 'backgroundColor'),
+    headerRule: header ? `${css(header, 'borderBottomWidth')} ${css(header, 'borderBottomColor')}` : null,
     ribbon: css(header, 'backgroundImage', '::after'),
-    ribbonHeight: css(header, 'height', '::after'),
+    h1Font: css(h1, 'fontFamily'),
     logo: logo ? (logo.tagName === 'IMG' ? new URL(logo.currentSrc || logo.src).pathname : `wordmark:${logo.textContent}`) : null,
     logoLoaded: logo && logo.tagName === 'IMG' ? logo.complete && logo.naturalWidth > 0 : null,
     heroImage: css(hero, 'backgroundImage'),
@@ -71,24 +73,25 @@ function contrast(a, b) {
 
 module.exports = spec(module, 'brand', (h) => {
   h.test(
-    'light: white header, colour logo, ribbon; light hero with the brand colours',
+    'light: header on the paper, colour logo, hairline; masthead in the display serif, the brand green',
     async (t) => {
       const { page } = await h.open(t, '/');
       await waitForH1(page, 'Hadith tiếng Việt');
       const c = await page.evaluate(brandColours);
-      assert.equal(c.header, 'rgb(255, 255, 255)', 'white header on the home page');
+      assert.equal(c.body, 'rgb(245, 246, 241)', 'page #F5F6F1');
+      assert.equal(c.header, 'rgb(245, 246, 241)', 'the header on the page colour');
+      assert.equal(c.headerRule, '1px rgb(220, 222, 212)', 'closed by the #DCDED4 hairline');
+      assert.equal(c.ribbon, 'none', 'no ribbon under the header');
       assert.equal(c.logo, '/img/logo.png', 'the colour logo');
       assert.equal(c.logoLoaded, true);
-      assert.match(c.ribbon, /linear-gradient\(90deg, rgb\(219, 36, 30\)/, 'the ribbon starts with #DB241E');
-      assert.equal(c.ribbonHeight, '4px');
-      assert.match(c.heroImage, /radial-gradient/, 'dots');
-      assert.match(c.heroImage, /linear-gradient\(rgb\(243, 247, 241\), rgb\(255, 255, 255\)\)/, '#F3F7F1 to white');
-      assert.equal(c.h1, 'rgb(23, 58, 29)', 'heading #173A1D');
-      assert.equal(c.tagline, 'rgb(61, 79, 64)', 'tagline #3D4F40');
-      assert.match(c.bar, /linear-gradient/);
-      assert.equal(c.barSize, '56x4');
-      assert.deepEqual(c.button, ['rgb(23, 58, 29)', 'rgb(255, 255, 255)'], 'button #173A1D, white text');
-      assert.ok(contrast(c.h1, 'rgb(243, 247, 241)') >= 4.5 && contrast(c.tagline, 'rgb(243, 247, 241)') >= 4.5, 'hero text readable');
+      assert.equal(c.heroImage, 'none', 'no texture or gradient behind the masthead');
+      assert.equal(c.bar, null, 'no ornament under the heading');
+      assert.equal(c.h1, 'rgb(20, 20, 19)', 'heading in ink #141413');
+      assert.match(c.h1Font, /displayFont/, 'heading in the display serif');
+      assert.equal(c.tagline, 'rgb(85, 87, 79)', 'tagline #55574F');
+      assert.deepEqual(c.button, ['rgb(23, 58, 29)', 'rgb(245, 246, 241)'], 'button #173A1D, #F5F6F1 text');
+      assert.ok(contrast(c.h1, c.body) >= 4.5 && contrast(c.tagline, c.body) >= 4.5, 'masthead text readable');
+      assert.ok(contrast(c.button[0], c.button[1]) >= 4.5, 'button text readable');
 
       // the hadith of the day and the figures come right after the search
       const order = await page.evaluate(() => {
@@ -106,31 +109,33 @@ module.exports = spec(module, 'brand', (h) => {
       const home = await api(`/home${loc()}`);
       await h.goto(page, `/books/${home.books[0].slug}`);
       const content = await page.evaluate(brandColours);
-      assert.equal(content.header, 'rgb(255, 255, 255)');
+      assert.equal(content.header, 'rgb(245, 246, 241)');
+      assert.equal(content.headerRule, '1px rgb(220, 222, 212)');
       assert.equal(content.logo, '/img/logo.png');
-      assert.equal(content.ribbonHeight, '4px');
     },
     { smoke: true }
   );
 
   h.test(
-    'dark: green-tinted page, the dark logo, gold primary button',
+    'dark: the paper at night, the dark logo, the light brand green',
     async (t) => {
       const { page } = await h.open(t, null, { initScript: `localStorage.setItem('settings', ${JSON.stringify(DARK)})` });
       await h.goto(page, '/');
+      // set before the first paint (pages/_document.js), on <html> and <body>
       await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark theme');
-      // (colours ease into the dark theme)
-      await until(async () => /rgb\(236, 185, 24\)/.test(JSON.stringify((await page.evaluate(brandColours)).button)), 'the dark button');
+      assert.equal(await page.getAttribute('html', 'data-theme'), 'dark');
+      await until(async () => /rgb\(168, 213, 176\)/.test(JSON.stringify((await page.evaluate(brandColours)).button)), 'the dark button');
       const c = await page.evaluate(brandColours);
-      assert.equal(c.body, 'rgb(17, 23, 18)', 'page #111712');
-      assert.equal(c.header, 'rgb(26, 34, 28)', 'header #1A221C');
+      assert.equal(c.body, 'rgb(24, 26, 23)', 'page #181A17');
+      assert.equal(c.header, 'rgb(24, 26, 23)', 'the header on the page colour');
+      assert.equal(c.headerRule, '1px rgb(53, 56, 49)', 'closed by the #353831 hairline');
       assert.equal(c.logo, '/img/logo_dark.png', 'the dark logo');
       assert.equal(c.logoLoaded, true, 'logo_dark.png is served');
-      assert.match(c.heroImage, /linear-gradient\(rgb\(22, 48, 29\), rgb\(17, 23, 18\)\)/, 'hero #16301D to the page');
-      assert.equal(c.h1, 'rgb(238, 243, 236)', 'heading #EEF3EC');
-      assert.equal(c.tagline, 'rgb(183, 196, 185)', 'tagline #B7C4B9');
-      assert.deepEqual(c.button, ['rgb(236, 185, 24)', 'rgb(22, 48, 29)'], 'button #ECB918 with #16301D');
-      assert.ok(contrast(c.h1, 'rgb(22, 48, 29)') >= 4.5 && contrast(c.tagline, 'rgb(22, 48, 29)') >= 4.5, 'hero text readable');
+      assert.equal(c.heroImage, 'none', 'no texture or gradient behind the masthead');
+      assert.equal(c.h1, 'rgb(241, 242, 236)', 'heading #F1F2EC');
+      assert.equal(c.tagline, 'rgb(191, 194, 183)', 'tagline #BFC2B7');
+      assert.deepEqual(c.button, ['rgb(168, 213, 176)', 'rgb(16, 38, 26)'], 'button #A8D5B0 with #10261A');
+      assert.ok(contrast(c.h1, c.body) >= 4.5 && contrast(c.tagline, c.body) >= 4.5, 'masthead text readable');
       assert.ok(contrast(c.button[0], c.button[1]) >= 4.5, 'button text readable');
 
       // links on cards and the page

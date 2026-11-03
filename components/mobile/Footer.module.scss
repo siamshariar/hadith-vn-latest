@@ -4,11 +4,11 @@
   position: fixed;
   bottom: 0;
   left: 0;
-  background-color: var(--bg11);
+  background-color: var(--surface-soft);
   z-index: 99;
   display: flex;
   align-items: center;
-  border-top: 1px solid var(--bdr11);
+  border-top: 1px solid var(--hairline);
   overflow: hidden;
 }
 
@@ -29,7 +29,7 @@
 // }
 
 // ul.menu li svg:hover {
-//   fill: var(--main-color);
+//   fill: var(--link);
 // }
 
 @media only screen and (min-width: 1024px) {

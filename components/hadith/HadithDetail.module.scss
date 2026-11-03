@@ -1,57 +1,94 @@
+// The hadith page (docs/hadith-design-system.md, "Reading"): one reading column on
+// the page's paper. The Arabic runs the full width of the column, a little larger
+// than in lists; the translation keeps a comfortable measure under it. A hairline
+// separates the two, whichever the reader's settings put first.
 .detail {
   container-type: inline-size;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-5);
 }
 
 .texts {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-5);
 }
 
-// Wide: translation (left) beside the Arabic (right).
-@container (min-width: 820px) {
-  .texts {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 32px;
-    align-items: start;
+.arabicBlock {
+  padding-top: var(--space-2);
+
+  [lang="ar"] {
+    font-size: calc(var(--fs-arabic) * 0.93);
+  }
+}
+
+.translationBlock {
+  display: block;
+  max-width: 44rem;
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--hairline);
+}
+
+// Reader settings (set on <html> by SettingsContext). Without any
+// translation the Arabic stays, even when the reader hides it.
+:global(html[data-text-order="translation"]) {
+  .translationBlock {
+    order: -1;
+    padding-top: 0;
+    border-top: 0;
   }
   .arabicBlock {
-    order: 2;
-  }
-  .translationBlock {
-    order: 1;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--hairline);
   }
 }
 
+:global(html[data-arabic="hidden"]) {
+  .arabicBlock:not(.arabicOnly) {
+    display: none;
+  }
+  .translationBlock {
+    padding-top: 0;
+    border-top: 0;
+  }
+}
+
+.arabicOnly {
+  display: block;
+}
+
+// previous / next hadith: two link cards, the same size whatever the labels
 .navigation {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
 }
 
-// Same width on both sides, whatever the labels, so previous and next are
-// always in the same place.
 .navLink {
   display: flex;
   flex: 0 1 48%;
   flex-direction: column;
   justify-content: center;
   gap: 2px;
-  min-height: 56px;
+  min-height: 64px;
   max-width: 48%;
-  padding: 10px 14px;
-  border: 1px solid var(--bdr11);
-  border-radius: 8px;
-  color: var(--txt11);
-  transition: border-color 0.2s ease;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color var(--duration) var(--ease);
 
   &:hover,
   &:focus-visible {
-    border-color: var(--theme-color);
+    border-color: var(--control-edge);
+
+    .navRef {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
   }
 }
 
@@ -61,43 +98,42 @@
 }
 
 .navDirection {
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .navRef {
-  color: var(--main-color);
-  font-weight: 500;
+  color: var(--link);
+  font-weight: 600;
 }
 
+// title, facts and actions; space, not a rule, separates them from the text
 .header {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  // the icon row's 44px buttons already leave room below
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--bdr11);
+  gap: var(--space-3);
 }
 
 .title {
-  color: var(--txt11);
-  font-size: 22px;
-  font-weight: 500;
-  line-height: 1.4;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 400;
+  line-height: var(--leading-tight);
 }
 
 .facts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 16px;
-  color: var(--txt12);
-  font-size: 14px;
+  gap: var(--space-2) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .fact strong {
-  color: var(--txt11);
-  font-weight: 500;
+  color: var(--ink);
+  font-weight: 600;
 }
 
 // The translations chip, at the end of the row.
@@ -105,60 +141,31 @@
   display: inline-flex;
   min-width: 0;
   max-width: 100%;
-  margin-left: auto;
+  margin-inline-start: auto;
 }
 
-.arabicBlock {
-  padding: 18px 16px;
-  border: 1px solid var(--bdr11);
-  border-radius: 10px;
-  background: var(--bg12);
-}
-
-// Reader settings (set on <html> by SettingsContext). Without any
-// translation the Arabic stays, even when the reader hides it.
-:global(html[data-text-order="translation"]) .translationBlock {
-  order: -1;
-}
-
-:global(html[data-arabic="hidden"]) {
-  .arabicBlock:not(.arabicOnly) {
-    display: none;
-  }
-  .translationBlock {
-    grid-column: 1 / -1;
-  }
-}
-
-.arabicOnly {
-  display: block;
-}
-
-// "Cũng có trong: Sahih Muslim 1907a"
+// "Also in: Sahih Muslim 1907a"
 .alsoIn {
-  color: var(--txt12);
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
   line-height: 1.6;
 
   a {
     display: inline-block;
     padding: 2px 0;
-    color: var(--main-color);
-    font-weight: 500;
+    color: var(--link);
+    font-weight: 600;
 
     &:hover,
     &:focus-visible {
       text-decoration: underline;
+      text-underline-offset: 2px;
     }
   }
 }
 
 .alsoInLabel {
-  color: var(--txt12);
-}
-
-.translationBlock {
-  display: block;
+  color: var(--text-secondary);
 }
 
 .section {
@@ -166,54 +173,58 @@
 }
 
 .sectionTitle {
-  margin-bottom: 10px;
-  color: var(--txt11);
-  font-size: 16px;
-  font-weight: 500;
+  margin-bottom: var(--space-3);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  line-height: var(--leading-tight);
 }
 
+// HadeethEnc's explanation, benefits, word meanings and sources
 .details {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--space-6);
+  max-width: 44rem;
 }
 
 .fallbackNote {
-  padding: 8px 12px;
-  border-left: 3px solid var(--notice-bdr);
-  border-radius: 4px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--notice-bdr);
+  border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
 .attribution {
-  color: var(--txt11);
+  color: var(--text);
   font-size: 15px;
   line-height: 1.6;
 }
 
 .attributionLabel {
-  color: var(--txt12);
+  color: var(--text-secondary);
 }
 
 .prose {
-  color: var(--txt11);
+  color: var(--text);
   font-family: var(--font-trans);
   font-size: calc(var(--fs-trans) * 0.92);
-  line-height: 1.75;
+  line-height: var(--leading-reading);
   white-space: pre-line;
 }
 
 .hints {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  color: var(--txt11);
+  gap: var(--space-3);
+  color: var(--text);
   font-family: var(--font-trans);
   font-size: calc(var(--fs-trans) * 0.9);
-  line-height: 1.65;
+  line-height: 1.7;
 
   li {
     position: relative;
@@ -223,39 +234,39 @@
       content: "";
       position: absolute;
       inset-inline-start: 4px;
-      top: 0.65em;
-      width: 7px;
-      height: 7px;
+      top: 0.7em;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      background: var(--theme-color);
+      background: var(--accent);
     }
   }
 }
 
+// word meanings: a ruled glossary
 .words {
   display: grid;
-  gap: 8px;
+  border-top: 1px solid var(--hairline);
 
   div {
-    padding: 10px 12px;
-    border: 1px solid var(--bdr11);
-    border-radius: 8px;
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--hairline);
   }
 
   dt {
-    margin-bottom: 4px;
-    color: var(--txt11);
-    font-weight: 500;
+    margin-bottom: var(--space-1);
+    color: var(--ink);
+    font-weight: 600;
   }
 
   dd {
-    color: var(--txt12);
+    color: var(--text-secondary);
     line-height: 1.6;
   }
 }
 
 .reference {
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-family: var(--font-arabic);
   font-size: 18px;
   line-height: 1.9;
@@ -263,32 +274,45 @@
   text-align: right;
 }
 
+// categories and related hadiths: links, so squared tags
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  padding: 6px 14px;
-  border: 1px solid var(--bdr11);
-  border-radius: 999px;
-  color: var(--txt11);
-  font-size: 14px;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  min-height: 36px;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: var(--text-sm);
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
 
-  &:hover,
   &:focus-visible {
-    border-color: var(--theme-color);
-    color: var(--main-color);
+    background: var(--accent-tint);
+    color: var(--link);
+  }
+
+  // 44px where the screen is touched
+  @media (pointer: coarse) {
+    min-height: var(--tap);
+  }
+}
+
+@media (hover: hover) {
+  .chip:hover {
+    background: var(--accent-tint);
+    color: var(--link);
   }
 }
 
 @media only screen and (max-width: 599px) {
   .picker {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -303,15 +327,15 @@
 
 @media only screen and (min-width: 1024px) {
   .detail {
-    gap: 28px;
+    gap: var(--space-6);
   }
   .title {
-    font-size: 26px;
+    font-size: 2.125rem;
   }
-  .arabicBlock {
-    padding: 28px 32px;
+  .arabicBlock [lang="ar"] {
+    font-size: calc(var(--fs-arabic) * 1.1);
   }
   .sectionTitle {
-    font-size: 18px;
+    font-size: var(--text-xl);
   }
 }

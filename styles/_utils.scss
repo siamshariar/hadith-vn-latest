@@ -70,6 +70,16 @@ button {
   cursor: pointer;
 }
 
+// Browsers give form controls their own system font (Arial on most), not the
+// page's: inherit the family, so Bengali and Vietnamese labels in buttons (MUI's
+// accordion summaries among them) use the site's faces. Sizes stay as set.
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 button:focus {
   outline: none;
 }

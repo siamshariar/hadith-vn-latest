@@ -1,17 +1,18 @@
 // A country build: the Bangladesh site (NEXT_PUBLIC_COUNTRY_CODE=bd) at BASE_BD, a second
 // instance of the app (e.g. http://127.0.0.1:3001, from a git worktree; docs/DEPLOY.md).
 // Its interface is Bengali (<html lang="bn">, og:locale bn_BD, the site name in the title),
-// its content is requested in bn, and a reader's other content language changes the
-// content only. Skipped when BASE_BD is not set.
+// its content is requested in bn with the Bengali book names (lib/names), and a reader who
+// picks English gets English content and the English interface. Skipped when BASE_BD is not
+// set.
 //
-// Expected strings come from the bn catalog (lib/locales/bn.js) and the API, not from
-// the page. SITE_NAME_BD: the instance's NEXT_PUBLIC_SITE_NAME, if it was started with one.
+// Expected strings come from the catalogs (lib/locales) and the API, not from the page.
+// SITE_NAME_BD: the instance's NEXT_PUBLIC_SITE_NAME, if it was started with one.
 'use strict';
 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const countries = require('../../config/countries.json');
-const { api, assert, breadcrumbs, cleanText, loc, meta, norm, spec, waitForH1, waitForText } = require('./harness');
+const { api, assert, bookName, breadcrumbs, cleanText, interfaceStrings, loc, meta, norm, spec, waitForH1, waitForText } = require('./harness');
 
 const BASE_BD = (process.env.BASE_BD || '').replace(/\/+$/, '');
 const SITE_NAME = process.env.SITE_NAME_BD || countries.bd.siteName || 'Hadith'; // lib/sites.js default
@@ -69,15 +70,17 @@ module.exports = spec(module, 'country (bd)', (h) => {
     'bd: Bengali interface, <html lang="bn">, og:locale bn_BD and the site name in the title',
     async (t) => {
       const { t: tr, heading, strings } = await bn();
+      const counts = await interfaceStrings('bn', { site: SITE_NAME, language: 'bn' });
       const book = await api(`/books/bukhari${loc('bn')}`);
       assert.equal(book.language && book.language.code, 'bn', 'the API answers the collection in bn');
+      const name = bookName('bn', book);
       const { page, response } = await openBd(h, t, `/books/${book.slug}`);
       assert.equal(response.status(), 200);
-      await waitForH1(page, book.name);
+      await waitForH1(page, name);
 
       const info = await meta(page);
       assert.equal(info.lang, 'bn', '<html lang>');
-      assert.equal(norm(info.title), `${book.name} | ${heading} | ${SITE_NAME}`, 'title: page | বাংলা হাদিস | site name');
+      assert.equal(norm(info.title), `${name} | ${heading} | ${SITE_NAME}`, 'title: page | বাংলা হাদিস | site name');
       const tags = await social(page);
       assert.equal(tags.ogLocale, 'bn_BD');
       assert.equal(tags.ogSiteName, SITE_NAME);
@@ -86,9 +89,9 @@ module.exports = spec(module, 'country (bd)', (h) => {
       assert.deepEqual(await breadcrumbs(page), [
         { label: strings.home, href: '/' },
         { label: strings.books, href: '/books' },
-        { label: book.name, href: null },
+        { label: name, href: null },
       ]);
-      await waitForText(page.locator('#book-chapters'), `${book.chapters.length} ${strings.chapters}`);
+      await waitForText(page.locator('#book-chapters'), counts('chapterCount', { count: book.chapters.length }));
       assert.equal(tr('siteHeading'), 'বাংলা হাদিস');
     },
     { smoke: true }
@@ -115,8 +118,8 @@ module.exports = spec(module, 'country (bd)', (h) => {
     { smoke: true }
   );
 
-  h.test('bd: ?lang=en and a saved English preference change the content, not the interface', async (t) => {
-    const { strings, heading } = await bn();
+  h.test('bd: ?lang=en and a saved English preference: English content and interface', async (t) => {
+    const tr = await interfaceStrings('en', { site: SITE_NAME, language: 'bn' });
     const en = await api(`/books/bukhari/hadiths/1${loc('en')}`);
     const ways = [
       ['?lang=en', '/books/sahih-al-bukhari/hadiths/1?lang=en', {}],
@@ -130,9 +133,10 @@ module.exports = spec(module, 'country (bd)', (h) => {
         const shown = await textsIn(page, 'en');
         assert.ok(shown.some((text) => squash(text) === squash(cleanText(en.translation.text))), `${how}: the English translation is on the page`);
         const info = await meta(page);
-        assert.equal(info.lang, 'bn', `${how}: the interface stays Bengali`);
-        assert.ok(norm(info.title).endsWith(`| ${heading} | ${SITE_NAME}`), `${how}: title ${info.title}`);
-        assert.equal((await breadcrumbs(page))[0].label, strings.home);
+        assert.equal(info.lang, 'en', `${how}: the interface follows the content`);
+        assert.ok(norm(info.title).endsWith(`| ${tr('siteHeading')} | ${SITE_NAME}`), `${how}: title ${info.title}`);
+        assert.equal((await breadcrumbs(page))[0].label, tr('home'));
+        assert.equal((await social(page)).ogLocale, 'en_US', `${how}: og:locale follows the interface`);
       });
     }
   });

@@ -37,7 +37,7 @@ export default function Category({ category, preview, previewFiltered, books, er
     <>
       <Meta
         title={category.title}
-        description={`${category.title} (${category.titleArabic || ""}): ${total} hadiths.`}
+        description={`${category.title}${category.titleArabic ? ` (${category.titleArabic})` : ""}: ${t("hadithCount", { count: total })}.`}
         url={`${server}${categoryPath(category)}`}
         image={shareImage}
         type="website"
@@ -47,7 +47,6 @@ export default function Category({ category, preview, previewFiltered, books, er
         <Breadcrumbs items={categoryCrumbs(category, t)} />
 
         <header className={styles.header}>
-          <p className={styles.eyebrow}>{t("categories")}</p>
           <h1 className={styles.title}>{category.title}</h1>
           {category.titleArabic && (
             <p className={styles.titleArabic} dir="rtl" lang="ar">
@@ -56,12 +55,12 @@ export default function Category({ category, preview, previewFiltered, books, er
           )}
           <p className={styles.meta}>
             <span>
-              {formatNumber(total)} {t("hadiths")}
+              {t("hadithCount", { count: total })}
             </span>
             {showTranslated && <span>{t("countTranslated", { count: formatNumber(translated), language })}</span>}
             {children.length > 0 && (
               <span>
-                {formatNumber(children.length)} {t("subcategories").toLowerCase()}
+                {t("subcategoryCount", { count: children.length })}
               </span>
             )}
           </p>
@@ -89,12 +88,12 @@ export default function Category({ category, preview, previewFiltered, books, er
                         </span>
                       )}
                       <span className={styles.tileMeta}>
-                        {formatNumber(child.totalHadith)} {t("hadiths")}
+                        {t("hadithCount", { count: child.totalHadith })}
                         {showTranslated &&
                           child.totalTranslated != null &&
                           ` · ${t("countTranslated", { count: formatNumber(child.totalTranslated), language })}`}
                         {child.totalChildren > 0 &&
-                          ` · ${formatNumber(child.totalChildren)} ${t("subcategories").toLowerCase()}`}
+                          ` · ${t("subcategoryCount", { count: child.totalChildren })}`}
                       </span>
                     </span>
                   </Link>

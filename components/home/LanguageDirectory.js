@@ -34,7 +34,7 @@ export function directoryLanguages(languages) {
 // (?lang=, so the link works and can be shared as it is) and saves it as the reader's
 // preference (hadith_lang). Phones and tablets get a filter: the list is long there.
 export default function LanguageDirectory({ languages }) {
-  const { t, lang, formatNumber, rememberLanguage } = useLocale();
+  const { t, lang, rememberLanguage } = useLocale();
   const [query, setQuery] = useState("");
   const needle = fold(query.trim());
   const shown = needle
@@ -48,7 +48,7 @@ export default function LanguageDirectory({ languages }) {
           {t("languagesTitle")}
         </h2>
       </div>
-      <p className={styles.intro}>{t("languagesIntro", { count: formatNumber(languages.length) })}</p>
+      <p className={styles.intro}>{t("languagesIntro", { count: languages.length })}</p>
 
       <div className={styles.filter}>
         <span className={styles.filterIcon} aria-hidden="true">
@@ -69,7 +69,7 @@ export default function LanguageDirectory({ languages }) {
       <ul id="language-directory" className={styles.list} aria-labelledby="home-languages">
         {shown.map((language) => {
           const current = language.code === lang;
-          const count = formatNumber(language.totalTranslated);
+          const count = language.totalTranslated;
           return (
             <li key={language.code} className={styles.item}>
               <Link

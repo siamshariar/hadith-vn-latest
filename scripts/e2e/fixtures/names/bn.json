@@ -1,0 +1,11 @@
+{
+  "_note": "End-to-end fixture (NAMES_FIXTURE=1): two of lib/names/bn.json's attested book names, so that the suite does not depend on the rest of that file; Sunan Abu Dawud is left out on purpose (a book without a name keeps the API's).",
+  "books": {
+    "sahih-al-bukhari": "সহীহ বুখারী",
+    "sahih-muslim": "সহীহ মুসলিম"
+  },
+  "bookSources": {
+    "sahih-al-bukhari": "wikidata:Q1023470 সহীহ বুখারী",
+    "sahih-muslim": "wikidata:Q886659 সহীহ মুসলিম"
+  }
+}

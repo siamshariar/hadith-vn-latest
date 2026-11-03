@@ -13,7 +13,7 @@ const GROUPS = [
   },
   { key: "other", title: "bookGroupOther", arabic: "المصادر الأصلية الأخرى", codes: ["malik"] },
   { key: "forty", title: "bookGroupForty", arabic: "الأربعينات", codes: ["nawawi", "qudsi", "dehlawi"] },
-  { key: "encyclopedia", title: "bookGroupEncyclopedia", arabic: null, codes: ["hadeethenc"] },
+  { key: "topics", title: "bookGroupTopics", arabic: null, codes: ["hadeethenc"] },
 ];
 
 export function groupBooks(books) {

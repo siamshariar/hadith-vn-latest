@@ -2,7 +2,7 @@
 // been scrolled; clear of the iPhone home indicator.
 .top {
   position: fixed;
-  right: 16px;
+  right: calc(16px + env(safe-area-inset-right, 0px));
   bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   z-index: 98; // below the headers (99) and dialogs
   display: flex;
@@ -11,11 +11,11 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid var(--bdr13);
+  border: 1px solid var(--hairline);
   border-radius: 50%;
-  background: var(--bg11);
-  color: var(--txt11);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-float);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -28,8 +28,8 @@
   }
 
   &:hover {
-    border-color: var(--theme-color);
-    color: var(--main-color);
+    border-color: var(--accent);
+    color: var(--link);
   }
 }
 

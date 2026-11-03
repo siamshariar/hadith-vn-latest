@@ -124,6 +124,7 @@ export default function BookmarkContent({ folderKey }) {
                   <HadithCard
                     hadith={item.hadith}
                     book={item.hadith.book}
+                    headingLevel={2}
                     isBookmarkPage
                     updateBookmarksData={() => {}}
                   />

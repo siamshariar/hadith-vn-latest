@@ -3,7 +3,7 @@
 // collection -> chapter -> hadith and back up through the breadcrumbs.
 'use strict';
 
-const { api, assert, breadcrumbs, cleanText, lettered, loc, meta, norm, spec, waitForH1, viNumber } = require('./harness');
+const { BREADCRUMB_NAV, api, assert, bookName, breadcrumbs, cleanText, interfaceStrings, lettered, loc, meta, norm, spec, waitForH1, viNumber } = require('./harness');
 
 const SITE = 'Hadith tiếng Việt | Hadith.vn';
 
@@ -17,6 +17,7 @@ async function pages() {
   ]);
   const henc = await api(`/hadiths/${bukhari3.linkedTranslation.hadithId}${loc()}`);
   const hencTitle = cleanText(henc.title);
+  const vi = await interfaceStrings('vi');
   return [
     ['/', 'Hadith tiếng Việt', 'Trang chủ'],
     ['/books', 'Bộ sưu tập hadith', 'Bộ sưu tập hadith'],
@@ -25,7 +26,7 @@ async function pages() {
     [`/books/${bukhari.slug}/hadiths/1`, 'Sahih al-Bukhari 1', 'Sahih al-Bukhari 1'],
     ['/books/sahih-muslim/hadiths/8a', 'Sahih Muslim 8a', 'Sahih Muslim 8a'],
     // the title is cut at 70 characters (components/hadith/HadithPage)
-    [`/hadiths/${henc.id}`, norm(hencTitle), norm(`${hencTitle.slice(0, 70)} - HadeethEnc ${henc.referenceNumber}`)],
+    [`/hadiths/${henc.id}`, norm(hencTitle), norm(`${hencTitle.slice(0, 70)} - ${bookName('vi', henc.book, vi)} ${henc.referenceNumber}`)],
     ['/categories', 'Danh mục', 'Danh mục'],
     [`/categories/${creed.slug}`, creed.title, creed.title],
     [`/categories/${creed.slug}/hadiths`, creed.title, `Hadith trong danh mục: ${creed.title}`],
@@ -34,7 +35,7 @@ async function pages() {
     ['/search?q=%D8%A7%D9%86%D9%85%D8%A7%20%D8%A7%D9%84%D8%A7%D8%B9%D9%85%D8%A7%D9%84', 'Tìm kiếm', 'Tìm kiếm: انما الاعمال'],
     ['/bookmarks', 'Đã lưu', 'Đã lưu'],
     ['/bookmarks?key=favorites', 'Yêu thích', 'Đã lưu'],
-    ['/sources', 'Nguồn & phương pháp', 'Nguồn & phương pháp'],
+    ['/sources', 'Dữ liệu & phương pháp', 'Dữ liệu & phương pháp'],
     ['/settings', 'Cài đặt', 'Cài đặt'],
     ['/about', 'Giới thiệu', 'Giới thiệu'],
     ['/contact', 'Liên hệ', 'Liên hệ'],
@@ -107,7 +108,7 @@ module.exports = spec(module, 'smoke', (h) => {
         { label: `Hadith ${first.referenceNumber}`, href: null },
       ]);
 
-      const crumbs = page.locator('nav[aria-label="Breadcrumb"]');
+      const crumbs = page.locator(BREADCRUMB_NAV);
       await crumbs.getByRole('link', { name: 'Chương 1' }).click();
       await h.waitForPath(page, (url) => url.pathname === `/books/${bukhari.slug}/chapters/1`, 'breadcrumb to the chapter');
       await waitForH1(page, `1. ${chapter.chapter.name}`);

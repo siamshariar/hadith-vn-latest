@@ -14,10 +14,10 @@ export default function DeeniinfotechContent() {
             <a href={DEENI_URL} target="_blank" rel="noopener noreferrer">
               Deeni Info Tech
             </a>
-            : {t("deeniText")}
+            {t("labelColon", { label: "" })} {t("deeniText")}
           </p>
           <p>
-            {t("website")}:{" "}
+            {t("labelColon", { label: t("website") })}{" "}
             <a href={DEENI_URL} target="_blank" rel="noopener noreferrer">
               www.DeeniInfoTech.com
             </a>

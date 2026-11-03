@@ -1,10 +1,10 @@
 // The international edition: the ac site (NEXT_PUBLIC_COUNTRY_CODE=ac, Hadith.ac) at BASE_AC,
 // another instance of the app (e.g. http://127.0.0.1:3002, from a git worktree; docs/DEPLOY.md).
 // One site for every language: the reader's browser languages (Accept-Language) choose the
-// content language among the API's and the interface among the catalogs (vi, en, bn), the
-// interface menu saves another (hadith_ui), English is shown beside any other language until
-// the reader chooses (hadith_tr), and the home page lists every language. Skipped when
-// BASE_AC is not set.
+// content language among the API's, the interface follows it (its catalog when there is
+// one, else English), the language menu saves another (hadith_lang), English is shown beside
+// any other language until the reader chooses (hadith_tr), and the home page lists every
+// language. Skipped when BASE_AC is not set.
 //
 // Expected strings come from the catalogs (lib/i18n.js, lib/locales) and the API, not from the page.
 'use strict';
@@ -19,27 +19,31 @@ const SITE_NAME = process.env.SITE_NAME_AC || countries.ac.siteName;
 const BUKHARI_1 = '/books/sahih-al-bukhari/hadiths/1';
 const squash = (value) => String(value || '').replace(/\s+/g, '');
 
-// lib/i18n.js is an ES module; Node says so once, which is not a test problem.
-process.removeAllListeners('warning');
-process.on('warning', (warning) => {
-  if (warning.code !== 'MODULE_TYPELESS_PACKAGE_JSON') console.warn(warning.stack || String(warning));
-});
 let loaded;
 async function i18n() {
-  loaded = loaded || import(pathToFileURL(path.join(__dirname, '..', '..', 'lib', 'i18n.js')).href);
+  loaded =
+    loaded ||
+    import(pathToFileURL(path.join(__dirname, '..', '..', 'lib', 'i18n.js')).href).then(async (m) => {
+      await m.loadCatalogs();
+      return m;
+    });
   const m = await loaded;
   // what LocaleContext's t() gives on this site (the site name filled in)
   const t = (ui, key, vars = {}) => m.translate(ui, key, { site: SITE_NAME, ...vars });
-  return { ...m, t };
+  // the interface for content in `lang` (lib/language.js interfaceFor; ac's own language is en)
+  const uiOf = (lang) => (lang !== 'en' && m.isInterfaceLanguage(lang) ? lang : 'en');
+  return { ...m, t, uiOf };
 }
 
-// Readers by the language their browser asks for, and what the site must give them.
+// Readers by the language their browser asks for: the content language they must get; the
+// interface follows it (French: the French catalog; Urdu: English, no right-to-left
+// interface while lib/i18n RTL_INTERFACES is off).
 const READERS = [
-  { locale: 'en-US', content: 'en', ui: 'en' },
-  { locale: 'bn-BD', content: 'bn', ui: 'bn' },
-  { locale: 'vi-VN', content: 'vi', ui: 'vi' },
-  { locale: 'fr-FR', content: 'fr', ui: 'en' }, // no French catalog
-  { locale: 'ur-PK', content: 'ur', ui: 'en' }, // no right-to-left interface yet
+  { locale: 'en-US', content: 'en' },
+  { locale: 'bn-BD', content: 'bn' },
+  { locale: 'vi-VN', content: 'vi' },
+  { locale: 'fr-FR', content: 'fr' },
+  { locale: 'ur-PK', content: 'ur' },
 ];
 
 // A fresh context whose browser asks for `locale`, then the page on the ac instance.
@@ -66,8 +70,8 @@ const cookieOf = async (context, name) => {
   const found = (await context.cookies(BASE_AC)).find((c) => c.name === name);
   return found ? decodeURIComponent(found.value) : undefined;
 };
-// the visible interface button of the header (desktop: "English ▾"; phones: the globe)
-const interfaceButton = (page) => page.locator('button[data-interface]').filter({ visible: true }).first();
+// the visible language menu button of the header (desktop: "English ▾"; phones: the globe)
+const menuButton = (page) => page.locator('button[data-language-menu]').filter({ visible: true }).first();
 // the translations chip of the hadith page header
 const headerChip = (page) => page.locator('article > header button[data-translations]');
 
@@ -80,10 +84,11 @@ module.exports = spec(module, 'international (ac)', (h) => {
   }
 
   h.test(
-    'ac: the browser languages choose the content and the interface (<html lang>, og:locale, title, h1)',
+    'ac: the browser languages choose the content language, the interface follows (<html lang>, og:locale, title, h1)',
     async (t) => {
-      const { t: tr, catalogLocale } = await i18n();
-      for (const want of READERS) {
+      const { t: tr, catalogLocale, uiOf } = await i18n();
+      for (const reading of READERS) {
+        const want = { ...reading, ui: uiOf(reading.content) };
         await t.test(want.locale, async (st) => {
           const { page, response } = await openAc(h, st, '/', { locale: want.locale });
           assert.equal(response.status(), 200);
@@ -146,37 +151,45 @@ module.exports = spec(module, 'international (ac)', (h) => {
   );
 
   h.test(
-    'ac: the interface menu saves the interface, kept after a reload and on static pages',
+    'ac: the language menu sets the content and the interface, kept after a reload and on static pages',
     async (t) => {
-      const { t: tr, catalogName, interfaceLanguages } = await i18n();
-      const { page, context } = await openAc(h, t, BUKHARI_1, { locale: 'fr-FR' });
-      const button = interfaceButton(page);
-      assert.equal(await button.getAttribute('aria-label'), `${tr('en', 'interfaceLanguage')}: English`);
+      const { t: tr, uiOf } = await i18n();
+      const languages = await api('/languages');
+      const french = languages.find((l) => l.code === 'fr');
+      const { page, context } = await openAc(h, t, BUKHARI_1, { locale: 'fr-FR', allow: [/status of 404/] });
+      const button = menuButton(page);
+      const frUi = uiOf('fr');
+      assert.equal(await button.getAttribute('aria-label'), tr(frUi, 'labelValue', { label: tr(frUi, 'language'), value: french.nativeName }));
+      assert.equal(await button.getAttribute('aria-haspopup'), 'dialog');
       const box = await button.boundingBox();
       assert.ok(box.width >= 44 && box.height >= 44, `a 44px tap target (${box.width}x${box.height})`);
-      if (h.desktop) assert.equal(norm(await button.innerText()), 'English', 'desktop: "English ▾"');
+      if (h.desktop) assert.equal(norm(await button.innerText()), french.nativeName, 'desktop: "Français ▾"');
       await button.click();
+      assert.equal(await button.getAttribute('aria-expanded'), 'true');
       const items = page.getByRole('menuitemradio');
-      assert.deepEqual((await items.allInnerTexts()).map(norm), interfaceLanguages.map(catalogName), 'the catalogs by their own names');
-      assert.equal(await page.getByRole('menuitemradio', { name: 'English' }).getAttribute('aria-checked'), 'true');
-      await Promise.all([page.waitForEvent('load'), page.getByRole('menuitemradio', { name: 'বাংলা' }).click()]);
-      await h.waitForHydration(page);
-      assert.equal(await htmlLang(page), 'bn', 'the page is reloaded in Bengali');
-      assert.equal(await cookieOf(context, 'hadith_ui'), 'bn', 'saved in hadith_ui');
-      const props = await pageProps(page);
-      assert.equal(props.uiLang, 'bn');
-      assert.equal(props.lang, 'fr', 'the content language does not change');
+      await items.first().waitFor();
+      assert.equal(await items.count(), languages.length, 'every language of the API');
+      assert.deepEqual(await page.locator('[role="menuitemradio"][aria-checked="true"]').evaluateAll((els) => els.map((el) => el.dataset.language)), ['fr']);
+      await page.locator('[role="menuitemradio"][data-language="bn"]').click();
+      await until(async () => (await htmlLang(page)) === 'bn', 'the page is shown in Bengali');
+      assert.equal(await cookieOf(context, 'hadith_lang'), 'bn', 'saved in hadith_lang');
+      assert.equal(await cookieOf(context, 'hadith_ui'), undefined, 'no interface cookie');
+      await waitForH1(page, /1$/);
 
       await page.reload();
       await h.waitForHydration(page);
+      const props = await pageProps(page);
+      assert.equal(props.lang, 'bn', 'the content language');
+      assert.equal(props.uiLang, 'bn', 'and the interface');
       assert.equal(await htmlLang(page), 'bn', 'kept after a reload');
-      assert.equal(await interfaceButton(page).getAttribute('aria-label'), `${tr('bn', 'interfaceLanguage')}: বাংলা`);
+      const bengali = languages.find((l) => l.code === 'bn');
+      assert.equal(await menuButton(page).getAttribute('aria-label'), tr('bn', 'labelValue', { label: tr('bn', 'language'), value: bengali.nativeName }));
 
-      // a static page (built in English) takes the interface once in the browser
-      await gotoAc(h, page, '/about');
-      await waitForH1(page, tr('bn', 'about'));
+      // a static page (built in English) takes the language once in the browser
+      await gotoAc(h, page, '/no-such-page');
+      await waitForH1(page, tr('bn', 'notFoundTitle'));
       assert.equal(await htmlLang(page), 'bn');
-      assert.equal(norm(await page.title()), `${tr('bn', 'about')} | ${tr('bn', 'siteHeadingAll')} | ${SITE_NAME}`);
+      assert.equal(norm(await page.title()), `${tr('bn', 'notFoundTitle')} | ${tr('bn', 'siteHeadingAll')} | ${SITE_NAME}`);
     },
     { smoke: true }
   );
@@ -208,36 +221,36 @@ module.exports = spec(module, 'international (ac)', (h) => {
   h.test(
     'ac: ?lang= overrides for one view; the saved language beats the browser',
     async (t) => {
-      const { t: tr } = await i18n();
+      const { t: tr, uiOf } = await i18n();
       const de = await api(`/home${loc('de')}`);
       await t.test('?lang=de', async (st) => {
         const { page } = await openAc(h, st, '/?lang=de', { locale: 'en-US' });
         const props = await pageProps(page);
         assert.equal(props.lang, 'de');
         assert.equal(props.home.language.code, de.language.code);
-        assert.equal(props.uiLang, 'en', 'the interface stays the browser one');
-        assert.equal(await htmlLang(page), 'en');
+        assert.equal(props.uiLang, uiOf('de'), 'the interface follows the content language');
+        assert.equal(await htmlLang(page), uiOf('de'));
         assert.equal(props.preferredLang, 'en', '?lang= is not saved');
       });
       await t.test('hadith_lang=fr in a Bengali browser', async (st) => {
         const { page } = await openAc(h, st, '/', { locale: 'bn-BD', cookies: [{ name: 'hadith_lang', value: 'fr' }] });
-        await waitForH1(page, tr('bn', 'siteHeadingAll'));
+        await waitForH1(page, tr(uiOf('fr'), 'siteHeadingAll'));
         const props = await pageProps(page);
         assert.equal(props.lang, 'fr', 'the saved language');
-        assert.equal(props.uiLang, 'bn', 'the interface still follows the browser');
+        assert.equal(props.uiLang, uiOf('fr'), 'the interface follows it');
       });
-      await t.test('hadith_ui=vi in an English browser', async (st) => {
+      await t.test('an old hadith_ui cookie is ignored', async (st) => {
         const { page } = await openAc(h, st, '/', { locale: 'en-US', cookies: [{ name: 'hadith_ui', value: 'vi' }] });
-        await waitForH1(page, tr('vi', 'siteHeadingAll'));
-        assert.equal(await htmlLang(page), 'vi');
-        assert.equal((await pageProps(page)).lang, 'en', 'the content still follows the browser');
+        await waitForH1(page, tr('en', 'siteHeadingAll'));
+        assert.equal(await htmlLang(page), 'en');
+        assert.equal((await pageProps(page)).lang, 'en', 'the content follows the browser');
       });
     },
     { smoke: true }
   );
 
   h.test(
-    'ac: the international ribbon and the dark logo',
+    'ac: the international accent and the dark logo (no ribbon under the header)',
     async (t) => {
       const settings = JSON.stringify({
         view: { arabic: true, translation: true, tafseer: true },
@@ -257,6 +270,8 @@ module.exports = spec(module, 'international (ac)', (h) => {
         const header = [...document.querySelectorAll('div[class*="Header_header"]')].find(visible);
         const logo = header && [...header.querySelectorAll('a[aria-label] img')].find(visible);
         return {
+          // the site's accent (config/countries.json), for a wordmark without a logo
+          accent: getComputedStyle(document.documentElement).getPropertyValue('--brand-ribbon').trim(),
           ribbon: getComputedStyle(header, '::after').backgroundImage,
           logo: logo && new URL(logo.currentSrc || logo.src).pathname,
           loaded: logo && logo.complete && logo.naturalWidth === 2020,
@@ -264,7 +279,8 @@ module.exports = spec(module, 'international (ac)', (h) => {
         };
       });
       assert.equal(brand.dark, true);
-      assert.match(brand.ribbon, /^linear-gradient\(90deg, rgb\(13, 148, 136\), rgb\(37, 99, 235\) 50%, rgb\(79, 70, 229\)\)$/, 'teal, blue, indigo');
+      assert.match(brand.accent, /^linear-gradient\(90deg, #0D9488, #2563EB 50%, #4F46E5\)$/i, 'teal, blue, indigo');
+      assert.equal(brand.ribbon, 'none', 'the logo carries the accent; the header has no ribbon');
       assert.equal(brand.logo, '/img/logo_ac_dark.png');
       assert.equal(brand.loaded, true);
       const share = await page.getAttribute('meta[property="og:image"]', 'content');

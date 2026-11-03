@@ -1,12 +1,14 @@
 import Link from "next/link";
+import { useLocale } from "../../contexts/LocaleContext";
 import styles from "./breadcrumbs.module.scss";
 
 // items: [{ href, label }]; the last item is the current page and is not a link.
 export default function Breadcrumbs({ items = [] }) {
+  const { t } = useLocale();
   if (!items.length) return null;
 
   return (
-    <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
+    <nav className={styles.breadcrumbs} aria-label={t("breadcrumb")}>
       <ol>
         {items.map((item, index) => {
           const isLast = index === items.length - 1;

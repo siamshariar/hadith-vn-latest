@@ -1,3 +1,4 @@
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { server, config, shareImage } from "../../../../lib/config";
@@ -12,26 +13,70 @@ import Pagination, { pageHref } from "../../../../components/core/pagination";
 import Layout from "../../../../components/layouts/LayoutSecondary";
 import HadithCard, { HadithList } from "../../../../components/hadith/HadithCard";
 import ReaderBar, { barStyles } from "../../../../components/hadith/ReaderBar";
+import CheckIcon from "../../../../components/icons/Check";
 import styles from "../../../../components/content/Page.module.scss";
 
-const chapterLabel = (chapter, t) =>
-  chapter.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : `${t("chapter")} ${chapter.chapterNo}`;
+// The filter is a link (it works without JavaScript) shown as a switch; a switch
+// toggles on Space as well as Enter.
+const toggleOnSpace = (event) => {
+  if (event.key !== " ") return;
+  event.preventDefault();
+  event.currentTarget.click();
+};
 
-// The book's chapters in a select, like quran.com's surah switcher.
+const chapterLabel = (chapter, t) =>
+  chapter.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : t("chapterNumber", { number: chapter.chapterNo });
+
+// Keys that change a closed select's value as they go down (Chrome, Edge and Firefox on
+// Windows and Linux), with typed letters and digits: browsing, not choosing.
+const BROWSE_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "PageUp", "PageDown"]);
+// A change this soon after such a key came from the key, not from the open list.
+const KEYED_MS = 100;
+
+// The book's chapters in a select, like quran.com's surah switcher. Choosing a chapter
+// (from the open list, or a phone's picker) opens it, and the select's description
+// says so beforehand (WCAG 3.2.2). Browsing with the keyboard does not: Enter opens the
+// chapter shown, and leaving the select puts the current chapter back.
 function ChapterSwitcher({ book, chapter, chapters, query }) {
   const { t } = useLocale();
   const router = useRouter();
+  const hintId = useId();
+  const current = String(chapter.chapterNo);
+  const [value, setValue] = useState(current);
+  const keyedAt = useRef(-Infinity);
+  useEffect(() => setValue(current), [current]);
+
   const label = (item) =>
     item.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : `${item.chapterNo}. ${item.name}`;
   if (!chapters || chapters.length < 2) {
     return <span className={barStyles.shrink}>{label(chapter)}</span>;
   }
+
+  const open = (chapterNo) => {
+    if (chapterNo !== current) router.push(pageHref(chapterPath(book.slug, chapterNo), query, 1));
+  };
+  const onKeyDown = (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      open(event.currentTarget.value);
+    } else if (BROWSE_KEYS.has(event.key) || event.key.length === 1) {
+      keyedAt.current = performance.now();
+    }
+  };
+  const onChange = (event) => {
+    setValue(event.target.value);
+    if (performance.now() - keyedAt.current > KEYED_MS) open(event.target.value);
+  };
+
   return (
     <span className={barStyles.switcher}>
       <select
-        value={chapter.chapterNo}
-        onChange={(event) => router.push(pageHref(chapterPath(book.slug, event.target.value), query, 1))}
+        value={value}
+        onChange={onChange}
+        onKeyDown={onKeyDown}
+        onBlur={() => setValue(current)}
         aria-label={t("chooseChapter")}
+        aria-describedby={hintId}
       >
         {chapters.map((item) => (
           <option key={item.chapterNo} value={item.chapterNo}>
@@ -39,6 +84,9 @@ function ChapterSwitcher({ book, chapter, chapters, query }) {
           </option>
         ))}
       </select>
+      <span id={hintId} className="visually_hidden">
+        {t("chapterSelectHint")}
+      </span>
     </span>
   );
 }
@@ -125,7 +173,7 @@ export default function Chapter({ data, chapters, neighbours, onlyReadable, read
           )}
           <p className={styles.meta}>
             <span>
-              {formatNumber(chapter.totalHadith)} {t("hadiths")}
+              {t("hadithCount", { count: chapter.totalHadith })}
             </span>
             {pagination.lastPage > 1 && (
               <span>
@@ -145,9 +193,10 @@ export default function Chapter({ data, chapters, neighbours, onlyReadable, read
               role="switch"
               aria-checked={onlyReadable ? "true" : "false"}
               scroll={false}
+              onKeyDown={toggleOnSpace}
             >
               <span className={styles.switchBox} aria-hidden="true">
-                {onlyReadable ? "✓" : ""}
+                {onlyReadable && <CheckIcon />}
               </span>
               {t("onlyReadable", {
                 language: languageName(lang),
@@ -173,6 +222,7 @@ export default function Chapter({ data, chapters, neighbours, onlyReadable, read
                 key={hadith.id}
                 hadith={hadith}
                 book={book}
+                headingLevel={2}
                 inBookReference={inBookAt(index)}
               />
             )}

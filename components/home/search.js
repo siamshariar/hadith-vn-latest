@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import SearchIcon from "../icons/Search";
 import { useLocale } from "../../contexts/LocaleContext";
+import useSubmitBusy from "../../hooks/useSubmitBusy";
 import { MIN_SEARCH_LENGTH } from "../../lib/api";
 import styles from "./search.module.scss";
 
@@ -14,6 +15,7 @@ export function GoToHadith({ book = "", compact = false }) {
   const [value, setValue] = useState("");
   // Pressing "Đi" with nothing typed says what to type.
   const [hint, setHint] = useState(false);
+  const [busy, startBusy] = useSubmitBusy();
   const id = book ? `go-${book}` : "go-hadith";
 
   const submit = (event) => {
@@ -23,6 +25,7 @@ export function GoToHadith({ book = "", compact = false }) {
       setHint(true);
       return;
     }
+    startBusy();
     router.push({ pathname: "/search", query: book ? { go, book } : { go } });
   };
 
@@ -43,12 +46,17 @@ export function GoToHadith({ book = "", compact = false }) {
           }}
           placeholder={book ? t("numberPlaceholder") : t("goToPlaceholder")}
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           inputMode={book ? "text" : undefined}
           enterKeyHint="go"
           aria-describedby={hint ? `${id}-hint` : undefined}
         />
         {book && <input type="hidden" name="book" value={book} />}
-        <button type="submit">{t("goButton")}</button>
+        <button type="submit" aria-busy={busy || undefined}>
+          {t("goButton")}
+        </button>
       </div>
       {hint && (
         <p id={`${id}-hint`} className={styles.goHint} role="alert">
@@ -65,11 +73,13 @@ export default function HomeSearch() {
   const router = useRouter();
   const { t } = useLocale();
   const [query, setQuery] = useState("");
+  const [busy, startBusy] = useSubmitBusy();
 
   const submit = (event) => {
     event.preventDefault();
     const q = query.trim();
     if (q.length < MIN_SEARCH_LENGTH) return;
+    startBusy();
     router.push({ pathname: "/search", query: { q } });
   };
 
@@ -90,7 +100,9 @@ export default function HomeSearch() {
           autoComplete="off"
           enterKeyHint="search"
         />
-        <button type="submit">{t("searchButton")}</button>
+        <button type="submit" aria-busy={busy || undefined}>
+          {t("searchButton")}
+        </button>
       </form>
       <GoToHadith />
     </div>

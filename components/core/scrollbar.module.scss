@@ -1,6 +1,6 @@
 .scrollbar {
   overflow-y: auto !important;
-  transition: all 250ms ease;
+  transition: scrollbar-color var(--duration) var(--ease);
 }
 
 // firefox

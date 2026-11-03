@@ -14,7 +14,7 @@ export function EmailLinks({ emails = EMAILS }) {
   const { t } = useLocale();
   return (
     <p>
-      {t("email")}:{" "}
+      {t("labelColon", { label: t("email") })}{" "}
       {emails.map((email, index) => (
         <Fragment key={email}>
           {index > 0 && " | "}
@@ -36,7 +36,7 @@ export default function AboutContent() {
             {t("aboutApp")} {t("siteTagline")}
           </p>
           <p>
-            {t("aboutData")} <Link href="/sources">{t("sourcesAndMethod")}</Link>.
+            {t("aboutMethod")} <Link href="/sources">{t("dataAndMethod")}</Link>.
           </p>
           <p>
             {t("poweredBy")}{" "}

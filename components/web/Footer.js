@@ -9,7 +9,7 @@ import styles from "./Footer.module.scss";
 export default function FooterWeb() {
   const { t } = useLocale();
   const links = [
-    { href: "/sources", label: t("sourcesAndMethod") },
+    { href: "/sources", label: t("dataAndMethod") },
     { href: "/about", label: t("about") },
     { href: "/support", label: t("support") },
     { href: "/grateful", label: t("grateful") },
@@ -31,7 +31,8 @@ export default function FooterWeb() {
           </nav>
 
           <p className={styles.copyright}>
-            <span>&copy; {new Date().getFullYear()} </span>
+            {/* the server (UTC) and the reader's clock can be in different years */}
+            <span suppressHydrationWarning>&copy; {new Date().getFullYear()} </span>
             <Link href="/about">{site.siteName}</Link>
             <span>. {t("allRightsReserved")}</span>
           </p>

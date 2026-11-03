@@ -17,6 +17,7 @@ import { booksBySlug, hadithPath, shortBookName } from "../lib/hadith";
 import { compareLanguages } from "../lib/language";
 import { useLocale } from "../contexts/LocaleContext";
 import useRouteLoading from "../hooks/useRouteLoading";
+import useSubmitBusy from "../hooks/useSubmitBusy";
 import Meta from "../components/core/meta";
 import Breadcrumbs from "../components/core/breadcrumbs";
 import ErrorState, { EmptyState } from "../components/core/error";
@@ -42,6 +43,7 @@ function SearchForm({ query, book, books, languages, goTo }) {
   const { t, lang, formatNumber } = useLocale();
   const [value, setValue] = useState(query);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [busy, startBusy] = useSubmitBusy();
   const active = (book ? 1 : 0) + (router.query.lang ? 1 : 0);
 
   const go = (overrides = {}) => {
@@ -52,6 +54,7 @@ function SearchForm({ query, book, books, languages, goTo }) {
     const selectedLang = overrides.lang ?? (router.query.lang || "");
     if (selectedBook) params.book = selectedBook;
     if (selectedLang) params.lang = selectedLang;
+    startBusy();
     router.push({ pathname: "/search", query: params });
   };
 
@@ -82,7 +85,9 @@ function SearchForm({ query, book, books, languages, goTo }) {
             autoComplete="off"
             enterKeyHint="search"
           />
-          <button type="submit">{t("searchButton")}</button>
+          <button type="submit" aria-busy={busy || undefined}>
+            {t("searchButton")}
+          </button>
         </div>
       </form>
 
@@ -179,7 +184,7 @@ export default function Search({ query, book, results, books, languages, notFoun
   return (
     <>
       <Meta
-        title={query ? `${t("search")}: ${query}` : t("search")}
+        title={query ? t("labelValue", { label: t("search"), value: query }) : t("search")}
         description={t("searchTips")}
         url={`${server}/search`}
         image={shareImage}
@@ -352,7 +357,14 @@ export async function getServerSideProps(context) {
         book,
         results,
         notFound,
-        books: books.map(({ slug, code, name, source, totalHadith }) => ({ slug, code, name, source, totalHadith })),
+        books: books.map(({ slug, code, name, nameEnglish, source, totalHadith }) => ({
+          slug,
+          code,
+          name,
+          nameEnglish: nameEnglish || null,
+          source,
+          totalHadith,
+        })),
         // the deployment's language first, then English, then by name
         languages: languages
           .filter((language) => language.code !== "ar")

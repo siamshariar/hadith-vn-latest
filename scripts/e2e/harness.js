@@ -4,7 +4,10 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
 const { after, describe, test } = require('node:test');
+const { pathToFileURL } = require('node:url');
 const pw = require(process.env.PLAYWRIGHT_CORE || 'playwright-core');
 
 const BASE = (process.env.BASE || 'http://127.0.0.1:3000').replace(/\/+$/, '');
@@ -77,6 +80,15 @@ const norm = (value) => String(value == null ? '' : value).replace(/\s+/g, ' ').
 const cleanText = (value) => String(value || '').replace(/\r\n?/g, '\n').trim();
 // Vietnamese thousands separators (lib/i18n formatNumber).
 const viNumber = (value) => String(Math.trunc(Number(value))).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+// The translator a translation is credited to (lib/citation translatorName): the
+// name the source gives, unless it is HadeethEnc's own site or the collection's
+// compiler (the forty-hadith editions give Imam Nawawi, Shah Waliullah Dehlawi).
+function translatorOf(author, edition) {
+  const { code = '', source } = edition || {};
+  if (!author || source === 'hadeethenc') return null;
+  const collection = String(code).split('-').pop();
+  return collection && String(author).toLowerCase().replace(/[^a-z]/g, '').includes(collection) ? null : author;
+}
 // Muslim's 8.01 is cited 8a (lib/hadith lettered).
 function lettered(number) {
   const match = String(number ?? '').match(/^(\d+)\.(\d{2})$/);
@@ -84,6 +96,72 @@ function lettered(number) {
   const index = parseInt(match[2], 10);
   return index >= 1 && index <= 26 ? `${match[1]}${String.fromCharCode(96 + index)}` : String(number);
 }
+
+// ------------------------------------------------------------------ interface and names
+
+// lib/i18n.js is an ES module in a package without "type": "module"; Node says so once,
+// which is not a test problem.
+process.removeAllListeners('warning');
+process.on('warning', (warning) => {
+  if (warning.code !== 'MODULE_TYPELESS_PACKAGE_JSON') console.warn(warning.stack || String(warning));
+});
+
+// lib/i18n.js with every catalog loaded (lib/locales).
+let i18nModule;
+function i18n() {
+  i18nModule =
+    i18nModule ||
+    import(pathToFileURL(path.join(__dirname, '..', '..', 'lib', 'i18n.js')).href).then(async (m) => {
+      await m.loadCatalogs();
+      return m;
+    });
+  return i18nModule;
+}
+
+// The strings of an interface as LocaleContext's t() gives them on a site: tr(key, vars), with
+// the site's name and content language filled in, plus tr.language(code) (a language inside a
+// sentence) and tr.number(n). Default: the vn site.
+async function interfaceStrings(ui, { site = 'Hadith.vn', language = 'vi' } = {}) {
+  const m = await i18n();
+  const vars = { site, siteLanguage: m.languageName(ui, language) };
+  const tr = (key, values) => m.translate(ui, key, { ...vars, ...values });
+  tr.language = (code) => m.languageName(ui, code);
+  tr.number = (value) => m.formatNumber(value, ui);
+  return tr;
+}
+
+// The book names the site under test shows (lib/names.js): those of the fixture when the
+// builds and this run have NAMES_FIXTURE=1 (scripts/e2e/fixtures/names), else of lib/names;
+// the API's where they have none. Chapters keep the API's names. The topic collection is
+// named by the interface: pass that interface's strings (interfaceStrings) as `tr`.
+const NAMES_FIXTURE = process.env.NAMES_FIXTURE === '1';
+const NAMES_DIR = NAMES_FIXTURE ? path.join(__dirname, 'fixtures', 'names') : path.join(__dirname, '..', '..', 'lib', 'names');
+const namesCache = new Map();
+function namesOf(lang) {
+  if (!namesCache.has(lang)) {
+    const file = path.join(NAMES_DIR, `${lang}.json`);
+    namesCache.set(lang, fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : {});
+  }
+  return namesCache.get(lang);
+}
+const isTopicCollection = (book) => [book.slug, book.code, book.source].includes('hadeethenc');
+
+// The categories the lists show for content in `lang`: those with something to read in it
+// and their ancestors (lib/api.js readableCategories, which Node cannot import: its paths
+// are the bundler's). Arabic, the original, keeps them all.
+function readableCategories(categories, lang) {
+  if (lang === 'ar') return categories;
+  const byId = new Map(categories.map((c) => [c.id, c]));
+  const kept = new Set();
+  categories
+    .filter((c) => c.totalTranslated == null || c.totalTranslated > 0)
+    .forEach((c) => {
+      for (let node = c; node && !kept.has(node.id); node = byId.get(node.parentId)) kept.add(node.id);
+    });
+  return categories.filter((c) => kept.has(c.id));
+}
+const bookName = (lang, book, tr = null) =>
+  (isTopicCollection(book) && tr ? tr('topicCollection') : null) || (namesOf(lang).books || {})[book.slug] || book.name;
 
 // ------------------------------------------------------------------ browsers
 
@@ -258,9 +336,13 @@ function run(specs) {
 
 // ------------------------------------------------------------------ DOM helpers
 
+// The breadcrumb trail (components/core/breadcrumbs). It is named in the interface
+// language, which can be any catalog's, so it is found by its class.
+const BREADCRUMB_NAV = 'nav[class*="breadcrumbs_breadcrumbs"]';
+
 // Breadcrumb labels and links, in order.
 async function breadcrumbs(page) {
-  return page.locator('nav[aria-label="Breadcrumb"] li').evaluateAll((items) =>
+  return page.locator(BREADCRUMB_NAV).locator('li').evaluateAll((items) =>
     items.map((li) => {
       const link = li.querySelector('a');
       return { label: li.textContent.replace(/\s+/g, ' ').trim(), href: link ? link.getAttribute('href') : null };
@@ -333,22 +415,29 @@ async function scrollTo(page, y) {
 module.exports = {
   API,
   BASE,
+  BREADCRUMB_NAV,
+  NAMES_FIXTURE,
   PROFILES,
   api,
   assert,
+  bookName,
   breadcrumbs,
   cleanText,
   lettered,
+  interfaceStrings,
   loc,
   meta,
+  namesOf,
   norm,
   pathOf,
   readClipboard,
+  readableCategories,
   run,
   scrollTo,
   sleep,
   spec,
   stored,
+  translatorOf,
   until,
   viNumber,
   waitForH1,

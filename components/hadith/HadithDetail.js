@@ -14,6 +14,7 @@ import {
   hadithPath,
   isCategoryBook,
   lettered,
+  namedGrades,
   shortBookName,
   storedHadithRef,
 } from "../../lib/hadith";
@@ -28,8 +29,7 @@ import TranslationPicker from "./TranslationPicker";
 import styles from "./HadithDetail.module.scss";
 
 // A related hadith (API `related`: same wording in another collection) by its citation.
-const relatedLabel = (item) =>
-  `${item.bookSlug === "hadeethenc" ? "HadeethEnc" : item.bookName} ${lettered(item.referenceNumber)}`.trim();
+const relatedLabel = (item) => `${item.bookName} ${lettered(item.referenceNumber)}`.trim();
 const relatedPath = (item) =>
   item.referenceNumber && item.bookSlug
     ? bookHadithPath(item.bookSlug, lettered(item.referenceNumber))
@@ -42,7 +42,7 @@ function AlsoIn({ related, keepLang }) {
   if (!related || !related.length) return null;
   return (
     <p className={styles.alsoIn}>
-      <span className={styles.alsoInLabel}>{t("alsoIn")}:</span>{" "}
+      <span className={styles.alsoInLabel}>{t("labelColon", { label: t("alsoIn") })}</span>{" "}
       {related.map((item, index) => (
         <Fragment key={item.id}>
           {index > 0 && ", "}
@@ -97,7 +97,7 @@ function Details({ details }) {
 
       {details.attribution && (
         <p className={styles.attribution} lang={code} dir={dir}>
-          <span className={styles.attributionLabel}>{t("attribution")}:</span> {cleanText(details.attribution)}
+          <span className={styles.attributionLabel}>{t("labelColon", { label: t("attribution") })}</span> {cleanText(details.attribution)}
         </p>
       )}
 
@@ -146,7 +146,7 @@ function Details({ details }) {
           <h2 id="hadith-sources" className={styles.sectionTitle}>
             {t("sources")}
           </h2>
-          <div className={styles.reference} dir="rtl" lang="ar">
+          <div className={styles.reference} dir="rtl" lang="ar" translate="no">
             {cleanText(details.reference)}
           </div>
         </section>
@@ -211,7 +211,7 @@ export default function HadithDetail({ hadith, translations }) {
   const chapterText = showChapter
     ? chapter.chapterNo === UNASSIGNED_CHAPTER
       ? t("unassignedChapter")
-      : `${t("chapter")} ${chapter.chapterNo}: ${chapter.name}`
+      : t("chapterNumberName", { number: chapter.chapterNo, name: chapter.name })
     : null;
   // HadeethEnc is browsed by category: its first one stands for the chapter.
   const category = categoryBook && hadith.categories && hadith.categories[0];
@@ -257,10 +257,10 @@ export default function HadithDetail({ hadith, translations }) {
         <div className={styles.facts}>
           {hadith.referenceNumber && (
             <span className={styles.fact}>
-              {t("hadithNumber")}: <strong>{lettered(hadith.referenceNumber)}</strong>
+              {t("labelColon", { label: t("hadithNumber") })} <strong>{lettered(hadith.referenceNumber)}</strong>
             </span>
           )}
-          <GradeBadge grades={hadith.grades} gradeText={hadith.gradeText} />
+          <GradeBadge grades={namedGrades(hadith, book)} gradeText={hadith.gradeText} />
           {hadith.title && <span className={styles.fact}>{reference}</span>}
           <span className={styles.picker}>
             <TranslationPicker translations={extras} book={book.slug} />
@@ -281,7 +281,7 @@ export default function HadithDetail({ hadith, translations }) {
         </section>
 
         <section className={styles.translationBlock}>
-          <HadithTranslations hadith={hadith} showNote />
+          <HadithTranslations hadith={hadith} book={book} showNote />
         </section>
       </div>
 

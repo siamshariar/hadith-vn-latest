@@ -16,7 +16,7 @@ const FOUND = [
 const GARBAGE = ['xyz abc', 'bukhari 999999', '!!'];
 
 // The page reached for a hadith: its h1 is the citation (no title outside
-// HadeethEnc) and its fact line the citable number.
+// the topic collection) and its fact line the citable number.
 async function expectHadith(h, page, hadith, input) {
   const citation = `${hadith.book.name} ${lettered(hadith.referenceNumber)}`;
   await h.waitForPath(

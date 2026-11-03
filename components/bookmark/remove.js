@@ -50,12 +50,12 @@ export default function RemoveBookmark({
       }}
     >
       <Fade in={open} timeout={250}>
-        <div className={styles.content}>
+        <div className={styles.content} role="dialog" aria-modal="true" aria-labelledby="bookmark-remove-title">
           <button type="button" className={styles.close} onClick={closer(false)} aria-label={t("close")} title={t("close")}>
             <CloseIcon />
           </button>
 
-          <h2 className={styles.title}>{t("removeBookmarkTitle")}</h2>
+          <h2 id="bookmark-remove-title" className={styles.title}>{t("removeBookmarkTitle")}</h2>
           <div className={styles.title_desc}>
             {t("removeBookmarkText", { name: folderLabel(bookmarkKey, bookmarks[bookmarkKey], t) })}
           </div>

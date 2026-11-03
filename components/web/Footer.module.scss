@@ -3,7 +3,7 @@
 // iPhone home indicator.
 .footer {
   display: block;
-  background: var(--bg11);
+  background: var(--surface-soft);
 }
 
 .bottom {
@@ -27,13 +27,13 @@
     min-height: 44px;
     padding: 0 10px;
     border-radius: 6px;
-    color: var(--txt11);
+    color: var(--text);
     font-size: 14px;
     font-weight: 500;
 
     &:hover,
     &:focus-visible {
-      color: var(--main-color);
+      color: var(--link);
       text-decoration: underline;
     }
   }
@@ -41,7 +41,7 @@
 
 .copyright,
 .credit {
-  color: var(--txt12);
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
 
@@ -49,7 +49,7 @@
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    color: var(--main-color);
+    color: var(--link);
     font-weight: 500;
 
     &:hover,
@@ -100,12 +100,12 @@
       content: "";
       width: 1px;
       height: 14px;
-      background-color: var(--bdr13);
+      background-color: var(--control-edge);
     }
 
     a {
       padding: 0 12px;
-      color: var(--txt12);
+      color: var(--text-secondary);
       font-weight: 400;
     }
   }

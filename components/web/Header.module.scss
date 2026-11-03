@@ -3,31 +3,19 @@
 }
 
 @media only screen and (min-width: 1024px) {
-  // White on every page, the home page included; its bottom 4px are the
-  // ribbon of the logo's gradient (decoration only).
+  // On the page's own paper, closed by a hairline: no shadow, no ribbon (the
+  // logo carries the site's colours).
   .header {
     display: block;
     width: 100%;
     position: absolute;
     top: 0;
     left: 0;
-    border-bottom: none;
-    background: var(--bg11);
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08);
-    z-index: 999;
     height: 64px;
-    padding: 0 17px 4px;
-
-    &::after {
-      content: "";
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      left: 0;
-      height: 4px;
-      background: var(--brand-ribbon);
-      pointer-events: none;
-    }
+    padding: 0 var(--space-5);
+    border-bottom: 1px solid var(--hairline);
+    background: var(--canvas);
+    z-index: 999;
   }
 
   .content {
@@ -35,12 +23,48 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
+    gap: var(--space-4);
     height: 100%;
   }
 
   .left {
+    display: flex;
     flex: 0 0 auto;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  // Books · Categories: words, the current one underlined in the brand green
+  .nav {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-1);
+    height: 64px;
+  }
+
+  .navLink {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--space-3);
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+
+    &:hover {
+      color: var(--ink);
+    }
+
+    &[aria-current] {
+      border-bottom-color: var(--accent);
+      color: var(--ink);
+    }
+
+    &:focus-visible {
+      outline-offset: -2px;
+    }
   }
 
   .right {
@@ -53,16 +77,16 @@
     min-width: 0;
   }
 
-  // the interface menu of an international site
-  .interface {
+  // the language menu
+  .language {
     margin-right: 6px;
   }
 
   .btn {
-    width: 48px !important;
-    min-width: 48px !important;
-    height: 48px !important;
-    border-radius: 50% !important;
+    width: var(--tap) !important;
+    min-width: var(--tap) !important;
+    height: var(--tap) !important;
+    border-radius: 50% !important; // icon-only: a circle, as everywhere
   }
 
   .btn span {
@@ -75,13 +99,17 @@
   }
 
   .btn svg {
-    fill: var(--txt11);
-    width: 24px;
-    height: 24px;
+    fill: var(--text-secondary);
+    width: 22px;
+    height: 22px;
+  }
+
+  .btn:hover {
+    background: var(--hover) !important;
   }
 
   .btn:hover svg {
-    fill: var(--main-color);
+    fill: var(--ink);
   }
 
   // search box
@@ -90,32 +118,33 @@
     align-items: center;
     width: 100%;
     max-width: 320px;
-    height: 46px;
-    margin-right: 8px;
-    border: 1px solid var(--bdr11);
-    border-radius: 23px;
-    background: var(--bg12);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    height: var(--tap);
+    margin-right: var(--space-2);
+    border: 1px solid var(--control-edge);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    transition: border-color var(--duration) var(--ease);
 
     &:focus-within {
-      border-color: var(--theme-color);
-      box-shadow: 0 0 0 3px var(--accent-soft);
+      border-color: var(--accent);
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 2px;
     }
 
     input {
       flex: 1 1 auto;
       min-width: 0;
       height: 100%;
-      padding: 0 4px 0 18px;
+      padding: 0 var(--space-1) 0 var(--space-3);
       border: 0;
       background: transparent;
-      color: var(--txt11);
+      color: var(--text);
       font: inherit;
       font-size: 15px;
       appearance: none;
 
       &::placeholder {
-        color: var(--txt13);
+        color: var(--muted);
       }
 
       &:focus-visible {
@@ -128,32 +157,47 @@
       flex: 0 0 auto;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
+      width: 42px;
+      height: 42px;
       border: 0;
-      border-radius: 0 22px 22px 0;
+      border-radius: var(--radius-sm);
       background: transparent;
       cursor: pointer;
 
       svg {
-        width: 22px;
-        height: 22px;
-        fill: var(--txt12);
+        width: 20px;
+        height: 20px;
+        fill: var(--text-secondary);
       }
 
       &:hover svg {
-        fill: var(--main-color);
+        fill: var(--link);
+      }
+
+      // busy (styles/_core): the turning ring takes the glyph's place
+      &[aria-busy="true"] {
+        color: var(--text-secondary);
+
+        svg {
+          display: none;
+        }
+
+        &::after {
+          margin: 0;
+        }
       }
     }
   }
 
-  //popover
+  // the menu (popover)
   .menu {
-    background-color: var(--bg11);
+    min-width: 220px;
+    padding: var(--space-1) 0;
+    background-color: var(--surface);
   }
 
   .icon {
-    margin-right: 11px;
+    margin-right: var(--space-3);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -162,13 +206,13 @@
   .icon svg {
     width: 18px;
     height: 18px;
-    fill: var(--txt11);
+    fill: var(--text-secondary);
   }
 
   .text {
     font-size: 15px;
-    color: var(--txt11);
-    padding-right: 14px;
+    color: var(--text);
+    padding-right: var(--space-4);
   }
 }
 

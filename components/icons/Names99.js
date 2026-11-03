@@ -1,6 +1,6 @@
 export default function Names99() {
   return (
-    <svg
+    <svg aria-hidden="true" focusable="false"
       version="1.1"
       id="Layer_1"
       x="0px"

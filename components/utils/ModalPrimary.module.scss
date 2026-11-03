@@ -1,35 +1,46 @@
 .scrollbar {
   height: 100%;
-  padding: 16px 32px;
+  padding: var(--space-4) var(--space-6);
 }
+
 .header {
   position: relative;
+  padding-inline-end: var(--tap);
 }
+
 .title {
-  font-size: 16px;
-  margin-bottom: 18px;
+  margin-bottom: var(--space-4);
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 600;
+  line-height: var(--leading-snug);
 }
+
+// 44px close button in the corner
 .close {
   position: absolute;
-  top: -4px;
+  top: -10px;
   right: -14px;
-  height: 32px;
-  width: 32px;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
   border: none;
-  background-color: var(--bg22);
-  transition: all 0.3s ease;
   border-radius: 50%;
+  background-color: transparent;
   cursor: pointer;
-  z-index: 1;
+  transition: background-color var(--duration) var(--ease);
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--hover);
+  }
 }
-// .close:hover {
-//   background-color: var(--bg22);
-// }
+
 .close svg {
   width: 22px;
   height: 22px;
-  fill: var(--txt12);
+  fill: var(--text-secondary);
 }
