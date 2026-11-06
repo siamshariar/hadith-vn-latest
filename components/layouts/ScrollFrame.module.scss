@@ -11,11 +11,11 @@
   width: 44px;
   height: 44px;
   padding: 0;
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
-  box-shadow: var(--shadow-float);
+  background: var(--surface-card);
+  color: var(--accent);
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
@@ -28,8 +28,7 @@
   }
 
   &:hover {
-    border-color: var(--accent);
-    color: var(--link);
+    color: var(--accent-hover);
   }
 }
 
@@ -47,10 +46,12 @@
   }
 }
 
+// The web: 16px beside the frame where the margin has room (--frame: Layout.module.scss), else
+// at the screen's edge, clear of the text inside the card's padding.
 @media only screen and (min-width: 1024px) {
   .top {
-    right: 24px;
-    bottom: 24px;
+    right: max(6px, calc((100vw - var(--frame)) / 2 - 36px));
+    bottom: 32px;
   }
 }
 

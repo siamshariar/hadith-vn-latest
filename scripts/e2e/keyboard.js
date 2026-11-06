@@ -1,7 +1,6 @@
 // Keyboard and screen-reader paths (docs/hadith-design-system.md, Accessibility): the
-// skip link, the dialogs' focus, the sidebar tree, the chapter select, anchors below the
-// reading bar, settings before the first paint, Undo, copy feedback, headings and the
-// header's current section.
+// skip link, the dialogs' focus, the navigation, anchors below the header, settings before
+// the first paint, Undo, copy feedback and headings.
 'use strict';
 
 const { BASE, assert, sleep, spec, stored, until, waitForText } = require('./harness');
@@ -18,15 +17,15 @@ const focused = (page) =>
     return {
       id: el ? el.id : null,
       name: el ? el.getAttribute('aria-label') || el.textContent.trim().slice(0, 60) : null,
-      dialog: titleId ? (document.getElementById(titleId) || {}).textContent || null : null,
+      dialog: dialog ? (titleId ? (document.getElementById(titleId) || {}).textContent : dialog.getAttribute('aria-label')) || null : null,
     };
   });
 
-// How far below the reading bar an element's top is.
-const belowBar = (page, id) =>
+// How far below the header's place an element's top is.
+const belowHeader = (page, id) =>
   page.evaluate((x) => {
-    const bar = document.querySelector('[data-reader-bar]').getBoundingClientRect();
-    return Math.round(document.getElementById(x).getBoundingClientRect().top - bar.bottom);
+    const height = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'), 10);
+    return Math.round(document.getElementById(x).getBoundingClientRect().top - height);
   }, id);
 
 module.exports = spec(module, 'keyboard and screen readers', (h) => {
@@ -46,97 +45,64 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
   });
 
   h.test(
-    'the phone panels are dialogs: focus goes in, stays, comes back; Esc clears the filter first',
+    'the phone drawer and the reading settings are dialogs: focus goes in, stays, comes back; Esc clears the filter first',
     async (t) => {
       const { page } = await h.open(t, CHAPTER);
-      // Settings, from the header
-      await page.getByRole('link', { name: 'Cài đặt', exact: true }).focus();
+      // the reading settings, from the header
+      const tune = page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true });
+      await tune.focus();
       await page.keyboard.press('Enter');
-      await until(async () => {
-        const f = await focused(page);
-        return f.name === 'Quay lại' && f.dialog === 'Cài đặt';
-      }, 'focus on Back, in the Settings dialog');
-      for (let i = 1; i <= 30; i += 1) {
+      await until(async () => (await focused(page)).dialog === 'Cài đặt hiển thị', 'focus in the Reading settings dialog');
+      for (let i = 1; i <= 16; i += 1) {
         await page.keyboard.press('Tab');
         assert.ok((await focused(page)).dialog, `Tab ${i} stays in the dialog`);
       }
       await page.keyboard.press('Escape');
-      await until(async () => (await focused(page)).name === 'Cài đặt', 'closed; focus back on the Settings link');
-      assert.ok((await page.locator('[role="dialog"][inert]').count()) >= 1, 'a closed panel is inert');
+      await until(async () => (await focused(page)).name === 'Cài đặt hiển thị', 'closed; focus back on its button');
 
-      // Categories, from the menu drawer (which hands focus back to its button as it closes)
-      await page.getByRole('button', { name: 'Mở menu' }).click();
-      await page.locator('.MuiDrawer-paper a[href="/categories"]').click();
-      await until(async () => {
-        const f = await focused(page);
-        return f.name === 'Quay lại' && f.dialog === 'Danh mục';
-      }, 'focus on Back, in the Categories dialog');
-      const filter = page.getByRole('dialog', { name: 'Danh mục' }).getByRole('searchbox');
-      await filter.fill('giao ly');
+      // the navigation, from the title
+      const title = page.locator('button[class*="titleButton"]');
+      await title.focus();
+      await page.keyboard.press('Enter');
+      await until(async () => /Danh mục/.test((await focused(page)).dialog || ''), 'focus in the navigation dialog');
+      for (let i = 1; i <= 12; i += 1) {
+        await page.keyboard.press('Tab');
+        assert.ok((await focused(page)).dialog, `Tab ${i} stays in the dialog`);
+      }
+      const dialog = page.locator('.MuiDrawer-paper[role="dialog"]');
+      const filter = dialog.getByRole('searchbox');
+      await filter.fill('muslim');
       await page.keyboard.press('Escape');
       assert.equal(await filter.inputValue(), '', 'Esc clears the filter');
-      assert.ok((await focused(page)).dialog, 'and the panel stays open');
+      assert.ok((await focused(page)).dialog, 'and the drawer stays open');
       await page.keyboard.press('Escape');
-      await until(async () => (await focused(page)).name === 'Mở menu', 'closed; focus back on the menu button');
+      await until(async () => (await page.evaluate(() => document.activeElement.className)).includes('titleButton'), 'closed; focus back on the title');
     },
     { only: 'phone' }
   );
 
   h.test(
-    'the sidebar tree: each link, then its own toggle',
+    'the navigation: no control inside another; going down a level moves focus into it',
     async (t) => {
       const { page } = await h.open(t, CHAPTER);
       const aside = page.locator('aside');
-      const chapters = aside.locator(`a[href^="/books/${BUKHARI}/chapters/"]`);
-      await until(async () => (await chapters.count()) > 50, 'the sidebar lists the chapters');
       const nested = await page.evaluate(() => document.querySelectorAll('a a, a button, button a, button button').length);
       assert.equal(nested, 0, 'no control inside another');
+      const nav = aside.getByRole('navigation', { name: 'Bộ sưu tập hadith' });
+      await until(async () => (await nav.locator('a').count()) > 50, 'the chapters');
 
-      await aside.locator(`a[href="/books/${BUKHARI}"]`).focus();
-      await page.keyboard.press('Tab');
-      const toggle = await page.evaluate(() => ({
-        tag: document.activeElement.tagName,
-        name: document.activeElement.getAttribute('aria-label'),
-        expanded: document.activeElement.getAttribute('aria-expanded'),
-      }));
-      assert.deepEqual(toggle, { tag: 'BUTTON', name: 'Các chương của Sahih al-Bukhari', expanded: 'true' });
+      await aside.getByRole('button', { name: 'Quay lại' }).focus();
       await page.keyboard.press('Enter');
-      await until(async () => (await chapters.count()) === 0, 'Enter closes the branch');
-      assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-expanded')), 'false');
-      await page.keyboard.press(' ');
-      await until(async () => (await chapters.count()) > 50, 'Space opens it again');
+      await until(async () => (await nav.getByRole('button').count()) > 5, 'Enter goes up to the collections');
+      assert.ok(await page.evaluate(() => document.activeElement.closest('nav') !== null), 'focus on the first row');
+      await page.keyboard.press('Enter');
+      await until(async () => (await aside.getByRole('button', { name: 'Quay lại' }).count()) === 1, 'Enter goes down into a collection');
+      assert.equal((await focused(page)).name, 'Quay lại', 'focus on the way back up');
     },
     { only: 'desktop' }
   );
 
-  h.test(
-    'the chapter select: arrow keys browse, Enter opens, leaving puts the chapter back',
-    async (t) => {
-      const { page } = await h.open(t, CHAPTER);
-      const select = page.getByRole('combobox', { name: 'Chọn chương' });
-      const hint = await select.evaluate((el) => document.getElementById(el.getAttribute('aria-describedby')).textContent);
-      assert.equal(hint, 'Mở chương bạn chọn. Với bàn phím: phím mũi tên để chọn, Enter để mở.');
-      await select.focus();
-      await page.keyboard.press('ArrowDown');
-      await sleep(500);
-      assert.equal(new URL(page.url()).pathname, CHAPTER, 'an arrow key does not leave the page');
-      if ((await select.inputValue()) === '1') {
-        // an engine where the arrow opens the list (as on macOS): nothing changed
-        await page.keyboard.press('Escape');
-        return;
-      }
-      await page.keyboard.press('Tab');
-      assert.equal(await select.inputValue(), '1', 'leaving the select puts the current chapter back');
-      await select.focus();
-      await page.keyboard.press('ArrowDown');
-      await page.keyboard.press('ArrowDown');
-      await page.keyboard.press('Enter');
-      await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/3`, 'Enter opens the chapter shown');
-    },
-    { smoke: true }
-  );
-
-  h.test('links to a hadith land just below the reading bar: down, up, and from a pin', async (t) => {
+  h.test('links to a hadith land just below the header: down, up, and from a pin', async (t) => {
     const { page } = await h.open(t, CHAPTER);
     const ids = await page.locator('article[id^="hadith-"]').evaluateAll((cards) => cards.map((card) => card.id));
     for (const id of [ids[ids.length - 1], ids[1]]) {
@@ -144,8 +110,8 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
         window.location.hash = x;
       }, id);
       await sleep(700);
-      const gap = await belowBar(page, id);
-      assert.ok(gap >= 0 && gap <= 24, `#${id}: ${gap}px below the reading bar`);
+      const gap = await belowHeader(page, id);
+      assert.ok(gap >= 0 && gap <= 24, `#${id}: ${gap}px below the header`);
     }
     // a pin opens its chapter at the card, by a client-side navigation
     await h.goto(page, '/');
@@ -153,25 +119,26 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
     await page.evaluate((url) => window.next.router.push(url), `${CHAPTER}#${target}`);
     await page.waitForFunction((x) => document.getElementById(x), target);
     await sleep(900);
-    const gap = await belowBar(page, target);
-    assert.ok(gap >= 0 && gap <= 24, `from a pin: ${gap}px below the reading bar`);
+    const gap = await belowHeader(page, target);
+    assert.ok(gap >= 0 && gap <= 24, `from a pin: ${gap}px below the header`);
   });
 
   h.test('saved reading settings are on the page before its scripts run', async (t) => {
     // the scripts are blocked, so their failed loads are expected
     const { page, context } = await h.open(t, '/', { allow: [/Failed to load resource|ERR_FAILED|ChunkLoadError/] });
-    await page.evaluate(() =>
+    await page.evaluate(() => {
       localStorage.setItem(
         'settings',
         JSON.stringify({
           theme: 'dark',
-          version: 4,
+          version: 5,
           fontSize: { arabic: 34, translation: 22 },
           fontFamily: { arabic: 'Amiri', translation: 'TimesNewRoman' },
           reader: { showArabic: false, textOrder: 'translation' },
         })
-      )
-    );
+      );
+      localStorage.setItem('hadith-nav', 'closed');
+    });
     await context.route(/\/_next\/static\/chunks\//, (route) => route.abort());
     await page.goto(BASE + CHAPTER, { waitUntil: 'domcontentloaded' });
     const early = await page.evaluate(() => {
@@ -185,6 +152,7 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
         translationFace: /TimesNewRoman/.test(style.getPropertyValue('--font-trans')),
         arabic: html.getAttribute('data-arabic'),
         order: html.getAttribute('data-text-order'),
+        nav: html.getAttribute('data-nav'),
       };
     });
     assert.deepEqual(early, {
@@ -195,6 +163,7 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
       translationFace: true,
       arabic: 'hidden',
       order: 'translation',
+      nav: 'closed',
     });
   });
 
@@ -229,7 +198,7 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
           });
         },
       });
-      await page.locator('article[id^="hadith-"]').first().getByRole('button', { name: 'Copy trích dẫn, văn bản hoặc liên kết' }).click();
+      await page.locator('article[id^="hadith-"]').first().getByRole('button', { name: 'Tùy chọn hadith' }).click();
       await page.getByRole('menuitem', { name: 'Copy liên kết' }).click();
       await waitForText(page.locator('.MuiSnackbar-root'), 'Không copy được');
     },
@@ -249,19 +218,5 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
       assert.ok(search.indexOf('H2') > 0 && search.indexOf('H3') > search.indexOf('H2'), `search results: ${search.slice(0, 5)}`);
     },
     { smoke: true }
-  );
-
-  h.test(
-    'the header marks its section: the page itself, and the pages within it',
-    async (t) => {
-      // the desktop header's own nav (the breadcrumb trail links to /books too)
-      const section = (page, href) => page.locator(`nav[class*="Header_nav"] a[href="${href}"]`);
-      const { page } = await h.open(t, '/books');
-      assert.equal(await section(page, '/books').getAttribute('aria-current'), 'page');
-      await h.goto(page, CHAPTER);
-      assert.equal(await section(page, '/books').getAttribute('aria-current'), 'true');
-      assert.equal(await section(page, '/categories').getAttribute('aria-current'), null);
-    },
-    { only: 'desktop' }
   );
 });

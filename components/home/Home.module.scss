@@ -1,29 +1,24 @@
-// Home: masthead, hadith of the day, figures, then the library in sections, each
-// opened by a display-serif heading. Sections are 48px apart on desktop.
+// Home: the band with its two cards, then the library in sections on the grey page, on the
+// home page's own frame (--frame: layouts/Layout.module.scss).
 .sections {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  max-width: 1280px;
+  gap: var(--space-5);
   margin: 0 auto;
-  padding: var(--space-6) 0 var(--space-7);
+  padding: var(--space-5) 0 var(--space-6);
 }
 
 .section {
   min-width: 0;
 }
 
-// The hadith of the day, right under the search, as wide as the figures.
-.dailySection {
-  min-width: 0;
-  max-width: 920px;
-  margin: 0 auto;
-}
-
-@media screen and (min-width: 1024px) {
-  .dailySection {
-    max-width: 1100px;
-  }
+// in the search card, from 1024px
+.findTitle {
+  display: none;
+  color: var(--ink);
+  font-size: var(--text-xl);
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 .sectionHead {
@@ -31,13 +26,13 @@
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
+  padding: 0 6px;
 }
 
 .sectionTitle {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-size: var(--text-md);
   font-weight: 400;
   line-height: var(--leading-tight);
 }
@@ -49,7 +44,6 @@
   min-height: var(--tap);
   color: var(--link);
   font-size: var(--text-sm);
-  font-weight: 600;
   white-space: nowrap;
 
   &:hover,
@@ -67,16 +61,26 @@
 
 @media screen and (min-width: 1024px) {
   .sections {
-    gap: var(--space-7);
+    gap: var(--space-6);
+    max-width: 1120px;
     padding-top: var(--space-7);
+    padding-bottom: var(--space-7);
+  }
+  .findTitle {
+    display: block;
+  }
+  .sectionHead {
+    margin-bottom: var(--space-3);
+    padding: 0;
   }
   .sectionTitle {
-    font-size: var(--text-2xl);
+    font-size: var(--text-xl);
   }
 }
 
 // "Data & method", the last line before the footer.
 .sources {
+  padding: 0 6px;
 
   a {
     display: inline-flex;
@@ -84,7 +88,6 @@
     gap: var(--space-1);
     min-height: var(--tap);
     color: var(--link);
-    font-weight: 600;
 
     &:hover,
     &:focus-visible {
@@ -92,14 +95,5 @@
       text-decoration: underline;
       text-underline-offset: 3px;
     }
-  }
-}
-
-// Desktop: room for the back-to-top button beside the content (see
-// layouts/Layout.module.scss) until the page has a wide enough margin.
-@media screen and (min-width: 1024px) and (max-width: 1411px) {
-  .sections {
-    padding-left: 66px;
-    padding-right: 66px;
   }
 }

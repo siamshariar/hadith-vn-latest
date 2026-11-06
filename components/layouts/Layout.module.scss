@@ -1,157 +1,145 @@
+// The frame of the pages. docs/hadith-design-system.md, "Layout".
+//
+// Phones and tablets: the page is plain white to the edges, under a 54px header; the
+// navigation is a drawer (components/mobile/NavDrawer). From 1024px, the Quran sites' grey page
+// with white cards, on one centred frame: the navigation card, 16px, the 940px reading card.
+// The frame sets --frame for all that lines up with it: the header's logo and tools, the
+// footer, the back-to-top button (ScrollFrame).
 .wrapper {
+  --frame: calc(var(--nav-width) + var(--reading-card) + 64px); // 16 between, 24 at each side
   display: block;
   width: 100%;
-  height: 100%;
 }
+
 .header {
-  // position: fixed;
-  // top: 0;
-  // left: 0;
   width: 100%;
 }
-// viewport-fit=cover: in landscape the page clears the phone's notch and rounded
-// corners (the insets are 0 everywhere else)
+
 .body {
-  display: flex;
+  display: block;
   width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
-  padding-top: 54px;
-  height: 100%;
-  background-color: var(--canvas);
-  min-height: 100vh;
+  background-color: var(--surface);
 }
+
 .sidebar {
   display: none;
 }
-// min-width: 0 so wide content (a long select, a table) can't stretch the page
+
+// min-width: 0 so wide content (a long word, a table) can't stretch the page
 .content {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  display: block;
   width: 100%;
   min-width: 0;
-  height: 100%;
 }
+
 .container {
   width: 100%;
   min-width: 0;
-  margin: 0 auto;
-  padding-top: 16px;
-  height: 100%;
 }
+
 .footer {
   display: block;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   border-top: 1px solid var(--hairline);
 }
+
+// The plain text pages (LayoutTertiary): one card in the middle.
 .layout3 {
-  &.wrapper {
-    background-color: transparent;
-  }
-  .body {
-    background-color: transparent;
-  }
-  .content {
-    max-width: 100%;
-    margin: 0 auto;
-    // min-height: calc(100vh - 56px);
-  }
-  .container {
-    background-color: transparent;
-    margin: 0;
-    padding: 10px;
-  }
+  --frame: 1028px; // 980 + 24 at each side
+}
+
+// The home page: its own, wider frame of three columns.
+.home {
+  --frame: 1168px;
 }
 
 @media screen and (min-width: 1024px) {
-  .wrapper {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
   .header {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
     z-index: 99;
   }
+
   .body {
     display: flex;
-    width: 100%;
-    padding-top: 64px;
-    height: 100%;
-    background-color: var(--canvas);
-    min-height: calc(100vh - 72px);
-  }
-  .sidebar {
-    overflow: hidden;
-    padding: 0;
-    width: 400px;
-    height: auto;
-    max-height: 100vh;
-    background: var(--canvas);
-    box-shadow: none;
-    display: block;
-    align-self: start;
-    position: sticky;
-    top: 64px;
-    z-index: 9;
-    left: 0;
-    border-right: 1px solid var(--hairline);
-  }
-  .content {
-    display: flex;
-    justify-content: center;
     align-items: flex-start;
-    width: calc(100% - 400px);
-    padding: 32px;
-  }
-  .container {
-    width: 100%;
-    max-width: 1014px;
+    gap: var(--space-4);
+    max-width: var(--frame);
+    min-height: calc(100vh - 72px);
     margin: 0 auto;
-    padding-top: 0;
+    padding: calc(var(--header-height) + 32px) var(--space-5) 0;
+    background-color: transparent;
   }
-  .footer {
+
+  // Sticks below the header (24px from the top of the screen while it is away) and scrolls
+  // inside itself. A closed rail is only as tall as its buttons.
+  .sidebar {
+    position: sticky;
+    top: calc(var(--header-offset) + 24px);
+    z-index: 9;
     display: block;
-    border-top: 1px solid var(--hairline);
+    flex: 0 0 auto;
+    align-self: flex-start;
+    width: var(--nav-width);
+    height: calc(100vh - var(--header-offset) - 48px);
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+    transition: top 250ms var(--ease), height 250ms var(--ease);
   }
+
+  :global(html[data-nav="closed"]) .sidebar {
+    height: auto;
+  }
+
+  .content {
+    flex: 1 1 0;
+    max-width: var(--reading-card);
+  }
+
+  .footer {
+    margin-top: var(--space-7);
+    border-top: 0;
+  }
+
+  // One white card, as a reading page's, with the same reading column inside it.
   .layout3 {
-    .body {
-      background-color: transparent;
-      padding-left: 32px;
-      padding-right: 32px;
-    }
     .content {
-      margin: 32px auto;
-      min-height: calc(100vh - 201px);
-      border: 1px solid var(--hairline);
-      border-radius: var(--radius-lg);
-      background-color: var(--surface);
-      max-width: 980px;
-      width: 100%;
+      max-width: none;
     }
+
     .container {
-      padding: 0;
+      min-height: calc(100vh - 240px);
+      padding: var(--space-6) max(var(--space-6), calc((100% - var(--reading-measure)) / 2));
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow-card);
     }
   }
 }
 
-// Desktop: a lane right of the content for the back-to-top button
-// (ScrollFrame: 44px, 24px from the edge) where the page has no wider
-// gutter of its own, so it never covers a card's links.
-@media screen and (min-width: 1024px) and (max-width: 1565px) {
-  .wrapper:not(.layout3) .content {
-    padding-right: 76px;
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none !important;
   }
 }
 
-@media screen and (min-width: 1024px) and (max-width: 1131px) {
-  .layout3 .body {
-    padding-left: 76px;
-    padding-right: 76px;
+@media print {
+  .sidebar {
+    display: none !important;
+  }
+
+  .body {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
   }
 }

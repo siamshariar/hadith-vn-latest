@@ -79,7 +79,7 @@ async function checkExtras(scope, hadith, codes, where) {
 async function copyFrom(page, scope, item) {
   const sentinel = `e2e-${Date.now()}-${Math.random()}`;
   await writeClipboard(page, sentinel);
-  await scope.getByRole('button', { name: 'Copy trích dẫn, văn bản hoặc liên kết' }).click();
+  await scope.getByRole('button', { name: 'Tùy chọn hadith' }).click();
   await page.getByRole('menuitem', { name: item, exact: true }).click();
   return until(async () => {
     const value = await readClipboard(page);

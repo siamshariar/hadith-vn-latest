@@ -29,7 +29,7 @@
 
   dd {
     min-width: 0;
-    color: var(--ink);
+    color: var(--text);
     font-size: 15px;
     font-weight: 500;
     overflow-wrap: anywhere;
@@ -61,7 +61,7 @@
 
 .gradeText strong {
   color: var(--grade-txt);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 // grader and grade, ruled across
@@ -83,7 +83,7 @@
     border-bottom-color: var(--control-edge);
     background: var(--surface-soft);
     color: var(--text-secondary);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   td:first-child {
@@ -92,7 +92,7 @@
 
   td:last-child {
     color: var(--grade-txt);
-    font-weight: 600;
+    font-weight: 500;
   }
 }
 

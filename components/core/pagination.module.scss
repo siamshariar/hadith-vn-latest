@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin: 24px 0 8px;
+  margin: 32px 0 8px;
 }
 
 .controls {
@@ -56,7 +56,7 @@ a.number:focus-visible {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--on-accent);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .disabled {

@@ -19,8 +19,7 @@
 
 .quran_content h2 {
   color: var(--ink);
-  font-family: Roboto;
-  font-size: 24px;
+  font-size: var(--text-xl);
   font-weight: 400;
   line-height: 1.5;
   margin-bottom: 20px;
@@ -42,7 +41,7 @@
 .video_block h2 {
   padding: 10px 5px 0px 5px;
   color: var(--ink);
-  font-family: Roboto;
+  font-family: var(--font-ui);
   font-size: 18px;
   font-weight: 400;
   line-height: 1.5;
@@ -84,5 +83,12 @@
 @media only screen and (min-width: 1024px) {
   .title {
     font-size: 28px;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  // the card has the padding (layouts/Layout.module.scss)
+  .quran_content {
+    padding: 0;
   }
 }

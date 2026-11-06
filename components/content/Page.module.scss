@@ -1,53 +1,109 @@
 // Shared layout for the data pages (books, chapters, categories, search, hadith).
-// docs/hadith-design-system.md: page titles in the display serif, lists ruled by
-// hairlines, numbers set like a book's contents.
+// docs/hadith-design-system.md: one white surface, plain to the edges on phones and tablets, a
+// card on the web; a reading column of 720px inside it, whatever the card's width.
 
 .page {
   width: 100%;
-  padding: var(--space-1) var(--space-4) var(--space-6);
+  padding: var(--space-5) max(var(--space-4), calc((100% - 760px) / 2)) var(--space-2);
+  background: var(--surface);
 }
 
+// centred, as a surah's opening on the Quran sites: the title, the Arabic, the figures
 .header {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
+  align-items: center;
+  gap: 2px;
+  margin-bottom: var(--space-2);
+  text-align: center;
 }
 
 .title {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 400;
-  line-height: var(--leading-tight);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .titleArabic {
-  color: var(--text-secondary);
+  color: var(--ink);
   font-family: var(--font-arabic);
-  font-size: 22px;
-  line-height: 1.6;
+  font-size: 32px;
+  line-height: 1.5;
 }
 
 .subtitle {
   max-width: var(--measure);
   color: var(--text-secondary);
-  font-size: var(--text-base);
+  font-size: var(--text-sm);
   line-height: var(--leading-normal);
 }
 
 .meta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
+  justify-content: center;
+  gap: 0 var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 
   span + span::before {
     content: "·";
-    margin-inline-end: var(--space-4);
+    margin-inline-end: var(--space-2);
     color: var(--muted);
+  }
+}
+
+// Previous and next, after the text: a line on phones and tablets, a card of its own on the web.
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-5) var(--space-4) 0;
+  padding: 18px 0 var(--space-5);
+  border-top: 1px solid var(--hairline);
+  color: var(--text-secondary);
+  font-size: 15px;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    min-height: var(--tap);
+    color: inherit;
+
+    span:not([aria-hidden]) {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    &:focus-visible {
+      color: var(--link);
+    }
+  }
+
+  a[rel="next"],
+  .pagerNext {
+    margin-inline-start: auto;
+    text-align: end;
+  }
+
+  [aria-hidden] {
+    flex: 0 0 auto;
+    font-size: 22px;
+    line-height: 1;
+  }
+}
+
+@media (hover: hover) {
+  .pager a:hover {
+    color: var(--link);
   }
 }
 
@@ -80,6 +136,11 @@
   margin-top: var(--space-6);
 }
 
+// a section's own line under a list, or the page's first
+.toolbarEnd {
+  margin-inline-start: auto;
+}
+
 .sectionHead {
   display: flex;
   flex-wrap: wrap;
@@ -91,9 +152,8 @@
 
 .sectionTitle {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 400;
+  font-size: var(--text-md);
+  font-weight: 500;
   line-height: var(--leading-tight);
 }
 
@@ -104,7 +164,7 @@
   min-height: var(--tap);
   color: var(--link);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
 
   &:hover,
   &:focus-visible {
@@ -114,35 +174,32 @@
   }
 }
 
-// Card grid (chapters, subcategories, books)
+// Rows of two columns (subcategories), ruled by dashes as the Quran sites' lists
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-3);
+  column-gap: var(--space-5);
 }
 
 .tile {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  min-height: 64px;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 60px;
+  padding: 10px 2px;
+  border-bottom: 1px dashed var(--hairline);
   color: var(--text);
-  transition: border-color var(--duration) var(--ease);
+  transition: background-color var(--duration) var(--ease);
 
-  &:hover,
   &:focus-visible {
-    border-color: var(--control-edge);
+    outline-offset: -2px;
+  }
+}
 
-    .tileTitle {
-      color: var(--link);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 3px;
-    }
+@media (hover: hover) {
+  .tile:hover {
+    background: var(--hover);
   }
 }
 
@@ -159,26 +216,35 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
+// the title and the figures, the Arabic title beside them
 .tileBody {
-  display: flex;
+  display: grid;
   flex: 1 1 auto;
-  flex-direction: column;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 2px var(--space-3);
   min-width: 0;
 }
 
+.tileBody > :not(.tileArabic) {
+  grid-column: 1;
+}
+
 .tileTitle {
-  color: var(--ink);
+  color: var(--text);
   font-size: 15px;
-  font-weight: 500;
-  line-height: var(--leading-snug);
+  line-height: 1.35;
 }
 
 .tileArabic {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  max-width: 11em;
   color: var(--text-secondary);
   font-family: var(--font-arabic);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.5;
+  text-align: right;
 }
 
 .tileMeta {
@@ -199,19 +265,28 @@
   gap: var(--space-2);
   min-height: 36px;
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--hairline);
+  border: 0;
   border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
+  background: var(--surface-soft);
+  color: var(--text-secondary);
   font: inherit;
   font-size: var(--text-sm);
   line-height: var(--leading-snug);
   cursor: pointer;
-  transition: border-color var(--duration) var(--ease), color var(--duration) var(--ease);
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
 
-  &:hover,
   &:focus-visible {
-    border-color: var(--control-edge);
+    color: var(--link);
+  }
+
+  // 44px where the screen is touched
+  @media (pointer: coarse) {
+    min-height: var(--tap);
+  }
+}
+
+@media (hover: hover) {
+  .chip:hover {
     color: var(--link);
   }
 }
@@ -222,31 +297,77 @@
   font-variant-numeric: tabular-nums;
 }
 
+// the one in force: the tint of a current row, and the weight (colour is not the only signal)
 .chipActive {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--accent-tint);
+  color: var(--accent);
+  font-weight: 500;
 
   .chipCount {
-    color: var(--on-accent);
-    opacity: 0.8;
-  }
-
-  &:hover,
-  &:focus-visible {
-    border-color: var(--accent-hover);
-    background: var(--accent-hover);
-    color: var(--on-accent);
+    color: var(--accent);
   }
 }
 
+// What applies to the list below: filters, the translations chip.
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  gap: 6px var(--space-4);
+  margin-top: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+// A filter that is on or off: a switch with its words (the link works without JavaScript).
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--tap);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.switchTrack {
+  position: relative;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--control-edge);
+  transition: background-color var(--duration) var(--ease);
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    inset-inline-start: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--switch-knob);
+    transition: inset-inline-start var(--duration) var(--ease);
+  }
+}
+
+.switch[aria-checked="true"] .switchTrack {
+  background: var(--accent);
+
+  &::after {
+    inset-inline-start: 18px;
+    background: var(--on-accent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switchTrack,
+  .switchTrack::after {
+    transition: none;
+  }
 }
 
 .button {
@@ -262,7 +383,7 @@
   color: var(--on-accent);
   font: inherit;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease);
 
@@ -285,7 +406,7 @@
   }
 }
 
-@media only screen and (min-width: 600px) {
+@media only screen and (min-width: 640px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -293,19 +414,39 @@
 
 @media only screen and (min-width: 1024px) {
   .page {
-    padding: 0 0 var(--space-5);
+    padding: var(--space-6) max(var(--space-6), calc((100% - var(--reading-measure)) / 2));
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
   }
   .header {
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-1);
   }
+  // The title in a grey bar, as a surah's on the Quran sites.
   .title {
-    font-size: 2.125rem;
+    align-self: stretch;
+    min-height: 49px;
+    margin-bottom: 20px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+    color: var(--text);
+    font-size: var(--text-xl);
+    font-weight: 400;
+    line-height: 33px;
   }
   .titleArabic {
-    font-size: 26px;
+    font-size: var(--text-3xl);
   }
   .sectionTitle {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
+  }
+  .pager {
+    margin: var(--space-6) 0 0;
+    padding: 20px 25px;
+    border-top: 0;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
   }
 }
 
@@ -313,11 +454,6 @@
   .grid3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-}
-
-.neighbours {
-  margin-top: var(--space-5);
-  margin-bottom: 0;
 }
 
 .more {
@@ -375,8 +511,6 @@
 
 // a category with nothing in the reader's language yet: reachable, quieter
 .tileMuted {
-  border-style: dashed;
-  background: transparent;
   color: var(--muted);
 
   .tileTitle {
@@ -428,8 +562,7 @@
 .chapterNo {
   grid-area: no;
   color: var(--muted);
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   font-variant-numeric: lining-nums tabular-nums;
   text-align: center;
 }
@@ -485,13 +618,10 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-// prose pages (data & method): sentences keep a reading measure inside the wider page
+// prose pages (data & method)
 .prosePage {
-  max-width: 880px;
-
   p,
   li {
-    max-width: var(--measure);
     line-height: 1.7;
   }
 }
@@ -513,7 +643,7 @@
   h3 {
     color: var(--ink);
     font-size: var(--text-md);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   a {
@@ -557,7 +687,7 @@
     border-bottom-color: var(--control-edge);
     background: var(--surface-soft);
     color: var(--text-secondary);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   // the language of a group of translations: its own name on one line, the
@@ -565,7 +695,7 @@
   tbody th {
     min-width: 7.5em;
     color: var(--ink);
-    font-weight: 600;
+    font-weight: 500;
 
     bdi {
       white-space: nowrap;

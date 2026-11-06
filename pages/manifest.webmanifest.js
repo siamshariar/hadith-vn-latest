@@ -13,10 +13,10 @@ export async function getServerSideProps({ res }) {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    // The installed app opens on the page's paper, under a bar of the same colour
-    // (styles/_variables --canvas); the theme-color meta follows a dark reader.
-    background_color: "#F5F6F1",
-    theme_color: "#F5F6F1",
+    // The installed app opens on the page's colour (styles/_variables --canvas), under a bar of
+    // the header's (--surface); the theme-color meta follows a dark reader.
+    background_color: "#F4F4F4",
+    theme_color: "#FFFFFF",
     icons: [{ src: "/img/favicon/android-chrome-192x192.png", sizes: "192x192", type: "image/png" }],
   };
   res.setHeader("Content-Type", "application/manifest+json; charset=utf-8");

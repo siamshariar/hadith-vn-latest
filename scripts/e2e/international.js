@@ -70,8 +70,17 @@ const cookieOf = async (context, name) => {
   const found = (await context.cookies(BASE_AC)).find((c) => c.name === name);
   return found ? decodeURIComponent(found.value) : undefined;
 };
-// the visible language menu button of the header (desktop: "English ▾"; phones: the globe)
+// the visible language menu button (the web's header: "English ▾"; the phone's home page: the globe;
+// its reading pages: at the foot of the navigation drawer)
 const menuButton = (page) => page.locator('button[data-language-menu]').filter({ visible: true }).first();
+// the same, shown or not: for what it says once the drawer that has it has closed
+const anyMenuButton = (page) => page.locator('button[data-language-menu]').first();
+async function reachMenu(page) {
+  if (await menuButton(page).count()) return;
+  await page.locator('[class*="titleButton"]').click();
+  await page.locator('.MuiDrawer-paper[role="dialog"]').waitFor();
+  await menuButton(page).waitFor();
+}
 // the translations chip of the hadith page header
 const headerChip = (page) => page.locator('article > header button[data-translations]');
 
@@ -157,6 +166,7 @@ module.exports = spec(module, 'international (ac)', (h) => {
       const languages = await api('/languages');
       const french = languages.find((l) => l.code === 'fr');
       const { page, context } = await openAc(h, t, BUKHARI_1, { locale: 'fr-FR', allow: [/status of 404/] });
+      await reachMenu(page);
       const button = menuButton(page);
       const frUi = uiOf('fr');
       assert.equal(await button.getAttribute('aria-label'), tr(frUi, 'labelValue', { label: tr(frUi, 'language'), value: french.nativeName }));
@@ -183,12 +193,13 @@ module.exports = spec(module, 'international (ac)', (h) => {
       assert.equal(props.uiLang, 'bn', 'and the interface');
       assert.equal(await htmlLang(page), 'bn', 'kept after a reload');
       const bengali = languages.find((l) => l.code === 'bn');
-      assert.equal(await menuButton(page).getAttribute('aria-label'), tr('bn', 'labelValue', { label: tr('bn', 'language'), value: bengali.nativeName }));
+      assert.equal(await anyMenuButton(page).getAttribute('aria-label'), tr('bn', 'labelValue', { label: tr('bn', 'language'), value: bengali.nativeName }));
 
       // a static page (built in English) takes the language once in the browser
       await gotoAc(h, page, '/no-such-page');
       await waitForH1(page, tr('bn', 'notFoundTitle'));
-      assert.equal(await htmlLang(page), 'bn');
+      // <html lang> follows in an effect right after that render (LocaleContext)
+      await until(async () => (await htmlLang(page)) === 'bn', '<html lang> in Bengali');
       assert.equal(norm(await page.title()), `${tr('bn', 'notFoundTitle')} | ${tr('bn', 'siteHeadingAll')} | ${SITE_NAME}`);
     },
     { smoke: true }

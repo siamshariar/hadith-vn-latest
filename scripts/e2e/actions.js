@@ -1,7 +1,6 @@
-// What a reader does with a hadith (the icon row on cards and on the hadith
-// page): copy the text, the citation or the link; share; bookmark into a
-// folder; pin; and the last-read history behind "Tiếp tục đọc". The saved
-// lists live in localStorage and must survive a reload.
+// What a reader does with a hadith (the ⋮ menu on cards and on the hadith page): copy the
+// text, the citation or the link; share; bookmark into a folder; pin; and the last-read
+// history behind "Tiếp tục đọc". The saved lists live in localStorage and must survive a reload.
 'use strict';
 
 const {
@@ -31,6 +30,7 @@ const BUKHARI = 'sahih-al-bukhari';
 // one, grades with their grader names (the topic collection's own grade
 // without one), and HadeethEnc's source line when its content is copied.
 const SOURCE_LINE = 'Nguồn: HadeethEnc.com';
+const HADITH_OPTIONS = 'Tùy chọn hadith';
 const label = (text, entry) => [text, translatorOf(entry.author, entry.edition)].filter(Boolean).join(' · ');
 
 function expectedCitation(hadith, permalink, site, name = hadith.book.name) {
@@ -76,7 +76,7 @@ function expectedText(hadith, permalink, name = hadith.book.name) {
 async function copyFrom(page, scope, item) {
   const sentinel = `e2e-${Date.now()}-${Math.random()}`;
   await writeClipboard(page, sentinel);
-  await scope.getByRole('button', { name: 'Copy trích dẫn, văn bản hoặc liên kết' }).click();
+  await scope.getByRole('button', { name: HADITH_OPTIONS }).click();
   await page.getByRole('menuitem', { name: item, exact: true }).click();
   const copied = await until(async () => {
     const value = await readClipboard(page);
@@ -141,8 +141,11 @@ module.exports = spec(module, 'hadith actions', (h) => {
         },
       });
       assert.equal(await page.evaluate(() => typeof navigator.share), 'undefined');
-      const share = page.locator('article > header').getByRole('button', { name: 'Chia sẻ', exact: true });
-      await share.click();
+      const share = async () => {
+        await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
+        await page.getByRole('menuitem', { name: 'Chia sẻ', exact: true }).click();
+      };
+      await share();
       const dialog = page.locator('[role="presentation"]').filter({ has: page.locator('#share-title') });
       await waitForText(dialog.locator('#share-title'), 'Chia sẻ hadith');
       for (const name of ['Email', 'Facebook', 'X (Twitter)', 'WhatsApp', 'Telegram']) {
@@ -150,7 +153,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
       }
       await dialog.getByRole('button', { name: 'Đóng' }).click();
       await dialog.waitFor({ state: 'detached' });
-      await share.click();
+      await share();
       await dialog.locator('#share-title').waitFor();
       await page.keyboard.press('Escape');
       await dialog.waitFor({ state: 'detached' });
@@ -173,7 +176,8 @@ module.exports = spec(module, 'hadith actions', (h) => {
         },
       });
       const { canonical } = await meta(page);
-      await page.locator('article > header').getByRole('button', { name: 'Chia sẻ', exact: true }).click();
+      await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
+      await page.getByRole('menuitem', { name: 'Chia sẻ', exact: true }).click();
       const shared = await until(() => page.evaluate(() => window.__shared), 'navigator.share called');
       assert.deepEqual(shared, { title: 'Sahih al-Bukhari 1 | Hadith.vn', url: canonical });
       assert.equal(await page.locator('#share-title').count(), 0, 'no fallback dialog when the browser shares');
@@ -187,7 +191,8 @@ module.exports = spec(module, 'hadith actions', (h) => {
       const hadith = await api(`/books/bukhari/hadiths/1${loc()}`);
       const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
       const header = page.locator('article > header');
-      await header.getByRole('button', { name: 'Lưu dấu trang' }).click();
+      await header.getByRole('button', { name: HADITH_OPTIONS }).click();
+      await page.getByRole('menuitem', { name: 'Lưu dấu trang', exact: true }).click();
       const dialog = page.locator('[role="presentation"]').filter({ has: page.locator('h2', { hasText: 'Lưu dấu trang' }) });
       await dialog.waitFor();
       const folder = dialog.getByRole('combobox', { name: 'Chọn thư mục' });
@@ -207,7 +212,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
 
       // the folder in the saved lists, then the folder page with the hadith
       await h.goto(page, '/bookmarks');
-      const folderLink = page.getByRole('tabpanel').getByRole('link', { name: /Yêu thích/ });
+      const folderLink = page.locator('main').getByRole('tabpanel').getByRole('link', { name: /Yêu thích/ });
       await waitForText(folderLink, /^Yêu thích\s*1 hadith$/);
       await folderLink.click();
       await h.waitForPath(page, (url) => url.pathname === '/bookmarks' && url.searchParams.get('key') === 'favorites', 'folder page');
@@ -231,7 +236,8 @@ module.exports = spec(module, 'hadith actions', (h) => {
   h.test('bookmark folders: create one, empty name refused, delete it', async (t) => {
     const hadith = await api(`/books/bukhari/hadiths/3${loc()}`);
     const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/3`);
-    await page.locator('article > header').getByRole('button', { name: 'Lưu dấu trang' }).click();
+    await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
+    await page.getByRole('menuitem', { name: 'Lưu dấu trang', exact: true }).click();
     const dialog = page.locator('[role="presentation"]').filter({ has: page.locator('h2', { hasText: 'Lưu dấu trang' }) });
     await dialog.getByRole('combobox', { name: 'Chọn thư mục' }).selectOption('create');
     const name = dialog.getByRole('textbox', { name: 'Tên thư mục' });
@@ -247,7 +253,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
     assert.deepEqual(saved[key].entry.map((e) => e.id), [hadith.id]);
 
     await h.goto(page, '/bookmarks');
-    const panel = page.getByRole('tabpanel');
+    const panel = page.locator('main').getByRole('tabpanel');
     await waitForText(panel.getByRole('link', { name: /Học tập/ }), /^Học tập\s*1 hadith$/);
     // on desktop the delete button shows on hover or when the folder has keyboard focus
     await panel.getByRole('link', { name: /Học tập/ }).focus();
@@ -257,8 +263,8 @@ module.exports = spec(module, 'hadith actions', (h) => {
     await until(async () => (await panel.getByRole('link', { name: /Học tập/ }).count()) === 0, 'folder removed');
     await page.reload();
     await h.waitForHydration(page);
-    await waitForText(page.getByRole('tabpanel').getByRole('link').first(), /Yêu thích/);
-    assert.equal(await page.getByRole('tabpanel').getByRole('link', { name: /Học tập/ }).count(), 0, 'still gone after a reload');
+    await waitForText(page.locator('main').getByRole('tabpanel').getByRole('link').first(), /Yêu thích/);
+    assert.equal(await page.locator('main').getByRole('tabpanel').getByRole('link', { name: /Học tập/ }).count(), 0, 'still gone after a reload');
   });
 
   h.test(
@@ -270,7 +276,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
 
       // pin from the hadith page
       await h.goto(page, `/books/${BUKHARI}/hadiths/3`);
-      await page.locator('article > header').getByRole('button', { name: 'Thêm thao tác' }).click();
+      await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
       await page.getByRole('menuitem', { name: 'Ghim', exact: true }).click();
       await until(async () => ((await stored(page, 'pin')) || []).some((p) => p.id === three.id), 'pin saved');
 
@@ -288,37 +294,37 @@ module.exports = spec(module, 'hadith actions', (h) => {
       // the saved lists: pins and recently read
       await h.goto(page, '/bookmarks');
       await page.getByRole('tab', { name: 'Đã ghim' }).click();
-      const pinned = page.getByRole('tabpanel').getByRole('link', { name: 'Sahih al-Bukhari 3' });
+      const pinned = page.locator('main').getByRole('tabpanel').getByRole('link', { name: 'Sahih al-Bukhari 3' });
       await pinned.waitFor();
       await page.getByRole('tab', { name: 'Đọc gần đây' }).click();
-      await page.getByRole('tabpanel').getByRole('link', { name: /Sahih al-Bukhari 3/ }).waitFor();
+      await page.locator('main').getByRole('tabpanel').getByRole('link', { name: /Sahih al-Bukhari 3/ }).waitFor();
       await page.reload();
       await h.waitForHydration(page);
       // the last tab is remembered, and the history is still there
       await until(async () => (await page.getByRole('tab', { name: 'Đọc gần đây' }).getAttribute('aria-selected')) === 'true', 'tab remembered');
-      await page.getByRole('tabpanel').getByRole('link', { name: /Sahih al-Bukhari 3/ }).waitFor();
+      await page.locator('main').getByRole('tabpanel').getByRole('link', { name: /Sahih al-Bukhari 3/ }).waitFor();
       await page.getByRole('tab', { name: 'Đã ghim' }).click();
-      await page.getByRole('tabpanel').getByRole('link', { name: 'Sahih al-Bukhari 3' }).click();
+      await page.locator('main').getByRole('tabpanel').getByRole('link', { name: 'Sahih al-Bukhari 3' }).click();
       await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/hadiths/3`, 'pin opens where it was made');
       await waitForH1(page, 'Sahih al-Bukhari 3');
 
       // unpin
-      await page.locator('article > header').getByRole('button', { name: 'Thêm thao tác' }).click();
+      await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
       await page.getByRole('menuitem', { name: 'Bỏ ghim', exact: true }).click();
       await until(async () => ((await stored(page, 'pin')) || []).length === 0, 'pin removed');
       await h.goto(page, '/bookmarks');
       await page.getByRole('tab', { name: 'Đã ghim' }).click();
-      await waitForText(page.getByRole('tabpanel'), 'Chưa có hadith nào được ghim.');
+      await waitForText(page.locator('main').getByRole('tabpanel'), 'Chưa có hadith nào được ghim.');
 
       // a pin made on a chapter page goes back to the card there
       const first = chapter.hadiths[1];
       await h.goto(page, `/books/${BUKHARI}/chapters/1`);
-      await page.locator(`#hadith-${first.id}`).getByRole('button', { name: 'Thêm thao tác' }).click();
+      await page.locator(`#hadith-${first.id}`).getByRole('button', { name: HADITH_OPTIONS }).click();
       await page.getByRole('menuitem', { name: 'Ghim', exact: true }).click();
       await until(async () => ((await stored(page, 'pin')) || []).some((p) => p.id === first.id), 'card pin saved');
       await h.goto(page, '/bookmarks');
       await page.getByRole('tab', { name: 'Đã ghim' }).click();
-      await page.getByRole('tabpanel').getByRole('link', { name: `Sahih al-Bukhari ${first.referenceNumber}` }).click();
+      await page.locator('main').getByRole('tabpanel').getByRole('link', { name: `Sahih al-Bukhari ${first.referenceNumber}` }).click();
       await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/1` && url.hash === `#hadith-${first.id}`, 'back to the card');
       await until(async () => {
         const box = await page.locator(`#hadith-${first.id}`).boundingBox();
@@ -332,7 +338,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
     'desktop "Tùy chọn khác" menu: bookmarks, pins and history dialogs',
     async (t) => {
       const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
-      await page.locator('article > header').getByRole('button', { name: 'Thêm thao tác' }).click();
+      await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
       await page.getByRole('menuitem', { name: 'Ghim', exact: true }).click();
       for (const [item, expected] of [
         ['Dấu trang', /Yêu thích\s*0 hadith/],

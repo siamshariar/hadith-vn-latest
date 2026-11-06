@@ -1,85 +1,77 @@
-// Collection page (pages/books/[bookId]): intro block and chapter list. The intro
-// is the page's header, on the paper: the name in the display serif, the figures
-// on a ruled strip (as on the home page), the translations folded under it.
+// Collection page (pages/books/[bookId]): the opening, centred as a chapter's, and the chapter
+// list. The figures are one quiet line; the translations fold under it.
 
 .intro {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
 .titleRow {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
+  text-align: center;
 }
 
 .title {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 400;
-  line-height: var(--leading-tight);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .titleArabic {
   color: var(--ink);
   font-family: var(--font-arabic);
-  font-size: 26px;
-  line-height: 1.6;
+  font-size: 32px;
+  line-height: 1.5;
 }
 
-// figures: value over label, one strip ruled by hairlines
+// figures: "7,580 hadiths · 98 chapters", the numbers first
 .facts {
   display: flex;
   flex-wrap: wrap;
-  gap: 1px;
-  margin-top: var(--space-3);
-  border-block: 1px solid var(--hairline);
-  background: var(--hairline);
+  justify-content: center;
+  gap: var(--space-1) var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: center;
 }
 
 .fact {
-  display: flex;
-  flex: 1 1 96px;
-  flex-direction: column;
-  gap: 2px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 var(--space-1);
   min-width: 0;
-  padding: var(--space-3) var(--space-4);
-  background: var(--canvas);
 
   dt {
     order: 1;
-    color: var(--text-secondary);
-    font-size: 13px;
     line-height: var(--leading-snug);
   }
 }
 
 .factValue {
   order: 0;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: 400;
-  line-height: var(--leading-tight);
-  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--text);
+  font-weight: 500;
+  line-height: var(--leading-snug);
+  font-variant-numeric: tabular-nums;
 }
 
 .factNote {
   order: 2;
+  flex-basis: 100%;
   color: var(--muted);
   font-size: var(--text-xs);
   line-height: var(--leading-snug);
 }
 
-.factReadable {
-  flex-basis: 180px;
-
-  .factValue {
-    color: var(--accent);
-  }
+.factReadable .factValue {
+  color: var(--accent);
 }
 
 // the translations by language (/hadith/editions), folded
@@ -91,9 +83,10 @@
     align-items: center;
     gap: 6px;
     min-height: var(--tap);
+    justify-content: center;
     color: var(--link);
-    font-size: 15px;
-    font-weight: 600;
+    font-size: var(--text-sm);
+    font-weight: 500;
     cursor: pointer;
     list-style: none;
 
@@ -172,58 +165,65 @@
   overflow-wrap: anywhere;
 }
 
-// chapters: a contents page
+// chapters: rows with the number in a disc, as the Quran sites' surah list; two columns from
+// 640px, ruled by dashes
 .chapterList {
-  border-top: 1px solid var(--hairline);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: var(--space-5);
 }
 
 .chapterRow {
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 34px minmax(0, 1fr);
   grid-template-areas:
-    "no name range"
-    "no name count";
+    "no name"
+    "no range";
   align-items: center;
   gap: 0 var(--space-3);
-  min-height: 56px;
-  padding: 9px var(--space-2);
-  border-bottom: 1px solid var(--hairline);
+  height: 100%;
+  min-height: 60px;
+  padding: 10px 2px;
+  border-bottom: 1px dashed var(--hairline);
   color: var(--text);
   transition: background-color var(--duration) var(--ease);
 
-  &:hover,
   &:focus-visible {
-    background: var(--hover);
+    outline-offset: -2px;
+  }
+}
 
-    .chapterName {
-      color: var(--link);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 3px;
-    }
+@media (hover: hover) {
+  .chapterRow:hover {
+    background: var(--hover);
   }
 }
 
 .withArabic .chapterRow {
   grid-template-areas:
-    "no name range"
-    "no arabic count";
+    "no name"
+    "no arabic"
+    "no range";
 }
 
 .chapterNo {
   grid-area: no;
-  color: var(--muted);
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-variant-numeric: lining-nums tabular-nums;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .chapterName {
   grid-area: name;
-  color: var(--ink);
-  font-size: var(--text-base);
-  font-weight: 500;
+  color: var(--text);
+  font-size: 15px;
   line-height: 1.35;
 }
 
@@ -231,59 +231,33 @@
   grid-area: arabic;
   color: var(--text-secondary);
   font-family: var(--font-arabic);
-  font-size: 19px;
+  font-size: 18px;
   line-height: 1.5;
   text-align: right;
 }
 
+// "7 hadiths · 1–7"
 .chapterRange {
   grid-area: range;
-  color: var(--text);
-  font-size: var(--text-sm);
-  font-weight: 500;
+  color: var(--muted);
+  font-size: 12.5px;
   font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
 }
 
 .chapterCount {
-  grid-area: count;
-  color: var(--muted);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  white-space: nowrap;
+  display: none;
 }
 
 @media only screen and (min-width: 768px) {
-  .titleRow {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--space-1) var(--space-5);
-  }
-
   .edition {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
     grid-template-areas: "language translator";
   }
+}
 
-  // one dense line per chapter: number | name | range | count
-  .chapterRow {
-    grid-template-columns: 44px minmax(0, 1fr) 120px 92px;
-    grid-template-areas: "no name range count";
-    min-height: 44px;
-    padding: 10px var(--space-3);
-  }
-
-  .withArabic .chapterRow {
-    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 0.8fr) 120px 92px;
-    grid-template-areas: "no name arabic range count";
-  }
-
-  .chapterName {
-    line-height: 1.4;
+@media only screen and (min-width: 640px) {
+  .chapterList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -294,15 +268,21 @@
 }
 
 @media only screen and (min-width: 1024px) {
-  .intro {
-    margin-bottom: var(--space-6);
-  }
-
+  // The title in a grey bar, as a chapter's.
   .title {
-    font-size: 2.125rem;
+    align-self: stretch;
+    min-height: 49px;
+    margin-bottom: 20px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+    color: var(--text);
+    font-size: var(--text-xl);
+    font-weight: 400;
+    line-height: 33px;
   }
 
   .titleArabic {
-    font-size: 30px;
+    font-size: var(--text-3xl);
   }
 }

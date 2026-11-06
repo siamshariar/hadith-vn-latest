@@ -43,7 +43,7 @@ export default function Bookmark() {
 }
 
 Bookmark.getLayout = function getLayout(page) {
-  return <Layout>{page}</Layout>;
+  return <Layout title={({ t }) => t("savedLists")}>{page}</Layout>;
 };
 
 // Server-rendered only to know the reader's language; the bookmarks

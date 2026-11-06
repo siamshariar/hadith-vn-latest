@@ -83,7 +83,7 @@ export default function Book({ book, counts, editions, error }) {
 Book.getLayout = function getLayout(page) {
   const { book } = page.props;
   return (
-    <Layout sidebar="books" selectedBookSlug={book ? book.slug : null}>
+    <Layout sidebar="books" selectedBookSlug={book ? book.slug : null} title={book ? () => book.name : undefined}>
       {page}
     </Layout>
   );

@@ -31,8 +31,8 @@ const fold = (value) =>
 const capitalize = (text) => (text ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : text);
 
 // The language menu in the header of every site: "Tiếng Việt ▾" with a globe in the desktop
-// header (variant "desktop"), the globe alone in the phone headers ("phone"), a row of the
-// phone menu ("menu"). It lists every language of the API (/hadith/languages, loaded when it
+// header (variant "desktop"), the globe alone in the phone headers ("phone"), a place in the
+// foot of the navigation drawer ("foot", NavDrawer styles it), a row of a menu ("menu"). It lists every language of the API (/hadith/languages, loaded when it
 // opens): its own name, then its name in the interface (the catalog's, else the API's English
 // one) and how many hadiths are translated, with a filter. Choosing one saves it (hadith_lang)
 // and shows the page in it: the translation, the book names, and the interface
@@ -209,6 +209,7 @@ export default function LanguageMenu({ variant = "desktop", className = "" }) {
             <span className={styles.caret} aria-hidden="true" />
           </>
         )}
+        {variant === "foot" && <span lang={lang}>{name}</span>}
         {variant === "menu" && (
           <span className={styles.text}>
             {t("labelColon", { label: t("language") })} <span lang={lang}>{name}</span>

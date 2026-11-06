@@ -4,19 +4,17 @@
 
 // ---------------------------------------------------------------- Arabic
 
-// 24px on phones, 28px on desktops at the default size (--fs-arabic: 28px,
-// changed in the reader settings). Line-height 2: vowelled text, stacked
-// harakat never touch. Never letter-spaced (it breaks the joining).
+// 30px on phones, 36px from 640px at the default size (--fs-arabic, changed in the reader
+// settings), in the Quran sites' face. Never letter-spaced (it breaks the joining).
 .arabic {
   font-family: var(--font-arabic);
-  font-size: calc(var(--fs-arabic) * 0.86);
+  font-size: var(--fs-arabic);
   font-weight: 400;
   line-height: var(--leading-arabic);
   color: var(--ink);
   text-align: right;
   white-space: pre-line;
   overflow-wrap: anywhere;
-  word-spacing: 0.04em;
 }
 
 .clampArabic {
@@ -27,12 +25,6 @@
   overflow: hidden;
 }
 
-@media only screen and (min-width: 1024px) {
-  .arabic {
-    font-size: var(--fs-arabic);
-  }
-}
-
 // ---------------------------------------------------------------- translation
 
 .translation {
@@ -41,8 +33,8 @@
   gap: var(--space-2);
 }
 
-// "English · Muhsin Khan" above each translation. No case change or tracking:
-// the label may be in any script.
+// "English · Muhsin Khan" above a translation. No case change or tracking: the label may be in
+// any script.
 .labelRow {
   display: flex;
   flex-wrap: wrap;
@@ -50,13 +42,13 @@
   gap: var(--space-1) 6px;
   min-width: 0;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: var(--leading-snug);
 }
 
 .label {
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .creditSep {
@@ -96,9 +88,9 @@
 
 .translationText {
   font-family: var(--font-trans);
-  font-size: calc(var(--fs-trans) * 0.92);
+  font-size: var(--fs-trans);
   line-height: var(--leading-reading);
-  color: var(--text);
+  color: var(--ink);
   white-space: pre-line;
   overflow-wrap: anywhere;
   text-wrap: pretty; // no single word left on a paragraph's last line
@@ -109,7 +101,7 @@
   display: block;
   margin-bottom: var(--space-1);
   color: var(--ink);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .clampTranslation {
@@ -118,12 +110,6 @@
   -webkit-line-clamp: 6;
   line-clamp: 6;
   overflow: hidden;
-}
-
-@media only screen and (min-width: 600px) {
-  .translationText {
-    font-size: var(--fs-trans);
-  }
 }
 
 .missing {
@@ -148,8 +134,8 @@
   align-items: baseline;
   gap: 0 var(--space-1);
   max-width: 100%;
-  padding: 2px var(--space-3);
-  border-radius: var(--radius-pill);
+  padding: 1px var(--space-2);
+  border-radius: 10px;
   background: var(--grade-bg);
   color: var(--grade-txt);
   font-size: 13px;
@@ -157,7 +143,7 @@
 }
 
 .gradeBadgeGrade {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .gradeBadgeGrader,
@@ -184,7 +170,7 @@
 }
 
 .chipPrimary {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .chipGrader {
@@ -194,9 +180,8 @@
 .sectionTitle {
   margin-bottom: var(--space-3);
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 400;
+  font-size: var(--text-md);
+  font-weight: 500;
   line-height: var(--leading-tight);
 }
 
@@ -208,7 +193,7 @@
   margin-bottom: var(--space-3);
   color: var(--grade-txt);
   font-size: var(--text-base);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 // one ruled row per grader: name, then the grade as stated
@@ -234,7 +219,7 @@
 
 .graderGrade {
   color: var(--grade-txt);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 // ---------------------------------------------------------------- linked translation (topic collection)

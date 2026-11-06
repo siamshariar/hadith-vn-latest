@@ -1,14 +1,11 @@
-import { Fragment, useContext, useEffect, useRef, useState } from "react";
+import { Fragment, useContext, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { PinContext } from "../../contexts/PinContext";
 import { useLocale } from "../../contexts/LocaleContext";
 import {
-  UNASSIGNED_CHAPTER,
   bookHadithPath,
-  bookPath,
   categoryPath,
-  chapterPath,
   citablePath,
   cleanText,
   hadithPath,
@@ -18,14 +15,14 @@ import {
   shortBookName,
   storedHadithRef,
 } from "../../lib/hadith";
-import { referenceText } from "../../lib/citation";
-import { TRANSLATIONS_PARAM, extraTranslations } from "../../lib/translations";
+import { inBookText, referenceText } from "../../lib/citation";
+import { extraTranslations, keptQuery } from "../../lib/translations";
 import HadithOptions from "../content/HadithOptions";
 import { GradeBadge } from "./Grades";
 import HadithReference from "./HadithReference";
 import { ArabicText, HadithTranslations, shownTranslation } from "./HadithText";
-import ReaderBar, { barStyles } from "./ReaderBar";
 import TranslationPicker from "./TranslationPicker";
+import pageStyles from "../content/Page.module.scss";
 import styles from "./HadithDetail.module.scss";
 
 // A related hadith (API `related`: same wording in another collection) by its citation.
@@ -51,32 +48,6 @@ function AlsoIn({ related, keepLang }) {
       ))}
     </p>
   );
-}
-
-// True once `ref`'s element has scrolled up under the header and reader bar.
-const COVERED = 100;
-function useScrolledPast(ref) {
-  const [past, setPast] = useState(false);
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || typeof IntersectionObserver === "undefined") return undefined;
-    const observer = new IntersectionObserver(
-      ([entry]) => setPast(!entry.isIntersecting && entry.boundingClientRect.top < COVERED),
-      { rootMargin: `-${COVERED}px 0px 0px 0px` }
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [ref]);
-  return past;
-}
-
-// One-off view settings a link keeps from page to page: ?lang= and ?tr=.
-function keptQuery(query) {
-  const params = new URLSearchParams();
-  if (query.lang) params.set("lang", String(query.lang));
-  if (query[TRANSLATIONS_PARAM] !== undefined) params.set(TRANSLATIONS_PARAM, String(query[TRANSLATIONS_PARAM]));
-  const text = params.toString();
-  return text ? `?${text.replace(/%2C/gi, ",")}` : "";
 }
 
 // HadeethEnc explanation, benefits (`hints`), word meanings and sources.
@@ -156,32 +127,34 @@ function Details({ details }) {
 }
 
 // Previous / next hadith in the same collection (API `navigation`, linked by
-// id; some records have no referenceNumber). Renders nothing without it.
-function HadithNavigation({ navigation, book, keepLang }) {
+// id; some records have no referenceNumber): after the text, on the page's own
+// pager. Renders nothing without it.
+export function HadithNavigation({ hadith }) {
   const { t } = useLocale();
+  const router = useRouter();
+  const { navigation, book } = hadith;
+  const keepLang = keptQuery(router.query);
   if (!navigation || (!navigation.previous && !navigation.next)) return null;
   const label = (item) => (item.referenceNumber ? `${shortBookName(book)} ${lettered(item.referenceNumber)}` : null);
 
   return (
-    <nav className={styles.navigation} aria-label={`${t("previousHadith")} / ${t("nextHadith")}`}>
-      {navigation.previous ? (
+    <nav className={pageStyles.pager} aria-label={`${t("previousHadith")} / ${t("nextHadith")}`}>
+      {navigation.previous && (
         <Link href={`${citablePath(navigation.previous, book)}${keepLang}`} className={styles.navLink} rel="prev">
-          <span className={styles.navDirection}>
-            <span aria-hidden="true">‹ </span>
-            {t("previousHadith")}
+          <span aria-hidden="true">‹</span>
+          <span className={styles.navWords}>
+            <span>{t("previousHadith")}</span>
+            {label(navigation.previous) && <span className={styles.navRef}>{label(navigation.previous)}</span>}
           </span>
-          {label(navigation.previous) && <span className={styles.navRef}>{label(navigation.previous)}</span>}
         </Link>
-      ) : (
-        <span />
       )}
       {navigation.next && (
-        <Link href={`${citablePath(navigation.next, book)}${keepLang}`} className={`${styles.navLink} ${styles.navNext}`} rel="next">
-          <span className={styles.navDirection}>
-            {t("nextHadith")}
-            <span aria-hidden="true"> ›</span>
+        <Link href={`${citablePath(navigation.next, book)}${keepLang}`} className={styles.navLink} rel="next">
+          <span className={styles.navWords}>
+            <span>{t("nextHadith")}</span>
+            {label(navigation.next) && <span className={styles.navRef}>{label(navigation.next)}</span>}
           </span>
-          {label(navigation.next) && <span className={styles.navRef}>{label(navigation.next)}</span>}
+          <span aria-hidden="true">›</span>
         </Link>
       )}
     </nav>
@@ -193,9 +166,7 @@ export default function HadithDetail({ hadith, translations }) {
   const { t } = useLocale();
   const router = useRouter();
   const { addLastRead } = useContext(PinContext);
-  const { book, chapter } = hadith;
-  const titleRef = useRef(null);
-  const titleScrolledAway = useScrolledPast(titleRef);
+  const { book } = hadith;
 
   useEffect(() => {
     addLastRead(storedHadithRef(hadith, book));
@@ -206,75 +177,36 @@ export default function HadithDetail({ hadith, translations }) {
   // Links to other hadiths keep a one-off ?lang= and ?tr=.
   const keepLang = keptQuery(router.query);
   const extras = translations || (hadith.extraLanguages || []).map((language) => language.code);
-  const categoryBook = isCategoryBook(book);
-  const showChapter = chapter && !categoryBook;
-  const chapterText = showChapter
-    ? chapter.chapterNo === UNASSIGNED_CHAPTER
-      ? t("unassignedChapter")
-      : t("chapterNumberName", { number: chapter.chapterNo, name: chapter.name })
-    : null;
-  // HadeethEnc is browsed by category: its first one stands for the chapter.
-  const category = categoryBook && hadith.categories && hadith.categories[0];
   const reference = referenceText(hadith, book, t);
+  const inBook = isCategoryBook(book) ? null : inBookText(hadith.inBookReference, t);
   const { linked, own } = shownTranslation(hadith);
   const arabicOnly = !linked && !own && !extraTranslations(hadith).some((slot) => slot.entry);
 
-  // The translations chip is in the header; the reader bar shows it too once
-  // the header has scrolled away.
   return (
     <article className={styles.detail}>
-      <ReaderBar
-        picker={{ translations: extras, book: book.slug, hidden: !titleScrolledAway }}
-        trailing={
-          <span className={`${barStyles.trailing} ${titleScrolledAway ? barStyles.trailingShown : ""}`} aria-hidden={!titleScrolledAway}>
-            {reference}
-          </span>
-        }
-      >
-        <Link href={bookPath(book)} className={`${barStyles.book} ${showChapter || category ? barStyles.bookOptional : ""}`}>
-          {shortBookName(book)}
-        </Link>
-        {(showChapter || category) && (
-          <>
-            <span className={`${barStyles.separator} ${barStyles.bookOptional}`} aria-hidden="true">
-              ›
-            </span>
-            <Link
-              href={showChapter ? chapterPath(book.slug, chapter.chapterNo) : categoryPath(category)}
-              className={barStyles.shrink}
-            >
-              {showChapter ? chapterText : category.title}
-            </Link>
-          </>
-        )}
-      </ReaderBar>
-
       <header className={styles.header}>
-        <h1 className={styles.title} dir="auto" ref={titleRef}>
+        <h1 className={styles.title} dir="auto">
           {hadith.title ? cleanText(hadith.title) : reference}
         </h1>
 
+        {/* The reference line of a hadith in a list: the citation (when the title is not
+            already that), where it is in the book, the grade, the translations and ⋮. */}
         <div className={styles.facts}>
-          {hadith.referenceNumber && (
-            <span className={styles.fact}>
-              {t("labelColon", { label: t("hadithNumber") })} <strong>{lettered(hadith.referenceNumber)}</strong>
-            </span>
-          )}
+          {hadith.title && <span className={styles.citation}>{reference}</span>}
+          {inBook && <span>{inBook}</span>}
           <GradeBadge grades={namedGrades(hadith, book)} gradeText={hadith.gradeText} />
-          {hadith.title && <span className={styles.fact}>{reference}</span>}
           <span className={styles.picker}>
             <TranslationPicker translations={extras} book={book.slug} />
+          </span>
+          <span className={styles.options}>
+            <HadithOptions hadith={hadith} book={book} />
           </span>
         </div>
 
         <AlsoIn related={hadith.related} keepLang={keepLang} />
-
-        <HadithOptions hadith={hadith} book={book} />
       </header>
 
-      {/* Side by side on wide screens (translation left, Arabic right),
-          stacked on phones; the reader settings choose which comes first
-          and can hide the Arabic. */}
+      {/* The reader settings choose which comes first and can hide the Arabic. */}
       <div className={styles.texts}>
         <section className={`${styles.arabicBlock} ${arabicOnly ? styles.arabicOnly : ""}`} aria-label={t("arabicText")}>
           <ArabicText text={hadith.arabic} />
@@ -322,9 +254,6 @@ export default function HadithDetail({ hadith, translations }) {
           </ul>
         </section>
       )}
-
-      {/* Last on every page, whatever sections the hadith has. */}
-      <HadithNavigation navigation={hadith.navigation} book={book} keepLang={keepLang} />
     </article>
   );
 }

@@ -7,15 +7,17 @@ import styles from "./category-card.module.scss";
 // list). Counts show how many hadiths are translated into the reader's
 // language next to the total. The lists leave out the categories with none
 // (lib/api readableCategories); a child with none that is still given is muted.
-export default function CategoryCard({ category }) {
+// `compact` (home): the number and the category alone, the same card as a book's.
+export default function CategoryCard({ category, number = null, compact = false }) {
   const { t, lang, formatNumber, languageName } = useLocale();
-  const children = category.children || [];
+  const children = compact ? [] : category.children || [];
   const showTranslated = lang !== "ar" && category.totalTranslated != null;
   const language = languageName(lang);
 
   return (
-    <div className={styles.item}>
+    <div className={`${styles.item} ${compact ? styles.compact : ""}`}>
       <Link href={categoryPath(category)} className={styles.head}>
+        {number != null && <span className={styles.number}>{formatNumber(number)}</span>}{" "}
         <span className={styles.left}>
           <bdi className={styles.name}>{category.title}</bdi>
           <span className={styles.count}>

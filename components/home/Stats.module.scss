@@ -1,14 +1,13 @@
-// The figures, as one quiet line of facts under the hadith of the day (the reader's
-// language first): read like a book's colophon, not a row of big numbers, which is
-// the stock "hero metric" template.
+// The figures, one quiet line at the foot of the search card (the reader's language first): read
+// like a book's colophon, not a row of big numbers. From 1024px only: on phones the page gets
+// straight to the books.
 .stats {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--space-2) var(--space-5);
-  max-width: 1100px;
-  margin: var(--space-4) auto 0;
-  padding: 0 var(--space-1);
+  gap: var(--space-1) var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-sm);
   line-height: var(--leading-snug);
@@ -24,8 +23,8 @@
 
 .number {
   order: -1;
-  color: var(--ink);
-  font-weight: 600;
+  color: var(--text);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -53,7 +52,6 @@
 
 @media only screen and (min-width: 1024px) {
   .stats {
-    margin-top: var(--space-5);
-    font-size: var(--text-base);
+    display: flex;
   }
 }

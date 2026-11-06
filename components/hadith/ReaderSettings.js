@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import Link from "next/link";
 import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { SettingsContext } from "../../contexts/SettingsContext";
@@ -47,9 +48,10 @@ function SizeStepper({ id, label, value, limits, onChange, decreaseLabel, increa
   );
 }
 
-// The reading settings opened from the gear of the reader bar: a bottom
-// sheet on phones, a side panel on wider screens. Saved with the other
-// settings (SettingsContext, localStorage).
+// The reading settings, opened from the navigation's gear and the phone header: a bottom sheet
+// on phones, a side panel on wider screens, so the text stays in view while it changes. Saved
+// with the other settings (SettingsContext, localStorage); the language and the faces are on
+// the settings page it links to.
 export default function ReaderSettings({ open, onClose }) {
   const { t } = useLocale();
   const wide = useMediaQuery("(min-width:600px)", { noSsr: true });
@@ -63,6 +65,8 @@ export default function ReaderSettings({ open, onClose }) {
     textOrder,
     changeTextOrder,
     resetReader,
+    theme,
+    changeTheme,
   } = useContext(SettingsContext);
 
   return (
@@ -134,9 +138,35 @@ export default function ReaderSettings({ open, onClose }) {
           </div>
         </fieldset>
 
-        <button type="button" className={styles.reset} onClick={resetReader}>
-          {t("resetReader")}
-        </button>
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.label}>{t("theme")}</legend>
+          <div className={styles.segmented}>
+            {[
+              ["light", t("themeLight")],
+              ["dark", t("themeDark")],
+            ].map(([value, label]) => (
+              <label key={value} className={styles.segment}>
+                <input
+                  type="radio"
+                  name="reader-theme"
+                  value={value}
+                  checked={theme === value}
+                  onChange={() => changeTheme(value)}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className={styles.actions}>
+          <button type="button" className={styles.reset} onClick={resetReader}>
+            {t("resetReader")}
+          </button>
+          <Link href="/settings" className={styles.allSettings} onClick={onClose}>
+            {t("settings")} <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </div>
     </Drawer>
   );

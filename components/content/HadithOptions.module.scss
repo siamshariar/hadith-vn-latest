@@ -1,11 +1,11 @@
-// The icon row: four 44px buttons, on one line even at 320px (176px wide).
+// ⋮, with a bookmark and a pin beside it when the hadith has them. The glyph, not its tap
+// area, lines up with the end of the text.
 .row {
   display: flex;
   flex: 0 0 auto;
   flex-wrap: nowrap;
   align-items: center;
-  // the glyphs, not the tap areas, line up with the text above
-  margin-inline-start: -10px;
+  margin-inline-end: -10px;
 }
 
 .button {
@@ -24,8 +24,8 @@
   transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     fill: currentColor;
   }
 
@@ -50,6 +50,10 @@
 .paper {
   background-color: var(--surface) !important;
   color: var(--text) !important;
+}
+
+.divider {
+  border-color: var(--hairline) !important;
 }
 
 .icon {

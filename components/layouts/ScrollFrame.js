@@ -6,16 +6,16 @@ import styles from "./ScrollFrame.module.scss";
 
 const HIDDEN = "header-hidden";
 const PHONE = "(max-width: 1023px)";
-const HEADER_HEIGHT = 54;
+const HEADER_HEIGHT = 80; // from the Quran sites: the header stays until the page has moved this far
 const MIN_DELTA = 8; // px; smaller moves (and iOS bounce) don't toggle the header
 
 // Scroll behaviour shared by the layouts (one passive listener):
-// - phones: the fixed header slides away while reading down and comes back
-//   on any scroll up, as on quran.com. The state is the `header-hidden`
+// - every screen: the fixed header slides away while reading down and comes
+//   back on any scroll up, as on the Quran sites. The state is the `header-hidden`
 //   class on <html>, which also sets --header-offset to 0 (styles/_core).
 // - long pages: a back-to-top button after one and a half screens. On
 //   phones it comes and goes with the header, so it never sits on the text
-//   while reading down; on desktop the layouts keep a lane free for it.
+//   while reading down; on the web it stays beside the reading card.
 export default function ScrollFrame() {
   const router = useRouter();
   const { t } = useLocale();
@@ -32,7 +32,7 @@ export default function ScrollFrame() {
       frame = 0;
       const y = Math.max(window.scrollY, 0);
       const delta = y - last;
-      if (!phone.matches || y <= HEADER_HEIGHT) {
+      if (y <= HEADER_HEIGHT) {
         root.classList.remove(HIDDEN);
         last = y;
       } else if (window.location.hash !== hash) {
@@ -42,13 +42,23 @@ export default function ScrollFrame() {
         // scroll-padding, styles/_core).
         last = y;
       } else if (Math.abs(delta) >= MIN_DELTA) {
-        root.classList.toggle(HIDDEN, delta > 0);
+        root.classList.toggle(HIDDEN, delta > 0 && !headerInUse());
         last = y;
       }
       hash = window.location.hash;
       const readingDown = phone.matches && root.classList.contains(HIDDEN);
       setShowTop(y > window.innerHeight * 1.5 && !readingDown);
     };
+    // Something in the header has keyboard focus (or a field, which always shows it): it stays,
+    // and what is placed below it (--header-offset) knows, as both go by the same class.
+    const headerInUse = () => {
+      const el = document.activeElement;
+      return Boolean(el && el.closest("[data-site-header]") && el.matches(":focus-visible"));
+    };
+    const onFocusIn = () => {
+      if (headerInUse()) root.classList.remove(HIDDEN);
+    };
+    document.addEventListener("focusin", onFocusIn);
     const onScroll = () => {
       if (!frame) frame = window.requestAnimationFrame(update);
     };
@@ -67,6 +77,7 @@ export default function ScrollFrame() {
     router.events.on("hashChangeComplete", arrived);
     return () => {
       window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("focusin", onFocusIn);
       router.events.off("routeChangeStart", reveal);
       router.events.off("routeChangeComplete", arrived);
       router.events.off("hashChangeComplete", arrived);

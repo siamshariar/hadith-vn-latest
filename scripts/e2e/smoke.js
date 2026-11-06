@@ -108,6 +108,13 @@ module.exports = spec(module, 'smoke', (h) => {
         { label: `Hadith ${first.referenceNumber}`, href: null },
       ]);
 
+      // phones have no breadcrumb on show: back, then the drawer's level, lead up
+      if (h.phone) {
+        await page.getByRole('button', { name: 'Quay lại' }).click();
+        await h.waitForPath(page, (url) => url.pathname === `/books/${bukhari.slug}/chapters/1`, 'back to the chapter');
+        await waitForH1(page, `1. ${chapter.chapter.name}`);
+        return;
+      }
       const crumbs = page.locator(BREADCRUMB_NAV);
       await crumbs.getByRole('link', { name: 'Chương 1' }).click();
       await h.waitForPath(page, (url) => url.pathname === `/books/${bukhari.slug}/chapters/1`, 'breadcrumb to the chapter');

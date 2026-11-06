@@ -33,13 +33,14 @@ export function groupBooks(books) {
   return groups.filter((group) => group.books.length);
 }
 
-export default function BookList({ books, showTranslation = false }) {
+// `first`: the number of the first card (the numbers run on from group to group).
+export default function BookList({ books, showTranslation = false, first = null }) {
   if (!books || !books.length) return null;
   return (
     <ul className={styles.list}>
-      {books.map((book) => (
+      {books.map((book, index) => (
         <li key={book.slug}>
-          <BookCard book={book} showTranslation={showTranslation} />
+          <BookCard book={book} number={first == null ? null : first + index} showTranslation={showTranslation} />
         </li>
       ))}
     </ul>
@@ -52,10 +53,14 @@ export function BookGroups({ books, showTranslation = false, level = 3 }) {
   const Heading = `h${level}`;
   const groups = groupBooks(books);
   if (!groups.length) return null;
+  let shown = 0;
 
   return (
     <div className={styles.groups}>
-      {groups.map((group) => (
+      {groups.map((group) => {
+        const first = shown + 1;
+        shown += group.books.length;
+        return (
         <section key={group.key} className={styles.group} aria-labelledby={`book-group-${group.key}`}>
           <Heading id={`book-group-${group.key}`} className={styles.groupTitle}>
             <span>{t(group.title)}</span>
@@ -65,9 +70,10 @@ export function BookGroups({ books, showTranslation = false, level = 3 }) {
               </span>
             )}
           </Heading>
-          <BookList books={group.books} showTranslation={showTranslation} />
+          <BookList books={group.books} showTranslation={showTranslation} first={first} />
         </section>
-      ))}
+        );
+      })}
     </div>
   );
 }

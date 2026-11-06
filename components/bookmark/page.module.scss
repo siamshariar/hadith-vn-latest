@@ -48,7 +48,7 @@
 
 .quran_content_title {
   color: var(--ink);
-  font-family: Roboto;
+  font-family: var(--font-ui);
   font-size: 24px;
   font-weight: normal;
   line-height: 1.5;
@@ -56,7 +56,7 @@
 }
 
 .quran_content_text {
-  font-family: Roboto;
+  font-family: var(--font-ui);
   color: var(--text);
   font-size: 16px;
   font-weight: normal;

@@ -17,7 +17,8 @@ import Meta from "../core/meta";
 import Breadcrumbs from "../core/breadcrumbs";
 import ErrorState from "../core/error";
 import Layout from "../layouts/LayoutSecondary";
-import HadithDetail from "./HadithDetail";
+import { sidebarBooksData, sidebarCategoriesData } from "../sidebar/data";
+import HadithDetail, { HadithNavigation } from "./HadithDetail";
 import styles from "../content/Page.module.scss";
 
 // Shared by /hadiths/{id} and /books/{book}/hadiths/{number}. `translations`:
@@ -75,6 +76,8 @@ export default function HadithPage({ hadith, translations, error }) {
         <Breadcrumbs items={crumbs} />
         <HadithDetail hadith={hadith} translations={translations} />
       </div>
+
+      <HadithNavigation hadith={hadith} />
     </>
   );
 }
@@ -82,15 +85,21 @@ export default function HadithPage({ hadith, translations, error }) {
 // HadeethEnc hadiths are browsed by category; the other books by chapter.
 export function hadithLayout(page) {
   const { hadith } = page.props;
+  const title = hadith ? ({ t }) => referenceText(hadith, hadith.book, t) : undefined;
   if (hadith && isCategoryBook(hadith.book)) {
     const first = hadith.categories && hadith.categories[0];
-    return <Layout selectedCategoryId={first ? first.id : null}>{page}</Layout>;
+    return (
+      <Layout selectedCategoryId={first ? first.id : null} title={title}>
+        {page}
+      </Layout>
+    );
   }
   return (
     <Layout
       sidebar="books"
       selectedBookSlug={hadith ? hadith.book.slug : null}
       selectedChapterNo={hadith && hadith.chapter ? hadith.chapter.chapterNo : null}
+      title={title}
     >
       {page}
     </Layout>
@@ -102,9 +111,14 @@ export function hadithLayout(page) {
 export function loadHadithPage(context, fetchHadith) {
   return loadPage(context, async (lang, { translations }) => {
     const hadith = await fetchHadith(lang, { translations });
+    const topic = isCategoryBook(hadith.book);
+    const first = hadith.categories && hadith.categories[0];
     return {
       props: {
         hadith,
+        sidebarData: topic
+          ? await sidebarCategoriesData(lang, first ? first.id : null)
+          : await sidebarBooksData(lang, { book: hadith.book.slug }),
         backLink:
           hadith.chapter && !isCategoryBook(hadith.book)
             ? chapterPath(hadith.book.slug, hadith.chapter.chapterNo)

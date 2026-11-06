@@ -19,8 +19,8 @@ const Layout = ({ children }) => {
 
             <div className={`${styles.wrapper} ${styles.layout3}`}>
               <SkipLink />
-              <div className={styles.header}>
-                <HeaderWeb page={null} />
+              <div className={styles.header} data-site-header="">
+                <HeaderWeb page={null} sections />
                 <HeaderMobile
                   title={children.props.contentTitle}
                   titleKey={children.props.contentTitleKey}

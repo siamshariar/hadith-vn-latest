@@ -1,241 +1,198 @@
-.wrapper {
-  overflow: hidden;
-  width: 100%;
-  height: 100%;
-  min-height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
+// The navigation of the reading pages (index.js): the side card from 1024px, the drawer's
+// contents on phones and tablets (components/mobile/NavDrawer).
+
+.sidebar {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-}
-
-.top {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding-left: 15px;
-  padding-right: 15px;
-  padding-top: 20px;
-}
-
-.search {
-  position: relative;
-  display: block;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.icon {
-  height: 22px;
-  width: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-  position: absolute;
-  top: 12px;
-  opacity: 0.7;
-}
-
-.icon svg {
-  width: 22px;
-  height: 22px;
-  fill: var(--text-secondary);
-}
-
-.icon:hover svg {
-  fill: var(--text);
-}
-
-.icon.search_icon {
-  left: 10px;
-}
-// clear: a 44px target over the end of the 45px field
-.icon.close_icon {
-  top: 0;
-  right: 0;
-  width: var(--tap);
-  height: 45px;
-  border-radius: 50%;
-  opacity: 1;
-}
-
-// A search field (Esc clears it) without the browser's own look or its second
-// clear button: the field has one.
-input.input {
-  appearance: none;
-  padding-left: 42px;
-  padding-right: 42px;
-  width: 100%;
-  height: auto;
-  display: block;
-  color: var(--text);
-  border: 1px solid var(--hairline);
-  background-color: var(--surface);
-  line-height: 43px;
-  border-radius: var(--radius-md);
-  font-size: var(--text-base); // 16px: iOS zooms into smaller fields
-}
-
-input.input::-webkit-search-cancel-button,
-input.input::-webkit-search-decoration {
-  appearance: none;
-}
-
-.content {
-  overflow: hidden;
-  min-height: calc(100vh - 170px);
-  max-height: calc(100vh - 170px);
-  position: relative;
-  width: 100%;
-}
-
-.category {
-  overflow: hidden;
-  padding-left: 15px;
-  padding-right: 10px;
   height: 100%;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1;
-  background-color: var(--canvas);
-}
-.category:nth-of-type(2) {
-  z-index: 3;
+  min-height: 0;
 }
 
-.category * {
-  position: static !important;
+.panel {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.title {
-  margin-bottom: 10px;
-}
+// Closed down to the rail (html[data-nav]: index.js saveClosed): quran.vn's 70px white card,
+// rows of 50px, each a way back in.
+.rail {
+  display: none;
 
-.title h2 {
-  font-family: "Roboto";
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--text);
-}
+  a,
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 50px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: background-color var(--duration) var(--ease);
 
-.lists {
-  overflow: hidden;
-  width: 100%;
-  position: relative;
-  padding-bottom: 0;
-  padding-right: 0;
-}
-.cat_item {
-  width: 100%;
-}
+    svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+    }
 
-.list {
-  display: block;
-  width: calc(100% - 30px);
-  color: var(--text);
-  line-height: 1.6;
-  font-size: 1rem;
-  margin-bottom: 0;
-  cursor: pointer;
-  padding: 6px 0;
-  transition: color var(--duration) var(--ease);
-}
-.list .icon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: auto;
-}
+    &:focus-visible {
+      outline-offset: -2px;
+    }
+  }
 
-@media (hover: hover) {
-  .list:hover {
-    color: var(--link);
+  > * + * {
+    box-shadow: inset 0 1px 0 0 var(--hairline-soft);
   }
 }
 
-.list.active {
-  /*border: 1px solid var(--link);*/
+:global(html[data-nav="closed"]) {
+  .panel {
+    display: none;
+  }
+
+  .rail {
+    display: flex;
+    flex-direction: column;
+  }
 }
 
-// .list a {
-//   display: block;
-// }
-
-.name {
-  display: block;
-}
-
-.name span {
-  display: block;
-  color: var(--text);
-}
-
-.name span:nth-child(2) {
-  font-size: 12px;
-  opacity: 0.6;
-}
-
-.root {
-  font-weight: 500;
-}
-.parent {
-  width: calc(100% - 6px);
-}
-.active,
-.active:hover,
-.active:focus {
-  color: var(--link);
-  font-weight: 500;
-}
-
-// A branch: its link, then the toggle for what is under it (components/sidebar:
-// Branch). The chevron turns when open.
-.branch {
+.nav {
   display: flex;
-  align-items: flex-start;
-}
-
-.branch > .list {
   flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
-.toggle {
+.tabs {
+  display: flex;
+  flex: 0 0 auto;
+  padding: var(--space-2) var(--space-3) 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--tap);
+  margin-bottom: -1px;
+  padding: 6px 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+
+  &[aria-selected="true"] {
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+.filter {
+  position: relative;
+  flex: 0 0 auto;
+  padding: var(--space-3) var(--space-3) var(--space-2);
+
+  > svg {
+    position: absolute;
+    inset-inline-start: 24px;
+    top: 22px;
+    width: 20px;
+    height: 20px;
+    fill: var(--muted);
+    pointer-events: none;
+  }
+
+  input {
+    display: block;
+    width: 100%;
+    height: 40px;
+    padding-block: 0;
+    padding-inline: 40px 40px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: var(--surface-soft);
+    color: var(--text);
+    font: inherit;
+    font-size: var(--text-sm);
+    appearance: none;
+
+    &::placeholder {
+      color: var(--muted);
+    }
+
+    &::-webkit-search-cancel-button,
+    &::-webkit-search-decoration {
+      appearance: none;
+    }
+  }
+}
+
+// clear: a 44px target over the end of the field
+.clear {
+  position: absolute;
+  inset-inline-end: var(--space-3);
+  top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}
+
+// The level the list is in: back up, and that book's or category's own page.
+.crumb {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 2px var(--space-2) 6px var(--space-1);
+  border-bottom: 1px solid var(--hairline-soft);
+}
+
+.up {
   display: flex;
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  margin-inline-start: var(--space-1);
-  padding: 0;
   border: 0;
   border-radius: 50%;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text);
   cursor: pointer;
   transition: background-color var(--duration) var(--ease);
 
   svg {
     width: 24px;
     height: 24px;
-    transition: transform var(--duration) var(--ease);
-  }
-
-  &[aria-expanded="true"] svg {
-    transform: rotate(180deg);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: -2px;
+    fill: currentColor;
   }
 
   // 44px where the screen is touched
@@ -245,52 +202,216 @@ input.input::-webkit-search-decoration {
   }
 }
 
-@media (hover: hover) {
-  .toggle:hover {
-    background: var(--hover);
+.crumbLink {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 7px;
+  color: var(--ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+
+  small {
+    display: block;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 400;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .toggle svg {
-    transition: none;
-  }
-}
-
-// What is under a branch, ruled on its leading side.
-.branchBody {
-  padding-inline-start: 20px;
-  border-inline-start: 1px solid var(--hairline);
-}
-
-.count {
-  color: var(--muted);
-  font-size: 0.85em;
-  font-weight: 400;
-}
-
-.chapterNo {
-  display: inline-block;
-  min-width: 28px;
-  color: var(--muted);
-}
-
-.chapter {
-  font-size: 0.95rem;
-}
-
-.empty {
-  padding: 16px 0;
-  color: var(--text-secondary);
-  font-size: 14px;
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  scrollbar-width: thin;
 }
 
 .skeleton {
-  padding: 4px 8px 0 0;
+  padding: var(--space-2);
 }
 
-.list:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 7px var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14.5px;
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
+
+  &[aria-current] {
+    background: var(--accent-tint);
+    color: var(--accent);
+    font-weight: 500;
+
+    .num {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .count {
+      color: var(--accent);
+    }
+  }
+
+  &:focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+.num {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  small {
+    display: block;
+    margin-top: 1px;
+    color: var(--muted);
+    font-size: var(--text-xs);
+    font-weight: 400;
+  }
+}
+
+.count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.go {
+  flex: 0 0 auto;
+  margin-inline-end: -4px;
+
+  svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    fill: var(--muted);
+  }
+}
+
+.empty {
+  padding: var(--space-5) var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+// Saved, settings, close. The drawer has its own row of these (components/mobile/NavDrawer).
+.foot {
+  display: flex;
+  flex: 0 0 auto;
+  padding: var(--space-1);
+  border-top: 1px solid var(--hairline);
+
+  a,
+  button {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: 0;
+    min-height: var(--tap);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+
+    span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    svg {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    &:focus-visible {
+      outline-offset: -2px;
+    }
+  }
+
+  .collapse {
+    flex: 0 0 var(--tap);
+  }
+}
+
+@media (hover: hover) {
+  .rail a:hover,
+  .rail button:hover,
+  .row:hover,
+  .up:hover,
+  .foot a:hover,
+  .foot button:hover {
+    background: var(--hover);
+  }
+
+  .row[aria-current]:hover {
+    background: var(--accent-tint);
+  }
+
+  .foot a:hover,
+  .foot button:hover,
+  .crumbLink:hover {
+    color: var(--link);
+  }
+}
+
+// Touch screens: 16px in the field, or iOS zooms the page.
+@media (pointer: coarse) {
+  .filter {
+    > svg {
+      top: 24px;
+    }
+
+    input {
+      height: var(--tap);
+      font-size: var(--text-base);
+    }
+  }
+}
+
+@media print {
+  .sidebar {
+    display: none;
+  }
 }

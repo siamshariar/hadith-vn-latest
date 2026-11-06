@@ -7,7 +7,7 @@ import { ServerStyleSheets } from "@mui/styles";
 import { GA_TRACKING_ID } from "../lib/gtag";
 import { SITE_INTERFACE, interfaceDirection, isInterfaceLanguage } from "../lib/language";
 import { accentGradient } from "../lib/sites";
-import { fontStacks } from "../lib/settings";
+import { NAV_KEY, fontStacks } from "../lib/settings";
 
 // The site's ribbon (header, hero bar, menu: --brand-ribbon in styles/_variables.scss) from
 // its accent colours (config/countries.json); without one, the stylesheet's neutral one.
@@ -18,11 +18,14 @@ const ribbonStyle = ribbon ? { "--brand-ribbon": ribbon } : undefined;
 // styles/_variables.scss and SettingsContext expect them: the theme on <html
 // data-theme> and <body class>, and the reading typography that SettingsContext's
 // applyTypography sets (sizes, faces, Arabic shown, text order). Settings saved
-// before version 3 wait for SettingsContext's migration.
+// before version 5 wait for SettingsContext's migration. And the navigation closed
+// down to its rail (components/sidebar), so it never flashes open on a new page.
 const SETTINGS_SCRIPT = `try{
-var s=JSON.parse(localStorage.getItem("settings")||"null")||{},h=document.documentElement,c=h.style;
+var h=document.documentElement,c=h.style;
+if(localStorage.getItem(${JSON.stringify(NAV_KEY)})==="closed")h.setAttribute("data-nav","closed");
+var s=JSON.parse(localStorage.getItem("settings")||"null")||{};
 var t=s.theme==="dark"?"dark":"light";h.setAttribute("data-theme",t);document.body.className=t;
-if(s.version===3||s.version===4){
+if(s.version===5){
 var z=s.fontSize||{},f=s.fontFamily||{},r=s.reader||{},k=${JSON.stringify(fontStacks)};
 if(z.arabic>0)c.setProperty("--fs-arabic",z.arabic+"px");
 if(z.translation>0)c.setProperty("--fs-trans",z.translation+"px");

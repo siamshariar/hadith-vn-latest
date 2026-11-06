@@ -150,7 +150,11 @@ export default function Category({ category, preview, previewFiltered, books, er
 
 Category.getLayout = function getLayout(page) {
   const { category } = page.props;
-  return <Layout selectedCategoryId={category ? category.id : null}>{page}</Layout>;
+  return (
+    <Layout selectedCategoryId={category ? category.id : null} title={category ? () => category.title : undefined}>
+      {page}
+    </Layout>
+  );
 };
 
 export async function getServerSideProps(context) {

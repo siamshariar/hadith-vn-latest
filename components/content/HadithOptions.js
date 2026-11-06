@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext } from "react";
+import { useEffect, useRef, useState, useContext } from "react";
 import Link from "next/link";
 import { PinContext } from "../../contexts/PinContext";
 import { BookmarkContext } from "../../contexts/BookmarkContext";
@@ -20,6 +20,7 @@ import { site } from "../../lib/sites";
 import { TRANSLATIONS_PARAM, translationsParam } from "../../lib/translations";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import Divider from "@mui/material/Divider";
 import Snackbar from "@mui/material/Snackbar";
 import AddBookmark from "../bookmark/add";
 import RemoveBookmark from "../bookmark/remove";
@@ -29,7 +30,7 @@ import BookmarkBorder from "../icons/BookmarkBorder";
 import FileCopyIcon from "../icons/FileCopy";
 import LinkIcon from "../icons/Link";
 import ShareIcon from "../icons/ShareOutlined";
-import MoreIcon from "../icons/MoreHoriz";
+import MoreIcon from "../icons/MoreVert";
 import UnpinIcon from "../icons/Pin";
 import PinIcon from "../icons/PinOutline";
 import FeedbackIcon from "../icons/Feedback";
@@ -37,27 +38,26 @@ import EastIcon from "../icons/East";
 
 import styles from "./HadithOptions.module.scss";
 
-// One row of 44px icon buttons for a hadith (cards and the detail page):
-// bookmark, copy (the Arabic, the translations, everything, the citation or
-// the link), share, and ⋯ for pin, details and "report an error". `hadith`
-// is an API hadith object, `book` its collection. `showDetails`: add "view
-// details" to the ⋯ menu (lists). The shared link keeps the reader's extra
-// translations (?tr=), so the person it is sent to sees the same texts.
+// A hadith's ⋮, as on the Quran sites (cards and the detail page), one 44px button and one menu:
+// bookmark and pin; copy the Arabic, the translations, everything, the citation or the link;
+// share, details and "report an error". A bookmark or a pin also shows beside it. `hadith` is an
+// API hadith object, `book` its collection. `showDetails`: add "view details" (lists). The
+// shared link keeps the reader's extra translations (?tr=), so the person it is sent to sees
+// the same texts.
 const HadithOptions = ({ hadith, book, updateBookmarksData, isBookmarkPage, showDetails = false }) => {
   const locale = useLocale();
   const { t } = locale;
-  const [copyAnchor, setCopyAnchor] = useState(null);
-  const [moreAnchor, setMoreAnchor] = useState(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);
   const [message, setMessage] = useState(null);
   const [shareOpen, setShareOpen] = useState(false);
   const citation = referenceText(hadith, book, t);
   const extras = translationsParam((hadith.extraLanguages || []).map((language) => language.code));
   const url = `${permalink(hadith, book)}${extras ? `?${TRANSLATIONS_PARAM}=${extras}` : ""}`;
   const shareTitle = `${citation} | ${site.siteName}`;
-  const menuId = `hadith-${hadith.id}`;
+  const menuId = `hadith-menu-${hadith.id}`;
 
   const copy = (text) => {
-    setCopyAnchor(null);
+    setMenuAnchor(null);
     const failed = () => setMessage(t("copyFailed"));
     if (typeof navigator === "undefined" || !navigator.clipboard) {
       failed();
@@ -106,113 +106,103 @@ const HadithOptions = ({ hadith, book, updateBookmarksData, isBookmarkPage, show
   const togglePin = () => {
     if (isPinned) removePin(hadith);
     else addPin(storedHadithRef(hadith, book));
-    setMoreAnchor(null);
+    setMenuAnchor(null);
   };
 
+  // The inline Unpin or Remove goes away with what it removes: focus moves to ⋮, not the page.
+  const more = useRef(null);
+  const marks = `${isBookmarked}|${isPinned}`;
+  const lastMarks = useRef(marks);
+  useEffect(() => {
+    if (lastMarks.current === marks) return undefined;
+    lastMarks.current = marks;
+    const timer = window.setTimeout(() => {
+      const el = document.activeElement;
+      if ((!el || el === document.body) && more.current) more.current.focus({ preventScroll: true });
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [marks]);
+
   const bookmarkLabel = isBookmarked ? t("removeBookmark") : t("bookmark");
-  const menuProps = {
-    anchorOrigin: { vertical: "bottom", horizontal: "left" },
-    transformOrigin: { vertical: "top", horizontal: "left" },
-    disableScrollLock: true,
-    classes: { paper: styles.paper },
-  };
+  const closeMenu = () => setMenuAnchor(null);
+  const item = (icon, label) => (
+    <>
+      <span className={styles.icon}>{icon}</span>
+      <span className={styles.text}>{label}</span>
+    </>
+  );
 
   return (
     <>
       <div className={styles.row} role="group" aria-label={t("hadithActions")}>
+        {/* What the reader has marked stays in view, and can be taken back at once. */}
+        {isBookmarked && (
+          <button type="button" className={`${styles.button} ${styles.active}`} onClick={() => setRemoveBookmarkOpen(true)} aria-label={bookmarkLabel} title={bookmarkLabel}>
+            <BookmarkIcon />
+          </button>
+        )}
+        {isPinned && (
+          <button type="button" className={`${styles.button} ${styles.active}`} onClick={togglePin} aria-label={t("unpin")} title={t("unpin")}>
+            <UnpinIcon />
+          </button>
+        )}
         <button
-          type="button"
-          className={`${styles.button} ${isBookmarked ? styles.active : ""}`}
-          onClick={() => (isBookmarked ? setRemoveBookmarkOpen(true) : setAddBookmarkOpen(true))}
-          aria-label={bookmarkLabel}
-          title={bookmarkLabel}
-        >
-          {isBookmarked ? <BookmarkIcon /> : <BookmarkBorder />}
-        </button>
-        <button
-          type="button"
-          className={styles.button}
-          onClick={(event) => setCopyAnchor(event.currentTarget)}
-          aria-label={t("copyMenu")}
-          title={t("copyMenu")}
-          aria-haspopup="menu"
-          aria-expanded={copyAnchor ? "true" : "false"}
-          aria-controls={copyAnchor ? `${menuId}-copy` : undefined}
-        >
-          <FileCopyIcon />
-        </button>
-        <button type="button" className={styles.button} onClick={share} aria-label={t("share")} title={t("share")}>
-          <ShareIcon />
-        </button>
-        <button
+          ref={more}
           type="button"
           className={styles.button}
-          onClick={(event) => setMoreAnchor(event.currentTarget)}
-          aria-label={t("moreHadithActions")}
-          title={t("moreHadithActions")}
+          onClick={(event) => setMenuAnchor(event.currentTarget)}
+          aria-label={t("hadithOptions")}
+          title={t("hadithOptions")}
           aria-haspopup="menu"
-          aria-expanded={moreAnchor ? "true" : "false"}
-          aria-controls={moreAnchor ? `${menuId}-more` : undefined}
+          aria-expanded={menuAnchor ? "true" : "false"}
+          aria-controls={menuAnchor ? menuId : undefined}
         >
           <MoreIcon />
         </button>
       </div>
 
-      <Menu id={`${menuId}-copy`} anchorEl={copyAnchor} open={Boolean(copyAnchor)} onClose={() => setCopyAnchor(null)} {...menuProps}>
-        {hadith.arabic && (
-          <MenuItem onClick={() => copy(buildArabic(hadith, book, locale))}>
-            <span className={styles.icon}>
-              <FileCopyIcon />
-            </span>
-            <span className={styles.text}>{t("copyArabic")}</span>
-          </MenuItem>
-        )}
-        {hasTranslations(hadith) && (
-          <MenuItem onClick={() => copy(buildTranslations(hadith, book, locale))}>
-            <span className={styles.icon}>
-              <FileCopyIcon />
-            </span>
-            <span className={styles.text}>{t("copyTranslations")}</span>
-          </MenuItem>
-        )}
-        <MenuItem onClick={() => copy(buildText(hadith, book, locale))}>
-          <span className={styles.icon}>
-            <FileCopyIcon />
-          </span>
-          <span className={styles.text}>{t("copyAll")}</span>
+      <Menu
+        id={menuId}
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={closeMenu}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        disableScrollLock
+        classes={{ paper: styles.paper }}
+      >
+        <MenuItem
+          onClick={() => {
+            closeMenu();
+            if (isBookmarked) setRemoveBookmarkOpen(true);
+            else setAddBookmarkOpen(true);
+          }}
+        >
+          {item(isBookmarked ? <BookmarkIcon /> : <BookmarkBorder />, bookmarkLabel)}
         </MenuItem>
-        <MenuItem onClick={() => copy(buildCitation(hadith, book, locale))}>
-          <span className={styles.icon}>
-            <FileCopyIcon />
-          </span>
-          <span className={styles.text}>{t("copyCitation")}</span>
-        </MenuItem>
-        <MenuItem onClick={() => copy(url)}>
-          <span className={styles.icon}>
-            <LinkIcon />
-          </span>
-          <span className={styles.text}>{t("copyLink")}</span>
-        </MenuItem>
-      </Menu>
-
-      <Menu id={`${menuId}-more`} anchorEl={moreAnchor} open={Boolean(moreAnchor)} onClose={() => setMoreAnchor(null)} {...menuProps}>
-        <MenuItem onClick={togglePin}>
-          <span className={styles.icon}>{isPinned ? <UnpinIcon /> : <PinIcon />}</span>
-          <span className={styles.text}>{isPinned ? t("unpin") : t("pin")}</span>
+        <MenuItem onClick={togglePin}>{item(isPinned ? <UnpinIcon /> : <PinIcon />, isPinned ? t("unpin") : t("pin"))}</MenuItem>
+        <Divider className={styles.divider} />
+        {hadith.arabic && <MenuItem onClick={() => copy(buildArabic(hadith, book, locale))}>{item(<FileCopyIcon />, t("copyArabic"))}</MenuItem>}
+        {hasTranslations(hadith) && <MenuItem onClick={() => copy(buildTranslations(hadith, book, locale))}>{item(<FileCopyIcon />, t("copyTranslations"))}</MenuItem>}
+        <MenuItem onClick={() => copy(buildText(hadith, book, locale))}>{item(<FileCopyIcon />, t("copyAll"))}</MenuItem>
+        <MenuItem onClick={() => copy(buildCitation(hadith, book, locale))}>{item(<FileCopyIcon />, t("copyCitation"))}</MenuItem>
+        <MenuItem onClick={() => copy(url)}>{item(<LinkIcon />, t("copyLink"))}</MenuItem>
+        <Divider className={styles.divider} />
+        <MenuItem
+          onClick={() => {
+            closeMenu();
+            share();
+          }}
+        >
+          {item(<ShareIcon />, t("share"))}
         </MenuItem>
         {showDetails && (
-          <MenuItem component={Link} href={citablePath(hadith, book)} onClick={() => setMoreAnchor(null)}>
-            <span className={styles.icon}>
-              <EastIcon />
-            </span>
-            <span className={styles.text}>{t("viewDetails")}</span>
+          <MenuItem component={Link} href={citablePath(hadith, book)} onClick={closeMenu}>
+            {item(<EastIcon />, t("viewDetails"))}
           </MenuItem>
         )}
-        <MenuItem component="a" href={reportErrorHref(hadith, book, t)} onClick={() => setMoreAnchor(null)}>
-          <span className={styles.icon}>
-            <FeedbackIcon />
-          </span>
-          <span className={styles.text}>{t("reportError")}</span>
+        <MenuItem component="a" href={reportErrorHref(hadith, book, t)} onClick={closeMenu}>
+          {item(<FeedbackIcon />, t("reportError"))}
         </MenuItem>
       </Menu>
 

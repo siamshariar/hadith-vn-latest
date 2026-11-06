@@ -9,64 +9,63 @@ languages, read from the hadith API inside the Quran API.
 
 ## Design: act as this product's frontend architect
 
-The visual system is fixed and documented. Follow it; do not restyle from habit.
+The visual system is fixed and documented. Follow it; do not restyle from habit. The reading pages
+read like the Quran sites (`~/workspace/dit/quran-apps`, quran.vn): their owner and readers judge them
+the easiest to read, and that UI is locked. Measure against it before proposing changes.
 
 - **Read first:**
   - `docs/hadith-design-system.md` — the system.
-  - `docs/design-system-selection.md` — why it looks this way: the Claude reference from
-    awesome-design-md, adapted.
   - `styles/_variables.scss` — the only place colours, type, space and radii are defined.
 - **Tokens only.** Components use `var(--canvas)`, `var(--text)`, `var(--accent)` and the
   rest. No hex in a component. The old names (`--bg11`, `--txt11`, `--main-color`) are
   aliases kept for other branches; do not use them.
+- **Frame.** On the web a grey page, a white navigation card and a 940px white reading card, centred
+  (`--frame`, `components/layouts/Layout.module.scss`), with a 720px reading column. On phones and
+  tablets plain white to the edges, the navigation in a drawer.
+- **Navigation.** One component (`components/sidebar`, `Nav`), on the side card and in the drawer. It
+  closes down to a 70px rail (`html[data-nav="closed"]`, set before the first paint).
 - **One colour.**
-  - The logo green (`--accent`) marks actions, links, the current item and focus.
-  - Text on it is `var(--on-accent)`, never `#fff`; in the dark theme the accent is
-    light green.
+  - The green (`--accent`) marks actions, links, the current item and focus.
+  - Text on it is `var(--on-accent)`; in the dark theme the accent is light green.
   - Grades are shown as the source states them, in one neutral style, never colour-coded.
 - **Type.** No `letter-spacing` and no `text-transform` on text. Any string may be
   Bengali, Arabic or Vietnamese: tracking breaks Arabic joining and Bengali conjuncts.
-  - The display serif (`--font-display`) is for page, section and hadith titles, at
-    weight 400.
-  - Everything else uses the interface face.
-- **Arabic.** Arabic hadith text is `lang="ar" dir="rtl" translate="no"`, line-height 2,
-  and nothing decorative sits behind it.
-- **Shapes.** Buttons and inputs 8px, cards 12px, sheets 16px. Icon-only buttons are 44px
-  circles (steppers and a button inside a field excepted). Pills only for statuses (grade, fallback badge, counts), never for actions.
+  Roboto for the interface and translations, weights 400 and 500.
+- **Arabic.** Arabic hadith text is `lang="ar" dir="rtl" translate="no"`, in PDMS Islamic at 36px (30px on
+  phones), line-height 1.6, and nothing decorative sits behind it.
+- **Shapes.** Cards and buttons 8px, sheets 16px. Icon-only buttons are 44px circles (steppers and a
+  button inside a field excepted). Pills for statuses and for filter and search fields.
   44px minimum for every control on touch screens (`(pointer: coarse)` where a mouse
   layout is smaller).
-- **Depth.** Tone steps and hairlines. A shadow (`--shadow-float`) only on what floats:
-  menus, popovers, dialogs, sheets, the back-to-top button.
+- **Depth.** The cards' faint `--shadow-card`, tone steps and hairlines. `--shadow-float` only on what
+  floats: menus, popovers, dialogs, sheets, the drawer.
 - **Do not add:**
-  - gradients, glass, or emoji or unicode glyphs as icons (use `components/icons`);
+  - gradients (the home page's band in the site's colours is the one), glass, or emoji or unicode glyphs
+    as icons (use `components/icons`);
   - a small label (eyebrow) above a heading;
-  - index numbers that carry no information;
   - big-number stat strips;
+  - a bottom navigation bar;
   - coloured side stripes on cards or notices.
 - **Motion.** Colour and opacity, about 160ms (`--duration`, `--ease`). Under
   `prefers-reduced-motion`, remove travel (slides, turns, scaling) in the module that
-  styles it, and keep the feedback. Never add a global kill.
+  styles it, and keep the feedback. Never add a global kill. Never animate a width the text
+  depends on: it reflows the Arabic.
 - **Every interactive element has every state:** hover (inside `@media (hover: hover)`),
   `:focus-visible` (the global ring), disabled, and loading. A form that navigates uses
   `hooks/useSubmitBusy` → `aria-busy` on its button.
 - **Controls.**
-  - Never put a control inside another: no link inside a button (the sidebar tree is a
-    link plus a separate toggle, `Branch` in `components/sidebar`).
+  - Never put a control inside another: no link inside a button.
   - Icon-only buttons get an `aria-label` from the catalogs. The SVGs in
     `components/icons` are `aria-hidden`; keep new ones the same.
   - Fields: 16px text on touch screens (iOS zooms otherwise), the right `type`, a label.
-  - A select that navigates lets the keyboard browse: arrow keys change the value, Enter
-    opens it (`ChapterSwitcher` on the chapter page).
   - A reset or delete can be taken back (Undo), or asks first.
 - **Dialogs.** A floating dialog uses `components/utils/ModalPrimary` (MUI Modal, which
-  traps focus); a phone full-screen panel uses `ModalSecondary`. Either way: `role="dialog"`,
-  `aria-modal`, a name (`aria-labelledby` its `h2`), Esc closes, focus goes in and comes back.
+  traps focus); the navigation drawer and the sheets use MUI's Drawer. Each way: `role="dialog"`, `aria-modal`, a name, Esc closes, focus goes in and comes back.
 - **Fixed and full-bleed elements** pad `env(safe-area-inset-*)`: the viewport is
   `viewport-fit=cover`.
-- **Anchors.** `html`'s `scroll-padding-top` clears the header and the reading bar; never
-  add a `scroll-margin` on top of it.
-- **Light and dark** both ship. `pages/_document.js` applies the saved theme and reading
-  typography before the first paint; it mirrors `applyTypography` in
+- **Anchors.** `html`'s `scroll-padding-top` clears the header; never add a `scroll-margin` on top of it.
+- **Light and dark** both ship. `pages/_document.js` applies the saved theme, reading typography and
+  the closed navigation before the first paint; it mirrors `applyTypography` in
   `contexts/SettingsContext.js`, so change both together. Check both themes.
 
 ## Content integrity (non-negotiable)

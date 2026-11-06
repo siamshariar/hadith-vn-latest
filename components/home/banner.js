@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Container from "../core/container";
 import Grades from "../hadith/Grades";
 import { ArabicText, HadithTranslations } from "../hadith/HadithText";
 import { useLocale } from "../../contexts/LocaleContext";
@@ -7,20 +6,22 @@ import { cleanText, hadithPath, namedGrades } from "../../lib/hadith";
 import { referenceText } from "../../lib/citation";
 import styles from "./banner.module.scss";
 
-// The masthead: the site's heading, the tagline, then the search form.
-export function Hero({ children }) {
+// The top of the home page, as the Quran sites': on the web, a band in the site's colours behind
+// two cards, the hadith of the day and the way in (search, go to a hadith, the figures); on phones
+// and tablets the way in comes first, on the plain page, with no band. The site's heading is for
+// screen readers and search engines: the logo and the two cards say what the page is.
+export function Hero({ daily, children }) {
   const { t } = useLocale();
   return (
     <section className={styles.banner} aria-labelledby="site-heading">
-      <Container>
-        <div className={styles.heading}>
-          <h1 id="site-heading" className={styles.siteTitle}>
-            {t("siteHeading")}
-          </h1>
-          <p className={styles.tagline}>{t("siteTagline")}</p>
-        </div>
-        <div className={styles.panel}>{children}</div>
-      </Container>
+      <h1 id="site-heading" className="visually_hidden">
+        {t("siteHeading")}
+      </h1>
+      <p className="visually_hidden">{t("siteTagline")}</p>
+      <div className={styles.cards}>
+        {daily}
+        <div className={styles.find}>{children}</div>
+      </div>
     </section>
   );
 }

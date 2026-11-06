@@ -30,7 +30,7 @@
 .title {
   color: var(--text);
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .close {
@@ -230,7 +230,7 @@
     background: var(--surface);
     box-shadow: inset 0 0 0 1px var(--control-edge);
     color: var(--ink);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   input:focus-visible + span {
@@ -239,10 +239,34 @@
   }
 }
 
-.reset {
-  align-self: flex-start;
-  min-height: 44px;
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
   margin-top: 8px;
+}
+
+.allSettings {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  color: var(--link);
+  font-size: 14px;
+  font-weight: 500;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--link-hover);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+.reset {
+  min-height: 44px;
   padding: 8px 16px;
   border: 1px solid var(--hairline);
   border-radius: 8px;

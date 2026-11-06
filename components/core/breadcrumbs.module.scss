@@ -1,5 +1,8 @@
+// The web only, a quiet line above the title: phones and tablets have the back button and the
+// title in the header, and their first line is the text.
 .breadcrumbs {
-  margin-bottom: 12px;
+  display: none;
+  margin-bottom: var(--space-2);
   font-size: 13px;
   color: var(--text-secondary);
 
@@ -58,7 +61,6 @@
 
 @media only screen and (min-width: 1024px) {
   .breadcrumbs {
-    font-size: 14px;
-    margin-bottom: 16px;
+    display: block;
   }
 }

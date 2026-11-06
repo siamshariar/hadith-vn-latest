@@ -16,7 +16,7 @@ const FOUND = [
 const GARBAGE = ['xyz abc', 'bukhari 999999', '!!'];
 
 // The page reached for a hadith: its h1 is the citation (no title outside
-// the topic collection) and its fact line the citable number.
+// the topic collection).
 async function expectHadith(h, page, hadith, input) {
   const citation = `${hadith.book.name} ${lettered(hadith.referenceNumber)}`;
   await h.waitForPath(
@@ -25,7 +25,6 @@ async function expectHadith(h, page, hadith, input) {
     `"${input}" opens ${citation}`
   );
   await waitForH1(page, citation);
-  assert.equal(norm(await page.getByText('Số hadith:').textContent()), `Số hadith: ${lettered(hadith.referenceNumber)}`);
 }
 
 async function expectNotFound(h, page, input) {

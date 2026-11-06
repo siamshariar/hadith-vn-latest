@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import Container from "../core/container";
 import BackIcon from "../icons/NavigateBefore";
 import SearchIcon from "../icons/Search";
 import LanguageMenu from "../core/LanguageMenu";
@@ -23,7 +22,6 @@ export default function HeaderMobile({ title, titleKey }) {
 
   return (
     <div className={styles.header}>
-      <Container>
         <div className={styles.wrapper}>
           <div className={`${styles.left} ${styles.grow}`}>
             <button
@@ -44,7 +42,6 @@ export default function HeaderMobile({ title, titleKey }) {
             </Link>
           </div>
         </div>
-      </Container>
     </div>
   );
 }

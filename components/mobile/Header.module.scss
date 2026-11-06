@@ -1,23 +1,23 @@
-// The colour logo (the dark one in the dark theme) on the page's own paper,
-// closed by a hairline.
+// White, closed by a hairline, as the Quran sites' phone header.
 .header {
   display: block;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   border-bottom: 1px solid var(--hairline);
-  background: var(--canvas);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
   z-index: 99;
   transition: transform 200ms var(--ease);
 }
 
-// Slides away while reading down (components/layouts/ScrollFrame); stays
-// when something in it has keyboard focus.
-:global(html.header-hidden) .header:not(:focus-within) {
-  transform: translateY(-100%);
+// Slides away while reading down (components/layouts/ScrollFrame).
+:global(html.header-hidden) .header {
+  transform: translateY(-105%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -33,6 +33,7 @@
   align-items: center;
   gap: 4px;
   height: 53px;
+  padding: 0 4px;
 }
 
 .left,
@@ -53,16 +54,6 @@
 
 .grow {
   flex: 1 1 auto;
-}
-
-// The edge icons' glyphs line up with the page gutter; the tap area runs
-// to the screen edge.
-.left > .icon:first-child {
-  margin-left: -10px;
-}
-
-.right > .icon:last-child {
-  margin-right: -10px;
 }
 
 // The language menu leaves the content pages' header
@@ -122,20 +113,31 @@
   min-width: 0;
 }
 
-// "Danh mục ▾": opens the category tree
-.categoryButton {
-  display: inline-flex;
+// "1. Revelation ▾": where the reader is; it opens the navigation (NavDrawer). A long title is
+// cut here: the page shows it in full.
+.titleButton {
+  display: flex;
+  flex: 1 1 auto;
   align-items: center;
+  justify-content: center;
   gap: 2px;
+  min-width: 0;
   min-height: 44px;
-  padding: 0 4px 0 10px;
+  padding: 0 4px;
   border: 0;
   border-radius: var(--radius-md); // a button: never a pill
   background: transparent;
-  color: var(--text);
+  color: var(--ink);
   font: inherit;
   font-size: 16px;
   cursor: pointer;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
   svg {
     width: 24px;
@@ -151,7 +153,7 @@
 // Tablets with a mouse or trackpad use this header too.
 @media (hover: hover) {
   .icon:hover,
-  .categoryButton:hover {
+  .titleButton:hover {
     background: var(--hover);
   }
 }

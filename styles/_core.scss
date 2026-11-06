@@ -21,7 +21,38 @@ body.dark {
 }
 
 ::selection {
-  background: rgba(44, 94, 53, 0.2);
+  background: rgba(70, 101, 72, 0.2);
+}
+
+// Translations: 1.6, as the Quran sites. Scripts with stacked signs (the Indic, Arabic and Southeast
+// Asian ones) and the CJK ones need more; every language of /hadith/languages not in Latin or Cyrillic.
+:lang(am),
+:lang(ar),
+:lang(as),
+:lang(bn),
+:lang(fa),
+:lang(gu),
+:lang(hi),
+:lang(ja),
+:lang(ka),
+:lang(km),
+:lang(kn),
+:lang(ku),
+:lang(ml),
+:lang(mr),
+:lang(my),
+:lang(ne),
+:lang(pa),
+:lang(prs),
+:lang(ps),
+:lang(si),
+:lang(ta),
+:lang(te),
+:lang(th),
+:lang(ug),
+:lang(ur),
+:lang(zh) {
+  --leading-reading: 1.8;
 }
 
 // The parts of the browser the page did not draw take the palette too: the text
@@ -149,35 +180,21 @@ button[aria-busy="true"] {
   color: var(--text);
 }
 
-// Height of the fixed header, for sticky bars below it (`top:
-// var(--header-offset)`): 54px on phones and tablets, 64px from 1024px. The
-// phone header slides away while reading down (components/layouts/
-// ScrollFrame puts .header-hidden on <html>), so the offset becomes 0.
+// Height of the fixed header, for what sticks below it (`top: var(--header-offset)`): 54px on
+// phones and tablets, 66px from 1024px. It slides away while reading down, as on the Quran
+// sites (components/layouts/ScrollFrame puts .header-hidden on <html>), so the offset becomes 0.
 :root {
-  --header-offset: 54px;
+  --header-offset: var(--header-height);
 }
 
-@media only screen and (max-width: 1023px) {
-  html.header-hidden {
-    --header-offset: 0px;
-  }
+html.header-hidden {
+  --header-offset: 0px;
 }
 
-@media only screen and (min-width: 1024px) {
-  :root {
-    --header-offset: 64px;
-  }
-}
-
-// In-page links (#hadith-12) and keyboard focus land below the header, not under
-// it; on the reading pages below the sticky reading bar too (44px,
-// components/hadith/ReaderBar).
+// In-page links (#hadith-12) and keyboard focus land below the header, not under it. The
+// header stays down when coming back up, so always its height.
 html {
-  scroll-padding-top: calc(var(--header-offset) + 8px);
-}
-
-html:has([data-reader-bar]) {
-  scroll-padding-top: calc(var(--header-offset) + 44px + 8px);
+  scroll-padding-top: calc(var(--header-height) + 16px);
 }
 
 // The main region takes focus after "back to top"; it is not a control.

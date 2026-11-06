@@ -1,42 +1,43 @@
-// Design tokens of the hadith site: docs/hadith-design-system.md (the system) and
-// docs/design-system-selection.md (why it looks this way). Light theme on :root; the
-// dark theme on body.dark (SettingsContext), with html[data-theme] for the page itself.
+// Design tokens of the hadith site: docs/hadith-design-system.md (the system). Light theme on
+// :root; the dark theme on body.dark (SettingsContext), with html[data-theme] for the page itself.
 //
 // Components use the semantic tokens (--canvas, --text, --accent ...). The older names
 // further down (--bg11, --txt11, --main-color ...) are aliases of them, so styles written
 // before this system follow both themes too.
 
+// Reading design, 2026-11: the Quran sites' look (quran-apps/styles/_variables.scss), which
+// their readers find the easiest to read, with hadith's own navigation.
 :root {
-  // ---- surfaces: bone paper with a faint lean to the brand green (hue ~72°), low in
-  // chroma so it reads as paper, not as a yellow cream. Depth comes from these tone
-  // steps, and from hairlines where structure needs a line, not from shadows.
-  --canvas: #f5f6f1; // the page
-  --surface: #ffffff; // cards, inputs, menus: the reading surface
-  --surface-soft: #edefe8; // quiet bands, wells, table heads, tags
-  --surface-card: #e7e9e0; // feature blocks (hadith of the day), reference cells
-  --surface-strong: #dfe1d6; // pressed
-  --hover: #ebede5; // hover fill on canvas and surface
-  --hairline: #dcded4; // dividers and card edges (decorative)
-  --hairline-soft: #e4e6dd; // dividers inside a card
-  --control-edge: #86887e; // edges that identify a control: inputs, outlined buttons (3.3:1)
+  // ---- surfaces. On the web, a grey page with white cards; on phones and tablets the
+  // reading pages are plain white to the edges (components/layouts/Layout.module.scss).
+  --canvas: #f4f4f4; // the page
+  --surface: #ffffff; // the reading card, the navigation, the header, menus
+  --surface-soft: #f4f4f4; // wells: the title bar, filter fields, tags, reference cells
+  --surface-card: #eeeeee; // number discs and quiet fills
+  --surface-strong: #e4e4e6; // pressed
+  --hover: rgba(70, 101, 72, 0.05); // hover fill on canvas and surface
+  --hairline: #e8e8ea; // dividers and card edges (decorative)
+  --hairline-soft: #eff1f2; // dividers inside a card
+  --control-edge: #8a9096; // edges that identify a control (3.2:1)
 
-  // ---- text (contrast on --canvas)
-  --ink: #141413; // headings, Arabic (17.0:1)
-  --text: #2c2e2a; // reading text and primary labels (12.9:1)
-  --text-secondary: #55574f; // labels, icons, metadata (6.8:1)
-  --muted: #5f6159; // captions, counts (5.8:1; 5.1:1 on --surface-card)
-  --disabled: #86887e; // disabled labels and decorative marks only (3.3:1)
+  // ---- text (contrast on --surface; on --canvas a step less)
+  --ink: #000000; // the Arabic and the translation (21:1)
+  --text: #2e3031; // interface text and titles (13.2:1)
+  --text-secondary: #666666; // labels, icons, metadata (5.7:1)
+  --muted: #68717a; // captions, counts, placeholders (5:1; 4.6:1 on --canvas)
+  --disabled: #8a9096; // disabled labels and decorative marks only
 
-  // ---- brand: the logo's green. It carries every action, link and focus ring; nothing
-  // else is coloured. Inline links in running text are underlined: green and text are
-  // 1.4:1 apart, too close to tell by colour alone.
-  --accent: #173a1d; // buttons, active marks, focus (11.7:1)
-  --accent-hover: #245232;
-  --on-accent: #f5f6f1; // text on --accent (11.7:1)
-  --link: #2c5e35; // links (7.0:1)
-  --link-hover: #173a1d;
-  --accent-tint: #e2ebdf; // selected and current backgrounds
-  --accent-wash: rgba(23, 58, 29, 0.06); // the faintest tint: target and highlight rows
+  // ---- brand: the Quran sites' green. It carries every action, link, the current item and
+  // focus; nothing else is coloured. Inline links in running text are underlined.
+  --accent: #466548; // buttons, active marks, focus (6.5:1)
+  --accent-hover: #38523b;
+  --on-accent: #ffffff; // text on --accent (6.5:1)
+  --link: #466548;
+  --link-hover: #38523b;
+  --accent-tint: rgba(70, 101, 72, 0.1); // selected and current backgrounds
+  --accent-wash: rgba(70, 101, 72, 0.05); // the faintest tint: target and highlight rows
+  --chip: #68717a; // the citation's tag above a hadith (5:1 with white)
+  --on-chip: #ffffff;
 
   // ---- states
   --notice-bg: #eee6d1; // a fallback or missing translation: sand, not a yellow cream
@@ -46,32 +47,33 @@
   --error-hover: #8f1e18;
   --switch-knob: #ffffff; // both themes; the knob of a switch that is on takes --on-accent
   --error-bg: #fbeceb;
-  --grade-bg: #e2ebdf; // grades: one neutral style for every grade, never colour-coded
-  --grade-txt: #173a1d;
+  --grade-bg: #eef2ee; // grades: one neutral style for every grade, never colour-coded
+  --grade-txt: #38523b;
   --mark-bg: #f6e3a8; // search matches
 
-  // ---- elevation: only for layers that float over the page (menus, dialogs, sheets)
-  --shadow-float: 0 1px 2px rgba(20, 20, 19, 0.06), 0 12px 32px -8px rgba(20, 20, 19, 0.2);
-  --scrim: rgba(20, 20, 19, 0.45);
+  // ---- elevation: the cards at rest, and what floats over the page
+  --shadow-card: 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.13);
+  --scrim: rgba(0, 0, 0, 0.42);
 
   // ---- type. Families come from next/font (pages/_app.js); the reading faces from
   // the reader's settings (SettingsContext). Letter-spacing is 0 everywhere: tracking
   // breaks Arabic joining and Bengali conjuncts, and any string may be in any script.
   --font-ui: var(--font-ui-family), "Segoe UI", sans-serif;
-  --font-display: var(--font-display-family), Georgia, serif;
+  --font-display: var(--font-ui); // titles are in the interface face
   --text-xs: 0.75rem; // 12
   --text-sm: 0.875rem; // 14
   --text-base: 1rem; // 16
   --text-md: 1.125rem; // 18
   --text-lg: 1.25rem; // 20
-  --text-xl: 1.5rem; // 24
+  --text-xl: 1.375rem; // 22
   --text-2xl: 1.875rem; // 30
   --text-3xl: 2.25rem; // 36
-  --leading-tight: 1.25; // display
-  --leading-snug: 1.4; // titles, labels
+  --leading-tight: 1.3; // titles
+  --leading-snug: 1.4; // labels
   --leading-normal: 1.6; // interface text
-  --leading-reading: 1.75; // translations (Bengali vowel signs need >= 1.7)
-  --leading-arabic: 2; // vowelled Arabic: stacked harakat never touch
+  --leading-reading: 1.6; // translations; 1.8 for scripts with stacked signs (styles/_core)
+  --leading-arabic: 1.6; // PDMS at 30-36px: stacked harakat never touch
   --measure: 70ch; // longest comfortable line of reading text
 
   // ---- space (4px base) and shape
@@ -83,58 +85,82 @@
   --space-6: 32px;
   --space-7: 48px;
   --space-8: 64px;
-  --radius-xs: 4px; // inline marks
+  --radius-xs: 2px; // the citation's tag
   --radius-sm: 6px; // small controls, chips
   --radius-md: 8px; // buttons, inputs, tabs
-  --radius-lg: 12px; // cards, panels
-  --radius-xl: 16px; // sheets, large panels
-  --radius-pill: 999px; // status badges only, never actions
+  --radius-lg: 8px; // cards, panels
+  --radius-xl: 16px; // sheets
+  --radius-pill: 999px; // status badges and filter fields
   --tap: 44px; // smallest touch target
 
   // ---- motion
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --duration: 160ms;
 
-  // ---- reading typography (overridden from the reader's settings)
-  --fs-arabic: 28px;
+  // ---- reading typography. The sizes depend on the screen until the reader sets one
+  // (SettingsContext then sets them on <html>): Arabic 30px on phones, 36px from 640px, as
+  // quran.vn; the translation 18px, 20px on the web for its 720px line of about 77 characters.
+  --fs-arabic: 30px;
   --fs-trans: 18px;
-  --font-arabic: var(--font-amiri-family), "Noto Naskh Arabic", "Traditional Arabic", serif;
-  --font-trans: var(--font-ui-family), var(--font-amiri-family), "Segoe UI", sans-serif;
+  --font-arabic: var(--font-pdms-family), var(--font-amiri-family), "Traditional Arabic", serif;
+  --font-trans: var(--font-ui-family), "Segoe UI", sans-serif;
 
-  // The site's accent (config/countries.json), set on <html> by pages/_document.js. It
-  // belongs to the logo; the interface draws it once, under a wordmark that has no logo.
-  --brand-ribbon: linear-gradient(90deg, #1f4a27, #3e7a49 50%, #a8d5b0);
-  --brand-ink: #173a1d; // the wordmark
+  // ---- the frame of the web layout (components/layouts/Layout.module.scss): the navigation
+  // card, 16px, the 940px reading card. Closed, the navigation is quran.vn's 70px rail, and
+  // rail, card and header stand exactly where quran.vn has them.
+  --nav-width: clamp(280px, 22vw, 300px);
+  --reading-card: 940px;
+  --reading-measure: 720px;
+  --header-height: 54px;
+
+  // The site's colours (config/countries.json), set on <html> by pages/_document.js: the band
+  // behind the home page's cards, and the bar under a wordmark that has no logo.
+  --brand-ribbon: linear-gradient(90deg, #38523b, #466548 50%, #38523b);
+  --brand-ink: #466548; // the wordmark
 }
 
-// Dark theme: the same paper family at night (olive-black, hue ~100°), the brand green
-// lightened for text, buttons and focus. On <html> too, for what resolves there (the
-// page's scrollbar).
+@media only screen and (min-width: 640px) {
+  :root {
+    --fs-arabic: 36px;
+  }
+}
+
+@media only screen and (min-width: 1024px) {
+  :root {
+    --fs-trans: 20px;
+    --header-height: 66px;
+  }
+}
+
+// Dark theme: the Quran sites' night colours, the green lightened for text and focus. On
+// <html> too, for what resolves there (the page's scrollbar).
 .dark,
 html[data-theme="dark"] {
-  --canvas: #181a17;
-  --surface: #1f211e;
-  --surface-soft: #1c1e1b;
-  --surface-card: #262823;
-  --surface-strong: #2e302b;
-  --hover: #292b26;
-  --hairline: #353831;
-  --hairline-soft: #2c2e29;
-  --control-edge: #70736a; // 3.4:1 on --surface
+  --canvas: #293145;
+  --surface: #232a3b;
+  --surface-soft: #293145;
+  --surface-card: #313a55;
+  --surface-strong: #3a4462;
+  --hover: rgba(255, 255, 255, 0.05);
+  --hairline: #313a55;
+  --hairline-soft: #2c3550;
+  --control-edge: #77819a; // 3.6:1 on --surface
 
-  --ink: #f1f2ec; // 15.6:1
-  --text: #e3e5dc; // 13.8:1
-  --text-secondary: #bfc2b7; // 9.7:1
-  --muted: #9ea195; // 6.7:1
-  --disabled: #70736a;
+  --ink: #ffffff;
+  --text: #e2e8f0; // 12.6:1
+  --text-secondary: #b6bdc9; // 8.2:1
+  --muted: #9aa1ad; // 5.5:1
+  --disabled: #77819a;
 
-  --accent: #a8d5b0; // buttons and focus (10.9:1)
+  --accent: #a8d5b0; // buttons and focus (9.2:1)
   --accent-hover: #c6e6cb;
   --on-accent: #10261a; // 9.8:1 on --accent
   --link: #a8d5b0;
   --link-hover: #c6e6cb;
-  --accent-tint: rgba(168, 213, 176, 0.12);
+  --accent-tint: rgba(168, 213, 176, 0.14);
   --accent-wash: rgba(168, 213, 176, 0.07);
+  --chip: #4b5675;
+  --on-chip: #ffffff;
 
   --notice-bg: #2f2a1c;
   --notice-bdr: #5c4f2a;
@@ -142,26 +168,35 @@ html[data-theme="dark"] {
   --error-txt: #f2b8b5;
   --error-hover: #f7d0ce;
   --error-bg: #3a2120;
-  --grade-bg: rgba(168, 213, 176, 0.12);
-  --grade-txt: #cfe3d1;
+  --grade-bg: rgba(168, 213, 176, 0.14);
+  --grade-txt: #c6e6cb;
   --mark-bg: #6b5a2a;
 
-  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -8px rgba(0, 0, 0, 0.7);
-  --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-float: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --scrim: rgba(0, 0, 0, 0.55);
 
-  --brand-ink: #eef3ec;
+  --brand-ink: #ffffff;
+  // a calm band at night, not the day's colours
+  --brand-band: linear-gradient(90deg, #2b395d, #3d4a70 50%, #2b395d);
 }
 
 // The page behind the app: native controls and scrollbars in the reader's theme, and no
 // light flash before body.dark is set (pages/_document.js sets data-theme first).
 html {
   color-scheme: light;
-  background: #f5f6f1;
+  background: #f4f4f4;
 }
 
 html[data-theme="dark"] {
   color-scheme: dark;
-  background: #181a17;
+  background: #293145;
+}
+
+// The navigation closed down to its rail (components/sidebar): the saved choice is on <html>
+// before the first paint (pages/_document.js), so it never flashes open.
+html[data-nav="closed"] {
+  --nav-width: 70px;
 }
 
 // ---- derived tokens: named for their use, re-declared per theme so each resolves
@@ -189,7 +224,7 @@ html[data-theme="dark"] {
   --bdr12: var(--hairline);
   --bdr13: var(--control-edge);
   --bdr14: var(--hairline-soft);
-  --bs21: none;
+  --bs21: var(--shadow-card);
   --main-color: var(--link);
   --main-color-hover: var(--link-hover);
   --theme-color: var(--accent);

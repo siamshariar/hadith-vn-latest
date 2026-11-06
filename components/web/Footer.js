@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Container from "../core/container";
 import { useLocale } from "../../contexts/LocaleContext";
 import { site } from "../../lib/sites";
 import styles from "./Footer.module.scss";
@@ -14,11 +13,12 @@ export default function FooterWeb() {
     { href: "/support", label: t("support") },
     { href: "/grateful", label: t("grateful") },
     { href: "/contact", label: t("contact") },
+    { href: "/privacy-policy", label: t("privacyPolicy") },
   ];
 
   return (
     <footer className={styles.footer}>
-      <Container>
+      <div className={styles.inner}>
         <div className={styles.bottom}>
           <nav className={styles.nav} aria-label={t("footerLinks")}>
             <ul className={styles.menu}>
@@ -44,7 +44,7 @@ export default function FooterWeb() {
             </a>
           </p>
         </div>
-      </Container>
+      </div>
     </footer>
   );
 }

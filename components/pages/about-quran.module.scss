@@ -11,7 +11,7 @@
 
 .item h2 {
   color: var(--ink);
-  font-family: Roboto;
+  font-family: var(--font-ui);
   font-size: 18px;
   font-weight: bold;
   line-height: 1.5;
@@ -19,7 +19,7 @@
 }
 
 .item p {
-  font-family: Roboto;
+  font-family: var(--font-ui);
   color: var(--text);
   font-size: 15px;
   font-weight: normal;
@@ -28,7 +28,7 @@
 
 .item a {
   display: flex;
-  font-family: Roboto;
+  font-family: var(--font-ui);
   font-size: 15px;
   font-weight: normal;
   line-height: 1.5;

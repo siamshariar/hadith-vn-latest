@@ -1,51 +1,34 @@
-// Home masthead (docs/hadith-design-system.md, "Home"): the site's heading in the
-// display serif, the tagline, then search, on the page's own paper. No band, texture
-// or ornament: the logo carries the brand.
+// The top of the home page (docs/hadith-design-system.md, "Home"): the Quran sites' band, in this
+// site's colours (--brand-ribbon: config/countries.json), with the two cards overlapping its
+// lower edge. Phones and tablets: no band, the cards are white blocks on the grey page.
 .banner {
-  padding: var(--space-6) 0 var(--space-5);
+  padding: var(--space-3) 0 0;
 }
 
-.heading {
+.cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.find {
+  order: -1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  max-width: 760px;
-  margin: 0 auto var(--space-5);
-  text-align: center;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4) 15px;
+  background: var(--surface);
 }
 
-.siteTitle {
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: 400;
-  line-height: var(--leading-tight);
-}
-
-.tagline {
-  max-width: 60ch;
-  margin-top: var(--space-3);
-  color: var(--text-secondary);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-}
-
-// The search form is its own field (home/search.module.scss).
-.panel {
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-// Hadith of the day: the page's one feature block, a field of the card tone. Its
-// heading is a section heading like the others; the hadith's own title follows as
-// the lead paragraph (no label above a heading).
+// Hadith of the day
 .daily {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  padding: var(--space-5) var(--space-4);
-  border-radius: var(--radius-lg);
-  background-color: var(--surface-card);
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4) 15px;
+  background-color: var(--surface);
 }
 
 .top {
@@ -58,42 +41,44 @@
 
 .sectionHeading {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
+  font-size: var(--text-md);
   font-weight: 400;
-  line-height: var(--leading-tight);
+  line-height: 1.4;
 }
 
 .citation {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  color: var(--link);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
-  font-weight: 500;
 
   &:hover,
   &:focus-visible {
-    color: var(--link-hover);
+    color: var(--link);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 }
 
-// the hadith's title: content, set as the lead paragraph in the reading face
+// the hadith's title: content, set as the lead in the reading face
 .title {
-  max-width: var(--measure);
   color: var(--ink);
   font-family: var(--font-trans);
-  font-size: var(--text-md);
-  font-weight: 600;
+  font-size: var(--text-base);
+  font-weight: 500;
   line-height: var(--leading-normal);
 }
 
 .text {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-2);
+
+  // smaller than in reading: the card shows the start of the text
+  [lang="ar"] {
+    font-size: 26px;
+  }
 }
 
 .footer {
@@ -109,42 +94,54 @@
   align-items: center;
   gap: var(--space-1);
   min-height: var(--tap);
-  margin-left: auto;
-  color: var(--link);
-  font-size: var(--text-base);
-  font-weight: 600;
+  margin-inline-start: auto;
+  color: var(--text-secondary);
   white-space: nowrap;
 
   &:hover,
   &:focus-visible {
-    color: var(--link-hover);
+    color: var(--link);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
 }
 
 @media only screen and (min-width: 1024px) {
-  // The fixed 64px header lies over the top of the masthead.
+  // The fixed header lies above the band; the cards overlap its lower edge by 60px.
   .banner {
-    padding: calc(64px + var(--space-7)) 0 var(--space-6);
+    padding: calc(var(--header-height) + 32px) var(--space-5) 0;
+    background: var(--brand-band, var(--brand-ribbon));
   }
-  .heading {
-    margin-bottom: var(--space-6);
+
+  .cards {
+    position: relative;
+    top: 60px;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: var(--space-6);
+    max-width: 1120px;
+    margin: 0 auto 60px;
   }
-  .siteTitle {
-    font-size: 2.75rem;
+
+  .daily,
+  .find {
+    padding: var(--space-5);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 7px 13px rgba(71, 88, 114, 0.3);
   }
-  .tagline {
-    margin-top: var(--space-4);
+
+  .find {
+    order: 0;
+  }
+
+  .sectionHeading {
+    font-size: var(--text-xl);
+  }
+
+  .title {
     font-size: var(--text-md);
   }
-  .daily {
-    padding: var(--space-6) var(--space-7);
-  }
-  .sectionHeading {
-    font-size: var(--text-2xl);
-  }
-  .title {
-    font-size: var(--text-lg);
+
+  .text [lang="ar"] {
+    font-size: 28px;
   }
 }

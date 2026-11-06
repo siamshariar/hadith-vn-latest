@@ -299,7 +299,7 @@ export default function Search({ query, book, results, books, languages, notFoun
 }
 
 Search.getLayout = function getLayout(page) {
-  return <Layout>{page}</Layout>;
+  return <Layout title={({ t }) => t("search")}>{page}</Layout>;
 };
 
 const first = (value) => (Array.isArray(value) ? value[0] : value);

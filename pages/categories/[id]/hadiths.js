@@ -157,7 +157,11 @@ export default function CategoryHadiths({ data, books, direct, filtered, counts,
 
 CategoryHadiths.getLayout = function getLayout(page) {
   const { data } = page.props;
-  return <Layout selectedCategoryId={data ? data.category.id : null}>{page}</Layout>;
+  return (
+    <Layout selectedCategoryId={data ? data.category.id : null} title={data ? () => data.category.title : undefined}>
+      {page}
+    </Layout>
+  );
 };
 
 export async function getServerSideProps(context) {

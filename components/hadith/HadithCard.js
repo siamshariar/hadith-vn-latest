@@ -39,11 +39,10 @@ function CardContext({ hadith, book }) {
   );
 }
 
-// One hadith in a list (chapter, category, search, bookmarks), in full, as
-// sunnah.com and HadeethEnc list them. The header is the compact reference:
-// the citation (book plus `referenceNumber`, the number people cite), the
-// in-book reference when the list knows it, and the first grade; the full
-// grade table is on the detail page.
+// One hadith in a list (chapter, category, search, bookmarks), in full, as a verse on the Quran
+// sites. The header is the compact reference: the citation (book plus `referenceNumber`, the
+// number people cite) as a tag, the in-book reference when the list knows it, the first
+// grade, and ⋮; the full grade table is on the detail page.
 // - showContext: book › chapter above the citation (search results);
 // - inBookReference: { chapterNo, position } when the API item has none
 //   (the chapter page knows each hadith's position).
@@ -70,6 +69,15 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
           </Link>
           {inBook && <span className={styles.inBook}>{inBook}</span>}
           <GradeBadge grades={namedGrades(hadith, book)} gradeText={hadith.gradeText} />
+          <span className={styles.options}>
+            <HadithOptions
+              hadith={withInBook}
+              book={book}
+              isBookmarkPage={isBookmarkPage}
+              updateBookmarksData={updateBookmarksData}
+              showDetails
+            />
+          </span>
         </div>
       </header>
 
@@ -82,8 +90,7 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
         </Title>
       )}
 
-      {/* Arabic and translation side by side when the card is wide enough
-          (container query), stacked otherwise; the reader settings choose
+      {/* The Arabic, then the translation, as on the Quran sites; the reader settings choose
           which comes first and can hide the Arabic. */}
       <div className={styles.texts}>
         <div className={`${styles.arabicCol} ${arabicOnly ? styles.arabicOnly : ""}`}>
@@ -95,13 +102,6 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
       </div>
 
       <footer className={styles.foot}>
-        <HadithOptions
-          hadith={withInBook}
-          book={book}
-          isBookmarkPage={isBookmarkPage}
-          updateBookmarksData={updateBookmarksData}
-          showDetails
-        />
         <Link href={href} className={styles.details}>
           {t("viewDetails")}
           <span className={styles.detailsArrow} aria-hidden="true">

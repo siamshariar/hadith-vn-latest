@@ -92,9 +92,9 @@ module.exports = spec(module, 'lists', (h) => {
       rows,
       book.chapters.map((c) => [
         `/books/${book.slug}/chapters/${c.chapterNo}`,
-        [c.chapterNo === -1 ? '–' : String(c.chapterNo), c.chapterNo === -1 ? 'Chưa xếp chương' : c.name, chapterRange(c), `${viNumber(c.totalHadith)} hadith`],
+        [c.chapterNo === -1 ? '–' : String(c.chapterNo), c.chapterNo === -1 ? 'Chưa xếp chương' : c.name, [`${viNumber(c.totalHadith)} hadith`, chapterRange(c)].filter(Boolean).join(' · ')],
       ]),
-      'chapter rows: number, name, range, count'
+      'chapter rows: number, name, count and range'
     );
   });
 
@@ -141,7 +141,6 @@ module.exports = spec(module, 'lists', (h) => {
     assert.deepEqual(await cardIds(page), ids(unassigned));
     // no position in a chapter for these
     assert.equal(await page.locator('article[id^="hadith-"] span[class*="inBook"]').count(), 0);
-    assert.equal(await page.getByRole('combobox', { name: 'Chọn chương' }).inputValue(), '-1');
     const crumbs = await page.locator(BREADCRUMB_NAV).locator('li').allTextContents();
     assert.equal(norm(crumbs[crumbs.length - 1]), 'Chưa xếp chương');
     assert.ok(book.chapters.some((c) => c.chapterNo === -1));

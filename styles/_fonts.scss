@@ -1,14 +1,14 @@
 /*------- custom fonts -------*/
-// Be Vietnam Pro (interface, translations) and Amiri (Arabic) come from
-// next/font in pages/_app.js: self-hosted, no layout shift.
+// Roboto (interface, translations), PDMS Islamic and Amiri (Arabic) come from next/font in
+// pages/_app.js: self-hosted, no layout shift.
 
-// Roboto (a translation face in the settings, older lists) and Montserrat
-// (settings) from public/fonts, not Google Fonts: no render-blocking request
-// to another host. A face is only downloaded when a page uses it.
-@each $weight, $file in (400: "Regular", 500: "Medium", 700: "Bold") {
+// Be Vietnam Pro (a translation face in the settings) and Montserrat (settings) are not Google
+// Fonts requests either: no render-blocking request to another host. A face is only downloaded
+// when a page uses it.
+@each $weight, $file in (400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold") {
   @font-face {
-    font-family: Roboto;
-    src: url("../public/fonts/roboto/Roboto-#{$file}.ttf") format("truetype");
+    font-family: BeVietnamPro;
+    src: url("./fonts/be-vietnam-pro/BeVietnamPro-#{$file}.woff2") format("woff2");
     font-weight: $weight;
     font-style: normal;
     font-display: swap;
@@ -23,15 +23,6 @@
     font-style: normal;
     font-display: swap;
   }
-}
-
-@font-face {
-  font-family: PDMSIslam;
-  src: url("../public/fonts/pdms-islamic/_PDMS_IslamicFont Regular.ttf")
-    format("truetype");
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
 }
 
 @font-face {

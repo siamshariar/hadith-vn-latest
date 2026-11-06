@@ -3,7 +3,11 @@
 // iPhone home indicator.
 .footer {
   display: block;
-  background: var(--surface-soft);
+  background: var(--surface);
+}
+
+.inner {
+  padding: 0 var(--space-4);
 }
 
 .bottom {
@@ -64,6 +68,13 @@
 }
 
 @media only screen and (min-width: 1024px) {
+  // On the frame of the page (--frame: layouts/Layout.module.scss)
+  .inner {
+    max-width: var(--frame);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
+  }
+
   .bottom {
     flex-direction: row;
     flex-wrap: wrap;
@@ -113,13 +124,6 @@
   .copyright,
   .credit {
     font-size: 14px;
-  }
-}
-
-// keep the end of the row clear of the back-to-top button
-@media only screen and (min-width: 1024px) and (max-width: 1439px) {
-  .bottom {
-    padding-right: 60px;
   }
 }
 

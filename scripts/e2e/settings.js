@@ -1,4 +1,4 @@
-// Reading settings (the gear of the reader bar): font sizes, hiding the
+// Reading settings (the navigation's gear, the phone header's): font sizes, hiding the
 // Arabic, translation first; the Settings dialog and page (the language, which
 // the interface follows, fonts, theme); the theme toggle, and legible text in
 // the dark theme. Each takes effect at once and is still there after a reload.
@@ -12,7 +12,8 @@ const arabicText = (page) => page.locator('section[class*="arabicBlock"] div[lan
 const translationText = (page) => page.locator('section[class*="translationBlock"] div[class*="translationText"]');
 
 async function openReaderSettings(page) {
-  await page.getByRole('button', { name: 'Cài đặt hiển thị' }).first().click();
+  // the web: "Cài đặt" at the foot of the navigation; phones: the header's button
+  await page.getByRole('button', { name: /^Cài đặt( hiển thị)?$/ }).first().click();
   const dialog = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
   await dialog.waitFor();
   return dialog;
@@ -91,20 +92,21 @@ module.exports = spec(module, 'settings', (h) => {
     'reader settings: sizes, hide Arabic, translation first; at once and after a reload',
     async (t) => {
       const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
+      // until the reader chooses, the sizes are the screen's
+      const [arabicStart, translationStart] = h.desktop ? [36, 20] : [30, 18];
       const arabicBefore = await fontSize(arabicText(page));
       const translationBefore = await fontSize(translationText(page));
+      assert.deepEqual([arabicBefore, translationBefore], [arabicStart, translationStart]);
       let dialog = await openReaderSettings(page);
-      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), '28');
-      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), '18');
+      await until(async () => (await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập')) === String(arabicStart), 'the Arabic size shown');
+      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart));
 
       await dialog.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
       await dialog.getByRole('button', { name: 'Tăng cỡ chữ bản dịch' }).click();
-      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), '30');
-      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), '19');
-      const arabicAfter = await fontSize(arabicText(page));
-      const translationAfter = await fontSize(translationText(page));
-      assert.ok(Math.abs(arabicAfter / arabicBefore - 30 / 28) < 0.01, `Arabic ${arabicBefore}px -> ${arabicAfter}px`);
-      assert.ok(Math.abs(translationAfter / translationBefore - 19 / 18) < 0.01, `translation ${translationBefore}px -> ${translationAfter}px`);
+      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), String(arabicStart + 2));
+      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart + 1));
+      assert.equal(await fontSize(arabicText(page)), arabicStart + 2);
+      assert.equal(await fontSize(translationText(page)), translationStart + 1);
 
       // translation first
       await dialog.locator('label', { hasText: 'Bản dịch trước' }).click();
@@ -133,13 +135,13 @@ module.exports = spec(module, 'settings', (h) => {
       await h.waitForHydration(page);
       await until(async () => !(await arabicText(page).isVisible()), 'Arabic still hidden after a reload');
       const saved = await stored(page, 'settings');
-      assert.deepEqual(saved.fontSize, { arabic: 30, translation: 19 });
+      assert.deepEqual(saved.fontSize, { arabic: arabicStart + 2, translation: translationStart + 1 });
       assert.deepEqual(saved.reader, { showArabic: false, textOrder: 'translation' });
       await h.goto(page, `/books/${BUKHARI}/chapters/1`);
       await until(async () => (await page.locator('article[id^="hadith-"] div[lang="ar"]').first().isVisible()) === false, 'card Arabic hidden');
 
       dialog = await openReaderSettings(page);
-      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), '30');
+      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), String(arabicStart + 2));
       await dialog.getByRole('switch', { name: 'Hiện nguyên văn tiếng Ả Rập' }).check();
       await until(() => page.locator('article[id^="hadith-"] div[lang="ar"]').first().isVisible(), 'card Arabic back');
       const card = await page.locator('article[id^="hadith-"]').first().evaluate((article) => {
@@ -150,8 +152,8 @@ module.exports = spec(module, 'settings', (h) => {
       if (card.stacked) assert.ok(card.translationFirst, 'card: translation above the Arabic');
 
       await dialog.getByRole('button', { name: 'Đặt lại mặc định' }).click();
-      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), '28');
-      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), '18');
+      await until(async () => (await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập')) === String(arabicStart), 'the screen\'s size again');
+      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart));
       assert.equal(await dialog.getByRole('radio', { name: 'Tiếng Ả Rập trước' }).isChecked(), true);
       await page.keyboard.press('Escape');
       await dialog.waitFor({ state: 'hidden' });
@@ -160,101 +162,86 @@ module.exports = spec(module, 'settings', (h) => {
     { smoke: true }
   );
 
-  h.test('Settings dialog: font size, Arabic font, theme, reset', async (t) => {
+  h.test('Settings: font size, Arabic font, theme, reset', async (t) => {
     const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
-    let settings;
-    if (h.desktop) {
-      await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
-      await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ', { exact: true }) }).last();
-    } else {
-      // the phone header of content pages
-      await page.getByRole('link', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ' });
-    }
+    // the web: a dialog from the ⋮ menu, over the page. Phones: the settings page, from the reading settings.
+    const openSettings = async () => {
+      if (h.desktop) {
+        await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
+        await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
+        return page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ', { exact: true }) }).last();
+      }
+      await page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true }).click();
+      await page.getByRole('dialog', { name: 'Cài đặt hiển thị' }).getByRole('link', { name: /Cài đặt/ }).click();
+      await h.waitForPath(page, (url) => url.pathname === '/settings', 'to the settings page');
+      return page.locator('main');
+    };
+    const before = await fontSize(arabicText(page));
+    let settings = await openSettings();
     await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).waitFor({ state: 'visible' });
-    assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
+    if (h.desktop) assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
     assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).inputValue(), 'vi');
 
-    const before = await fontSize(arabicText(page));
     await settings.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
-    await until(async () => (await fontSize(arabicText(page))) > before, 'Arabic bigger at once');
-    assert.equal((await stored(page, 'settings')).fontSize.arabic, 29);
+    await until(async () => (await stored(page, 'settings')).fontSize.arabic === before + 1, 'Arabic size saved, one up from the screen\'s');
+    if (h.desktop) await until(async () => (await fontSize(arabicText(page))) > before, 'Arabic bigger at once');
 
     await settings.getByText('Chọn phông chữ tiếng Ả Rập').click();
-    await settings.getByRole('radio', { name: 'PDMS Islamic Font' }).check();
-    await until(
-      async () => /PDMSIslam/.test(await arabicText(page).evaluate((el) => getComputedStyle(el).fontFamily)),
-      'Arabic font applied'
-    );
+    await settings.getByRole('radio', { name: 'Amiri (Naskh)' }).check();
     // the translation's font too (its setter was once missing from the settings context)
     await settings.getByText('Chọn phông chữ bản dịch').click();
     await settings.getByRole('radio', { name: 'Times New Roman' }).check();
-    await until(
-      async () => /TimesNewRoman/.test(await translationText(page).first().evaluate((el) => getComputedStyle(el).fontFamily)),
-      'translation font applied'
-    );
-    assert.equal((await stored(page, 'settings')).fontFamily.translation, 'TimesNewRoman');
+    await until(async () => (await stored(page, 'settings')).fontFamily.translation === 'TimesNewRoman', 'translation font saved');
+    assert.equal((await stored(page, 'settings')).fontFamily.arabic, 'Amiri');
 
     await settings.getByText('Chọn giao diện').click();
     await settings.getByRole('button', { name: 'Tối', exact: true }).click();
     await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark theme');
     assert.equal(await settings.getByRole('button', { name: 'Tối', exact: true }).getAttribute('aria-pressed'), 'true');
 
-    await page.reload();
-    await h.waitForHydration(page);
+    await h.goto(page, `/books/${BUKHARI}/hadiths/1`);
     await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark after a reload');
-    await until(async () => /PDMSIslam/.test(await arabicText(page).evaluate((el) => getComputedStyle(el).fontFamily)), 'font after a reload');
+    await until(async () => /amiri/i.test(await arabicText(page).evaluate((el) => getComputedStyle(el).fontFamily)), 'Arabic font applied');
+    await until(async () => /TimesNewRoman/.test(await translationText(page).first().evaluate((el) => getComputedStyle(el).fontFamily)), 'translation font applied');
+    assert.equal(await fontSize(arabicText(page)), before + 1, 'the saved size');
 
-    // reset everything
-    if (h.desktop) {
-      await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
-      await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ', { exact: true }) }).last();
-    } else {
-      await page.getByRole('link', { name: 'Cài đặt', exact: true }).click();
-      settings = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ' });
-    }
+    // reset everything: the screen's sizes and the default faces
+    settings = await openSettings();
     await settings.getByRole('button', { name: 'Đặt lại', exact: true }).click();
     await until(async () => (await page.evaluate(() => document.body.className)) === 'light', 'light again');
     const reset = await stored(page, 'settings');
-    assert.equal(reset.fontSize.arabic, 28);
-    assert.equal(reset.fontFamily.arabic, 'Amiri');
-    assert.equal(reset.fontFamily.translation, 'BeVietnamPro');
+    assert.equal(reset.fontSize.arabic, null);
+    assert.equal(reset.fontFamily.arabic, 'PDMSIslam');
+    assert.equal(reset.fontFamily.translation, 'Roboto');
     if (h.desktop) {
       await page.keyboard.press('Escape');
-    } else {
-      await settings.getByRole('button', { name: 'Quay lại' }).click();
+      await until(async () => !(await settings.isVisible()), 'settings closed');
     }
-    await until(async () => !(await settings.isVisible()), 'settings closed');
   });
 
   h.test(
-    'the /settings page and the menu entry',
+    'an old reader\'s settings follow the new defaults; what they chose themselves stays',
+    async (t) => {
+      const old = JSON.stringify({ theme: 'light', version: 4, fontSize: { arabic: 28, translation: 22 }, fontFamily: { arabic: 'Amiri', translation: 'TimesNewRoman' }, reader: { showArabic: true, textOrder: 'arabic' } });
+      const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`, { initScript: `if (!localStorage.getItem('settings')) localStorage.setItem('settings', ${JSON.stringify(old)})` });
+      await until(async () => (await stored(page, 'settings')).version === 5, 'migrated');
+      const saved = await stored(page, 'settings');
+      assert.deepEqual(saved.fontSize, { arabic: null, translation: 22 }, 'the old default follows the screen; the 22 was chosen');
+      assert.deepEqual(saved.fontFamily, { arabic: 'PDMSIslam', translation: 'TimesNewRoman' });
+    },
+    { only: 'desktop' }
+  );
+
+  h.test(
+    'the /settings page and the way there',
     async (t) => {
       const { page, response } = await h.open(t, '/settings');
       assert.equal(response.status(), 200);
       await waitForH1(page, 'Cài đặt');
       await page.getByRole('combobox', { name: 'Ngôn ngữ' }).waitFor();
+      const start = h.desktop ? 20 : 18;
       await page.getByRole('button', { name: 'Tăng cỡ chữ bản dịch' }).click();
-      assert.equal((await stored(page, 'settings')).fontSize.translation, 19);
-      if (h.phone) {
-        // the menu's "Cài đặt" opens the dialog over the page it was opened on
-        await h.goto(page, `/books/${BUKHARI}`);
-        await page.getByRole('button', { name: 'Mở menu' }).click();
-        await page.locator('.MuiDrawer-paper').getByRole('link', { name: 'Cài đặt', exact: true }).click();
-        const dialog = page.locator('div[class*="ModalSecondary_modal"]').filter({ hasText: 'Ngôn ngữ' });
-        // the menu closes: while open it hides the rest of the page from
-        // assistive technology and keeps the keyboard focus to itself
-        await page.locator('.MuiDrawer-paper').waitFor({ state: 'detached' });
-        const language = dialog.getByRole('combobox', { name: 'Ngôn ngữ' });
-        await language.waitFor({ state: 'visible' });
-        await language.focus();
-        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Ngôn ngữ', 'focus reaches the settings');
-        assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}`);
-        await dialog.getByRole('button', { name: 'Quay lại' }).click();
-        await until(async () => !(await dialog.isVisible()), 'settings dialog closed');
-      }
+      await until(async () => (await stored(page, 'settings')).fontSize.translation === start + 1, 'one up from the screen\'s size');
     },
     { smoke: true }
   );
@@ -293,15 +280,25 @@ module.exports = spec(module, 'settings', (h) => {
     'theme toggle: dark and back, kept after a reload',
     async (t) => {
       const { page } = await h.open(t, '/');
-      const toDark = page.getByRole('button', { name: 'Chuyển sang giao diện tối' });
-      await toDark.click();
+      // the web's header has a toggle; on phones the theme is in the reading settings
+      const choose = async (toggle, radio) => {
+        if (h.desktop) {
+          await page.getByRole('button', { name: toggle }).click();
+          return;
+        }
+        await page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
+        await dialog.locator('label', { hasText: radio }).click();
+        await page.keyboard.press('Escape');
+        await dialog.waitFor({ state: 'hidden' });
+      };
+      await choose('Chuyển sang giao diện tối', 'Tối');
       await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark theme');
       assert.equal((await stored(page, 'settings')).theme, 'dark');
       await page.reload();
       await h.waitForHydration(page);
       await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark after a reload');
-      const toLight = page.getByRole('button', { name: 'Chuyển sang giao diện sáng' });
-      await toLight.click();
+      await choose('Chuyển sang giao diện sáng', 'Sáng');
       await until(async () => (await page.evaluate(() => document.body.className)) === 'light', 'light theme');
       assert.equal((await stored(page, 'settings')).theme, 'light');
     },
@@ -312,15 +309,15 @@ module.exports = spec(module, 'settings', (h) => {
     const bukhari3 = await api(`/books/bukhari/hadiths/3${loc()}`);
     const darkSettings = JSON.stringify({
       view: { arabic: true, translation: true, tafseer: true },
-      fontSize: { arabic: 28, translation: 18 },
-      fontFamily: { arabic: 'Amiri', translation: 'BeVietnamPro' },
+      fontSize: { arabic: null, translation: null },
+      fontFamily: { arabic: 'PDMSIslam', translation: 'Roboto' },
       theme: 'dark',
       reader: { showArabic: true, textOrder: 'arabic' },
       verseMode: 'scroll',
       activeVerse: 1,
       autoScroll: true,
       notification: false,
-      version: 4,
+      version: 5,
     });
     const { page } = await h.open(t, null, { allow: [/status of 404/] });
     await page.context().addInitScript((value) => localStorage.setItem('settings', value), darkSettings);

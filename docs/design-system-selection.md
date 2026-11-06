@@ -1,5 +1,9 @@
 # Design system selection
 
+> **History.** This records the choice of 3 November 2026. Its look (bone paper, a display serif, separate
+> cards) was superseded later that month by the reading design, which follows the Quran sites:
+> see [hadith-design-system.md](hadith-design-system.md). Its accessibility work still stands.
+
 Which reference from `~/workspace/dit/awesome-design-md` the hadith site is designed on,
 and why. The resulting system is specified in [hadith-design-system.md](hadith-design-system.md)
 and implemented in `styles/_variables.scss`.

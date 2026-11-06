@@ -61,16 +61,16 @@ function HeaderSearch() {
   );
 }
 
-// Desktop header (1024px and up): the colour logo (the dark one in the dark
-// theme) and the two ways into the library, books and categories, as words;
-// on the right the language menu ("Tiếng Việt ▾", components/core/LanguageMenu),
-// search, the theme and the menu. The home and search pages have their own
-// search box, so the header only links to /search there.
+// Desktop header (1024px and up), a white bar on the page's frame: the colour logo (the
+// dark one in the dark theme); on the right search, the language menu ("Tiếng Việt ▾",
+// components/core/LanguageMenu), the theme and the menu. The home and search pages have their
+// own search box, so the header only links to /search there. `sections`: the two ways into
+// the library as words, on the pages that have no navigation card to show them.
 const SECTIONS = [
   { href: "/books", label: "books" },
   { href: "/categories", label: "categories" },
 ];
-export default function HeaderWeb({ page }) {
+export default function HeaderWeb({ page, sections = false }) {
   const router = useRouter();
 
   const { theme, changeTheme } = useContext(SettingsContext);
@@ -134,23 +134,13 @@ export default function HeaderWeb({ page }) {
         <div className={styles.content}>
           <div className={styles.left}>
             <HeaderLogo size="desktop" />
-            <nav className={styles.nav}>
-              {SECTIONS.map((section) => {
-                // the section's own page, or a page inside the section
-                const here = router.pathname === section.href;
-                const within = !here && router.pathname.startsWith(`${section.href}/`);
-                return (
-                  <Link
-                    key={section.href}
-                    href={section.href}
-                    className={styles.navLink}
-                    aria-current={here ? "page" : within ? "true" : undefined}
-                  >
-                    {t(section.label)}
-                  </Link>
-                );
-              })}
-            </nav>
+            {sections && <nav className={styles.nav}>
+              {SECTIONS.map((section) => (
+                <Link key={section.href} href={section.href} className={styles.navLink}>
+                  {t(section.label)}
+                </Link>
+              ))}
+            </nav>}
           </div>
 
           <div className={styles.right}>

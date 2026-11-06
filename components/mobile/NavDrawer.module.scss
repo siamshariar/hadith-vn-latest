@@ -1,0 +1,116 @@
+.root {
+  z-index: 999 !important;
+}
+
+// A strip of the page always stays to tap (at least 44px), and the drawer clears a landscape
+// phone's notch and the bars of an installed app.
+.paper {
+  width: min(calc(100vw - var(--tap)), 380px);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  background: var(--surface) !important;
+  background-image: none !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+
+.close {
+  position: absolute;
+  top: calc(4px + env(safe-area-inset-top, 0px));
+  right: 6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--hover);
+    }
+  }
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+
+  // the tabs leave room for the close button
+  [role="tablist"] {
+    padding-inline-end: 56px;
+  }
+}
+
+// The site's other pages, under the rows of the list.
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--hairline-soft);
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0 var(--space-2);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+  }
+}
+
+.foot {
+  display: flex;
+  flex: 0 0 auto;
+  padding: var(--space-1);
+  border-top: 1px solid var(--hairline);
+
+  > a,
+  > button {
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: 0;
+    min-height: var(--tap);
+    padding: 0 var(--space-1);
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: pointer;
+
+    span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    svg {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+  }
+}

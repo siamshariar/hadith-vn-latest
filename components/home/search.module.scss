@@ -1,29 +1,23 @@
 .parent {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
 }
 
-// The search field: the reading surface with a control edge (3.2:1) and the
-// primary button inside it. Focus: the brand green edge and ring.
+// The search field: a grey pill with the search button inside, as the Quran sites'.
 .search {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center;
   gap: var(--space-1);
   width: 100%;
-  min-height: 56px;
-  padding: var(--space-1);
-  border: 1px solid var(--control-edge);
-  border-radius: var(--radius-md);
-  background-color: var(--surface);
-  transition: border-color var(--duration) var(--ease);
+  min-height: 46px;
+  padding-inline: var(--space-1);
+  border-radius: 23px;
+  background-color: var(--surface-soft);
 
   &:focus-within {
-    border-color: var(--accent);
     outline: 2px solid var(--focus-ring);
     outline-offset: 2px;
   }
@@ -51,7 +45,7 @@
   color: var(--text);
   font: inherit;
   font-size: var(--text-base); // 16px avoids iOS zoom on focus
-  line-height: 46px;
+  line-height: 44px;
   appearance: none;
 
   &::placeholder {
@@ -65,15 +59,15 @@
 
 .search button {
   flex: 0 0 auto;
-  min-height: 46px;
-  padding: 0 var(--space-5);
+  min-height: 38px;
+  padding: 0 var(--space-4);
   border: 0;
-  border-radius: var(--radius-sm);
+  border-radius: 19px;
   background-color: var(--accent);
   color: var(--on-accent);
   font: inherit;
-  font-size: var(--text-base);
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color var(--duration) var(--ease);
@@ -91,38 +85,40 @@
 // "Go to hadith": a reference ("Bukhari 1") opens the hadith
 .goTo {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2) var(--space-3);
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .goLabel {
   color: var(--text-secondary);
   font-size: var(--text-sm);
-  font-weight: 500;
   white-space: nowrap;
 }
 
 .goField {
   display: flex;
-  flex: 1 1 240px;
+  align-items: center;
   // Safari gives an input a ~20-character minimum width; let the field shrink
   // to a 320px phone instead
   min-width: 0;
-  max-width: 360px;
+  min-height: 46px;
+  padding-inline: var(--space-1);
+  border-radius: 23px;
+  background: var(--surface-soft);
+
+  &:focus-within {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
 
   input {
     flex: 1 1 auto;
     min-width: 0;
     width: 100%;
-    height: var(--tap);
+    height: 44px;
     padding: 0 var(--space-3);
-    border: 1px solid var(--control-edge);
-    border-inline-end: 0;
-    border-start-start-radius: var(--radius-md);
-    border-end-start-radius: var(--radius-md);
-    background: var(--surface);
+    border: 0;
+    background: transparent;
     color: var(--text);
     font: inherit;
     font-size: var(--text-base);
@@ -130,19 +126,23 @@
     &::placeholder {
       color: var(--muted);
     }
+
+    &:focus-visible {
+      outline: none;
+    }
   }
 
   button {
-    height: var(--tap);
+    flex: 0 0 auto;
+    min-height: 38px;
     padding: 0 var(--space-4);
-    border: 1px solid var(--accent);
-    border-start-end-radius: var(--radius-md);
-    border-end-end-radius: var(--radius-md);
-    background: var(--surface);
+    border: 0;
+    border-radius: 19px;
+    background: transparent;
     color: var(--link);
     font: inherit;
     font-size: var(--text-sm);
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
 
@@ -151,29 +151,35 @@
       background: var(--accent);
       color: var(--on-accent);
     }
+
+    &:focus-visible {
+      outline: none;
+    }
   }
 }
 
 // what to type, after "Go" with an empty box
 .goHint {
-  flex: 1 1 100%;
   margin: 0;
   color: var(--text);
   font-size: var(--text-sm);
   line-height: 1.5;
-  text-align: center;
 }
 
 .goCompact {
-  justify-content: flex-start;
+  align-items: center;
+
+  .goLabel {
+    white-space: normal;
+  }
 
   .goField {
-    flex-basis: 180px;
-    max-width: 260px;
+    width: 100%;
+    max-width: 320px;
   }
 
   .goHint {
-    text-align: start;
+    text-align: center;
   }
 }
 

@@ -1,6 +1,6 @@
-// Getting around: previous / next hadith, the chapter switcher of the reader
-// bar, chapter neighbours, the desktop sidebar, the phone menu drawer, the
-// header search, back-to-top and the phone header that hides on scroll.
+// Getting around: previous / next hadith and chapter, the navigation on the web (the side
+// card and its rail) and on phones (the drawer), the header search, back-to-top and the
+// header that hides on scroll.
 'use strict';
 
 const { BASE, api, assert, loc, norm, readableCategories, scrollTo, sleep, spec, until, waitForH1, waitForText, viNumber } = require('./harness');
@@ -31,7 +31,7 @@ module.exports = spec(module, 'navigation', (h) => {
       assert.equal(await next.getAttribute('href'), `/books/${BUKHARI}/hadiths/${one.navigation.next.referenceNumber}`);
       assert.deepEqual(
         await next.locator(':scope > span').allTextContents().then((parts) => parts.map(norm)),
-        ['Hadith sau ›', `Sahih al-Bukhari ${one.navigation.next.referenceNumber}`]
+        [`Hadith sauSahih al-Bukhari ${one.navigation.next.referenceNumber}`, '›']
       );
 
       await next.click();
@@ -55,167 +55,206 @@ module.exports = spec(module, 'navigation', (h) => {
     { smoke: true }
   );
 
-  h.test('the chapter switcher in the reader bar lists every chapter and opens the chosen one', async (t) => {
+  h.test('previous and next chapter at the end of the page', async (t) => {
     const book = await api(`/books/bukhari${loc()}`);
-    const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`);
-    const select = page.getByRole('combobox', { name: 'Chọn chương' });
-    const options = await select.locator('option').evaluateAll((items) => items.map((o) => [o.value, o.textContent.trim()]));
-    assert.deepEqual(
-      options,
-      book.chapters.map((c) => [String(c.chapterNo), c.chapterNo === -1 ? 'Chưa xếp chương' : `${c.chapterNo}. ${c.name}`]),
-      'one option per chapter, in order'
-    );
-    assert.equal(await select.inputValue(), '1');
-
-    // the bar sticks under the header while reading
-    await scrollTo(page, 2500);
-    await sleep(400);
-    const barTop = await select.evaluate((el) => el.closest('div[class*="bar"]').getBoundingClientRect().top);
-    assert.ok(barTop >= 0 && barTop <= 64, `reader bar stays at the top (top=${barTop})`);
-
-    await select.selectOption('3');
-    await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/3`, 'chapter from the switcher');
+    const { page } = await h.open(t, `/books/${BUKHARI}/chapters/3`);
     const third = book.chapters.find((c) => c.chapterNo === 3);
     await waitForH1(page, `3. ${third.name}`);
-    assert.equal(await page.getByRole('combobox', { name: 'Chọn chương' }).inputValue(), '3');
-
-    // previous / next chapter at the end of the page
     const neighbours = page.getByRole('navigation', { name: 'Chương', exact: true });
-    assert.equal(await neighbours.getByRole('link', { name: 'Chương 2', exact: true }).getAttribute('href'), `/books/${BUKHARI}/chapters/2`);
-    await neighbours.getByRole('link', { name: 'Chương 4', exact: true }).click();
+    const second = book.chapters.find((c) => c.chapterNo === 2);
+    const fourth = book.chapters.find((c) => c.chapterNo === 4);
+    assert.equal(await neighbours.locator('a[rel="prev"]').getAttribute('href'), `/books/${BUKHARI}/chapters/2`);
+    assert.equal(norm(await neighbours.locator('a[rel="prev"]').textContent()), `‹2. ${second.name}`);
+    assert.equal(norm(await neighbours.locator('a[rel="next"]').textContent()), `4. ${fourth.name}›`);
+    await neighbours.locator('a[rel="next"]').click();
     await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/4`, 'next chapter');
-    await waitForH1(page, `4. ${book.chapters.find((c) => c.chapterNo === 4).name}`);
+    await waitForH1(page, `4. ${fourth.name}`);
   });
 
   h.test(
-    'desktop sidebar: collections with chapters, the current one marked, filter',
+    'the web navigation: tabs, one level at a time, the current one marked, filter',
     async (t) => {
       const [books, book] = await Promise.all([api(`/books${loc()}`), api(`/books/bukhari${loc()}`)]);
       const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`);
-      const sidebar = page.locator('aside').getByRole('navigation', { name: 'Bộ sưu tập hadith' });
-      await sidebar.waitFor();
-      const bookLinks = sidebar.locator('a[href^="/books/"]:not([href*="/chapters/"])');
-      // chapter pages load the sidebar in the browser
-      await until(async () => (await bookLinks.count()) === books.length, 'sidebar collections loaded');
-      await until(async () => (await sidebar.locator(`a[href^="/books/${BUKHARI}/chapters/"]`).count()) === book.chapters.length, 'sidebar chapters loaded');
-      assert.deepEqual(
-        await bookLinks.evaluateAll((links) => links.map((a) => a.getAttribute('href'))),
-        books.map((b) => `/books/${b.slug}`),
-        'every collection, in order'
-      );
+      const aside = page.locator('aside');
+      const sidebar = aside.getByRole('navigation', { name: 'Bộ sưu tập hadith' });
+      // the page comes with the navigation: the open book's chapters, the current one marked
       const chapterLinks = sidebar.locator(`a[href^="/books/${BUKHARI}/chapters/"]`);
       assert.equal(await chapterLinks.count(), book.chapters.length, 'the open collection lists its chapters');
+      assert.equal(await aside.getByRole('tab', { name: 'Bộ sưu tập hadith' }).getAttribute('aria-selected'), 'true');
       const current = sidebar.locator('a[aria-current="page"]');
       assert.equal(await current.getAttribute('href'), `/books/${BUKHARI}/chapters/1`);
-      assert.equal(norm(await current.textContent()), `1.${book.chapters[0].name} (${book.chapters[0].totalHadith})`);
+      assert.equal(norm(await current.textContent()), `1${book.chapters[0].name}${book.chapters[0].totalHadith}`);
 
       await sidebar.locator(`a[href="/books/${BUKHARI}/chapters/5"]`).click();
-      await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/5`, 'chapter from the sidebar');
+      await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/5`, 'chapter from the navigation');
       await waitForH1(page, `5. ${book.chapters.find((c) => c.chapterNo === 5).name}`);
       await until(
         async () => (await sidebar.locator('a[aria-current="page"]').getAttribute('href')) === `/books/${BUKHARI}/chapters/5`,
-        'sidebar marks the new chapter'
+        'the navigation marks the new chapter'
       );
 
-      const filter = page.locator('aside').getByRole('searchbox', { name: 'Bộ sưu tập hadith' });
-      await filter.fill('muslim');
-      await until(async () => (await bookLinks.count()) === 1, 'filter leaves one collection');
-      assert.equal(await bookLinks.first().getAttribute('href'), '/books/sahih-muslim');
-      await page.locator('aside').getByRole('button', { name: 'Xoá bộ lọc' }).click();
-      await until(async () => (await bookLinks.count()) === books.length, 'clearing the filter shows all');
+      // up: every collection, in order, the open one marked; down again into another
+      assert.equal(await aside.locator(`a[href="/books/${BUKHARI}"]`).count(), 1, 'the level links to the collection');
+      await aside.getByRole('button', { name: 'Quay lại' }).click();
+      const bookRows = sidebar.getByRole('button');
+      await until(async () => (await bookRows.count()) === books.length, 'every collection');
+      assert.equal(await sidebar.locator('button[aria-current="true"]').count(), 1, 'the open collection marked');
+      await bookRows.filter({ hasText: books.find((b) => b.slug === 'sahih-muslim').name }).click();
+      await until(async () => (await sidebar.locator('a[href^="/books/sahih-muslim/chapters/"]').count()) > 10, 'Muslim\'s chapters load');
+      await aside.getByRole('button', { name: 'Quay lại' }).click();
 
-      // categories mode
+      const filter = aside.getByRole('searchbox', { name: 'Bộ sưu tập hadith' });
+      await filter.fill('muslim');
+      await until(async () => (await bookRows.count()) === 1, 'filter leaves one collection');
+      await aside.getByRole('button', { name: 'Xoá bộ lọc' }).click();
+      await until(async () => (await bookRows.count()) === books.length, 'clearing the filter shows all');
+
+      // categories: the tab of a category page, the level of the current one
       const [creed, every] = await Promise.all([api(`/categories/the-creed${loc()}`), api(`/categories${loc()}`)]);
-      // the tree lists the categories with something to read in Vietnamese
+      // the lists show the categories with something to read in Vietnamese
       const all = readableCategories(every, 'vi');
       const shown = new Set(all.map((c) => c.id));
       await h.goto(page, `/categories/${creed.slug}`);
-      const tree = page.locator('aside').getByRole('navigation', { name: 'Danh mục' });
-      await until(async () => (await tree.locator('a[aria-current="page"]').count()) === 1, 'current category marked');
-      assert.equal(await tree.locator('a[aria-current="page"]').getAttribute('href'), `/categories/${creed.slug}`);
-      for (const child of creed.children.filter((c) => shown.has(c.id))) {
-        // (slugs can be Arabic: hrefs are percent-encoded)
-        assert.equal(await tree.locator(`a[href^="/categories/${encodeURIComponent(child.slug)}"]`).count(), 1, `child ${child.slug} shown in the open branch`);
-      }
-      await page.locator('aside').getByRole('searchbox', { name: 'Danh mục' }).fill('giao ly');
+      const tree = aside.getByRole('navigation', { name: 'Danh mục' });
+      assert.equal(await aside.getByRole('tab', { name: 'Danh mục' }).getAttribute('aria-selected'), 'true');
+      assert.equal(await aside.locator(`a[aria-current="page"][href="/categories/${creed.slug}"]`).count(), 1, 'the level is the current category');
+      const children = creed.children.filter((c) => shown.has(c.id));
+      await until(async () => (await tree.locator('a, button').count()) === children.length, 'its subcategories');
+      await aside.getByRole('searchbox', { name: 'Danh mục' }).fill('giao ly');
       const matches = all.filter((c) => /giao ly/.test(c.title.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd').toLowerCase()));
       await until(async () => (await tree.locator('a').count()) === matches.length, `filter shows the ${matches.length} matching categories`);
+
+      // the tabs are a tablist: the arrow keys move
+      await aside.getByRole('tab', { name: 'Danh mục' }).focus();
+      await page.keyboard.press('ArrowLeft');
+      await until(async () => (await aside.getByRole('tab', { name: 'Bộ sưu tập hadith' }).getAttribute('aria-selected')) === 'true', 'arrow key to the other tab');
     },
     { only: 'desktop' }
   );
 
   h.test(
-    'phone menu drawer: opens, closes with Escape and the backdrop, links work',
+    'from chapter to chapter, a shared link\'s ?lang= and the filter stay',
     async (t) => {
-      const { page } = await h.open(t, `/books/${BUKHARI}`);
-      const menu = page.getByRole('button', { name: 'Mở menu' });
+      const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1?lang=en&translated=1`);
+      const row = page.locator(`aside a[href^="/books/${BUKHARI}/chapters/2?"]`);
+      assert.equal(await row.getAttribute('href'), `/books/${BUKHARI}/chapters/2?lang=en&translated=1`, 'in the navigation');
+      const next = page.locator('a[rel="next"]').last();
+      assert.equal(await next.getAttribute('href'), `/books/${BUKHARI}/chapters/2?lang=en&translated=1`, 'in the pager');
+    },
+    { only: 'desktop' }
+  );
+
+  h.test(
+    'with keyboard focus in the header it stays, and the navigation stays below it',
+    async (t) => {
+      const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`);
+      const hidden = () => page.evaluate(() => document.documentElement.classList.contains('header-hidden'));
+      const box = page.locator('form[role="search"]').getByRole('searchbox').first();
+      await box.focus();
+      await scrollTo(page, 1500);
+      await sleep(500);
+      assert.equal(await hidden(), false, 'the header stays while its field has focus');
+      const top = await page.evaluate(() => Math.round(document.querySelector('aside').getBoundingClientRect().top));
+      assert.equal(top, 90, 'and the card is below it');
+      await box.blur();
+      await scrollTo(page, 2500);
+      await until(() => hidden(), 'away once focus has left');
+      // Tab into the hidden header: it comes back
+      await page.getByRole('link', { name: 'Hadith.vn', exact: true }).first().focus();
+      await until(async () => !(await hidden()), 'back when focus goes into it');
+    },
+    { only: 'desktop' }
+  );
+
+  h.test(
+    'the web navigation closes to the rail: quran.vn\'s frame, remembered, each icon opens it',
+    async (t) => {
+      const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`, { context: { viewport: { width: 1440, height: 900 } } });
+      const frame = () =>
+        page.evaluate(() => {
+          const side = document.querySelector('aside').getBoundingClientRect();
+          const card = document.querySelector('main div[class*="Page_page"]').getBoundingClientRect();
+          return { navX: Math.round(side.left), navW: Math.round(side.width), cardX: Math.round(card.left), cardW: Math.round(card.width), gap: Math.round(card.left - side.right) };
+        });
+      assert.deepEqual(await frame(), { navX: 92, navW: 300, cardX: 408, cardW: 940, gap: 16 }, 'open: the nav beside the card');
+      const close = page.locator('aside').getByRole('button', { name: 'Đóng', exact: true });
+      assert.equal(await close.getAttribute('aria-expanded'), 'true');
+      await close.click();
+      await until(async () => (await frame()).navW === 70, 'closed to the 70px rail');
+      assert.deepEqual(await frame(), { navX: 207, navW: 70, cardX: 293, cardW: 940, gap: 16 }, 'rail and card where quran.vn has them');
+      await until(() => page.evaluate(() => document.activeElement.getAttribute('aria-expanded') === 'false'), 'focus on the button that opens it');
+
+      // remembered, on another page too, and on <html> before the page's scripts run
+      await h.goto(page, `/books/${BUKHARI}/chapters/2`);
+      assert.equal((await frame()).navW, 70, 'still closed on the next page');
+      const early = await page.evaluate(() => performance.getEntriesByType('navigation').length);
+      assert.equal(early, 1);
+      assert.equal(await page.evaluate(() => document.documentElement.getAttribute('data-nav')), 'closed');
+
+      // each icon opens the panel on what it says
+      await page.locator('aside').getByRole('button', { name: 'Danh mục', exact: true }).click();
+      await until(async () => (await frame()).navW === 300, 'open again');
+      assert.equal(await page.locator('aside').getByRole('tab', { name: 'Danh mục' }).getAttribute('aria-selected'), 'true');
+      assert.equal(await page.evaluate(() => localStorage.getItem('hadith-nav')), null, 'the choice is saved');
+      await until(() => page.evaluate(() => document.activeElement.getAttribute('role') === 'tab'), 'focus on the tab, not the filter');
+    },
+    { only: 'desktop', smoke: true }
+  );
+
+  h.test(
+    'the phone drawer: from the title, the current place marked, closes with Escape, the page and a link',
+    async (t) => {
+      const book = await api(`/books/bukhari${loc()}`);
+      const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`);
+      const title = page.getByRole('button', { name: `1. ${book.chapters[0].name}` });
       const drawer = page.locator('.MuiDrawer-paper').filter({ has: page.locator('a[href="/privacy-policy"]') });
 
-      await menu.click();
+      await title.click();
       await drawer.waitFor({ state: 'visible' });
-      const links = await drawer.locator('a').evaluateAll((items) => items.map((a) => [a.getAttribute('href'), a.textContent.trim()]));
-      const expected = [
-        ['/', ''],
-        ['/books', 'Bộ sưu tập hadith'],
-        ['/search', 'Tìm kiếm'],
-        ['/categories', 'Danh mục'],
-        ['/bookmarks', 'Dấu trang'],
-        ['/bookmarks', 'Đã ghim'],
-        ['/bookmarks', 'Đọc gần đây'],
-        ['/settings', 'Cài đặt'],
-        ['/support', 'Ủng hộ'],
-        ['/grateful', 'Lời cảm ơn'],
-        ['/sources', 'Dữ liệu & phương pháp'],
-        ['/about', 'Giới thiệu'],
-        ['/contact', 'Liên hệ'],
-        ['/deeniinfotech', 'Deeni Info Tech'],
-        ['/privacy-policy', 'Chính sách bảo mật'],
-      ];
-      assert.deepEqual(links, expected, 'drawer links');
+      await until(async () => (await drawer.boundingBox()).x === 0, 'slides in from the left');
+      assert.equal((await drawer.boundingBox()).width, 346, 'leaving 44px of a 390px screen');
+      assert.equal(await drawer.locator('a[aria-current="page"]').getAttribute('href'), `/books/${BUKHARI}/chapters/1`);
+      const links = await drawer.locator('ul a').evaluateAll((items) => items.map((a) => a.getAttribute('href')));
+      assert.deepEqual(links, ['/sources', '/about', '/support', '/grateful', '/contact', '/privacy-policy'], 'the site\'s other pages');
       // every link target is a real page (also when opened in a new tab)
-      for (const href of new Set(expected.map(([href]) => href))) {
+      for (const href of links) {
         const res = await fetch(BASE + href, { redirect: 'manual' });
         assert.equal(res.status, 200, `${href} answers 200`);
       }
 
       await page.keyboard.press('Escape');
       await drawer.waitFor({ state: 'hidden' });
-
-      await menu.click();
+      await title.click();
       await drawer.waitFor({ state: 'visible' });
-      await page.mouse.click(380, 400); // the backdrop, right of the 300px drawer
+      await page.mouse.click(380, 400); // the page, right of the drawer
+      await drawer.waitFor({ state: 'hidden' });
+      await title.click();
+      await drawer.waitFor({ state: 'visible' });
+      await drawer.getByRole('button', { name: 'Đóng', exact: true }).click();
       await drawer.waitFor({ state: 'hidden' });
 
       // a link to a page with the same layout: the drawer must not stay open
-      for (const [name, path, h1] of [
-        ['Dữ liệu & phương pháp', '/sources', 'Dữ liệu & phương pháp'],
-        ['Bộ sưu tập hadith', '/books', 'Bộ sưu tập hadith'],
-        ['Đã ghim', '/bookmarks', 'Đã lưu'],
-      ]) {
-        await page.getByRole('button', { name: 'Mở menu' }).click();
-        await drawer.waitFor({ state: 'visible' });
-        await drawer.getByRole('link', { name, exact: true }).click();
-        await h.waitForPath(page, (url) => url.pathname === path, `drawer link ${name}`);
-        await waitForH1(page, h1);
-        await drawer.waitFor({ state: 'hidden' }).catch(() => assert.fail(`the drawer stays open after following "${name}"`));
-      }
-      // "Đã ghim" opens the saved lists on the pins tab
-      await until(
-        async () => (await page.getByRole('tab', { name: 'Đã ghim' }).getAttribute('aria-selected')) === 'true',
-        'pins tab selected'
-      );
+      await title.click();
+      await drawer.waitFor({ state: 'visible' });
+      await drawer.locator(`a[href="/books/${BUKHARI}/chapters/3"]`).click();
+      await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/chapters/3`, 'chapter from the drawer');
+      await waitForH1(page, `3. ${book.chapters.find((c) => c.chapterNo === 3).name}`);
+      await drawer.waitFor({ state: 'hidden' }).catch(() => assert.fail('the drawer stays open after following a link'));
 
-      // "Danh mục" opens the category tree over the page
+      // the saved lists and the site's pages from it
+      await page.getByRole('button', { name: `3. ${book.chapters.find((c) => c.chapterNo === 3).name}` }).click();
+      await drawer.waitFor({ state: 'visible' });
+      await drawer.getByRole('link', { name: 'Đã lưu', exact: true }).click();
+      await h.waitForPath(page, (url) => url.pathname === '/bookmarks', 'Saved from the drawer');
+      await waitForH1(page, 'Đã lưu');
+      await drawer.waitFor({ state: 'hidden' });
+
+      // the home page opens it from its menu button, on what the language has most
+      await h.goto(page, '/');
       await page.getByRole('button', { name: 'Mở menu' }).click();
       await drawer.waitFor({ state: 'visible' });
-      await drawer.getByRole('link', { name: 'Danh mục', exact: true }).click();
-      await drawer.waitFor({ state: 'hidden' });
-      const creed = await api(`/categories/the-creed${loc()}`);
-      const treeLink = page.getByRole('navigation', { name: 'Danh mục' }).locator(`a[href="/categories/${creed.slug}"]`).last();
-      await treeLink.waitFor({ state: 'visible' });
-      await treeLink.click();
-      await h.waitForPath(page, (url) => url.pathname === `/categories/${creed.slug}`, 'category from the menu');
-      await waitForH1(page, creed.title);
+      assert.equal(await drawer.getByRole('tab', { name: 'Danh mục' }).getAttribute('aria-selected'), 'true', 'Vietnamese leads with the categories');
     },
     { only: 'phone', smoke: true }
   );
@@ -242,20 +281,21 @@ module.exports = spec(module, 'navigation', (h) => {
   }, { smoke: true });
 
   h.test(
-    'desktop header: logo, collections, search on the home page, About in the ⋯ menu',
+    'desktop header: logo, search on the home page, About in the ⋯ menu, the sections on text pages',
     async (t) => {
       const { page } = await h.open(t, '/');
       // the home page has its own search box: the header links to /search
       await page.getByRole('link', { name: 'Tìm kiếm', exact: true }).click();
       await h.waitForPath(page, (url) => url.pathname === '/search', 'search icon');
       await waitForH1(page, 'Tìm kiếm');
-      await page.getByRole('link', { name: 'Bộ sưu tập hadith', exact: true }).first().click();
-      await h.waitForPath(page, (url) => url.pathname === '/books', 'collections icon');
-      await waitForH1(page, 'Bộ sưu tập hadith');
       await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
       await page.getByRole('menuitem', { name: 'Giới thiệu', exact: true }).click();
       await h.waitForPath(page, (url) => url.pathname === '/about', 'About from the menu');
       await waitForH1(page, 'Giới thiệu');
+      // a text page has no navigation card: the header names the two ways in
+      await page.getByRole('link', { name: 'Bộ sưu tập hadith', exact: true }).first().click();
+      await h.waitForPath(page, (url) => url.pathname === '/books', 'collections');
+      await waitForH1(page, 'Bộ sưu tập hadith');
       await page.getByRole('link', { name: 'Hadith.vn', exact: true }).first().click();
       await h.waitForPath(page, (url) => url.pathname === '/', 'logo');
       await waitForH1(page, 'Hadith tiếng Việt');
@@ -314,49 +354,48 @@ module.exports = spec(module, 'navigation', (h) => {
   );
 
   h.test(
-    'phone category pages: the header opens the category tree',
+    'phone category pages: the title opens the drawer on the categories, one level at a time',
     async (t) => {
       const creed = await api(`/categories/the-creed${loc()}`);
       const child = creed.children.find((c) => c.totalChildren > 0);
       const { page } = await h.open(t, `/categories/${creed.slug}`);
-      await page.getByRole('button', { name: 'Danh mục', exact: true }).click();
-      const dialog = page.locator('div[class*="ModalSecondary_modal"]').filter({ has: page.getByRole('navigation', { name: 'Danh mục' }) });
-      const link = dialog.getByRole('navigation', { name: 'Danh mục' }).locator(`a[href="/categories/${child.slug}"]`);
+      await page.getByRole('button', { name: creed.title, exact: true }).click();
+      const drawer = page.locator('.MuiDrawer-paper').filter({ has: page.locator('a[href="/privacy-policy"]') });
+      await drawer.waitFor({ state: 'visible' });
+      assert.equal(await drawer.getByRole('tab', { name: 'Danh mục' }).getAttribute('aria-selected'), 'true');
+      assert.equal(await drawer.locator(`a[aria-current="page"][href="/categories/${creed.slug}"]`).count(), 1, 'the level is the current category');
+      // a subcategory with its own: down a level, whose title links to its page
+      await drawer.getByRole('button', { name: new RegExp(child.title) }).click();
+      const link = drawer.locator(`a[href="/categories/${child.slug}"]`);
       await link.waitFor({ state: 'visible' });
-      assert.equal(await dialog.locator('a[aria-current="page"]').getAttribute('href'), `/categories/${creed.slug}`, 'the current category is marked');
       await link.click();
-      await h.waitForPath(page, (url) => url.pathname === `/categories/${child.slug}`, 'category from the tree');
+      await h.waitForPath(page, (url) => url.pathname === `/categories/${child.slug}`, 'category from the drawer');
       await waitForH1(page, child.title);
-      await until(async () => !(await dialog.isVisible()), 'the tree closes after the link');
-      // and closes with its back button
-      await page.getByRole('button', { name: 'Danh mục', exact: true }).click();
-      await dialog.getByRole('button', { name: 'Quay lại' }).click();
-      await until(async () => !(await dialog.isVisible()), 'closed with the back button');
+      await drawer.waitFor({ state: 'hidden' });
     },
     { only: 'phone' }
   );
 
   h.test(
-    'phone header hides while reading down and comes back on scroll up',
+    'the header hides while reading down and comes back on scroll up',
     async (t) => {
       const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`);
-      const menu = page.getByRole('button', { name: 'Mở menu' });
+      const search = page.getByRole('link', { name: 'Tìm kiếm', exact: true }).or(page.getByRole('button', { name: 'Tìm', exact: true })).first();
       const hidden = () => page.evaluate(() => document.documentElement.classList.contains('header-hidden'));
-      assert.equal(await onScreen(menu), true, 'header shown at the top');
+      assert.equal(await onScreen(search), true, 'header shown at the top');
       await scrollTo(page, 1500);
-      await until(async () => (await hidden()) && !(await onScreen(menu)), 'header slides away reading down');
-      // the reader bar moves up into the header's place
-      await until(
-        async () => (await page.getByRole('combobox', { name: 'Chọn chương' }).evaluate((el) => el.closest('div[class*="bar"]').getBoundingClientRect().top)) < 2,
-        'reader bar at the top while the header is hidden'
-      );
+      await until(async () => (await hidden()) && !(await onScreen(search)), 'header slides away reading down');
+      if (h.desktop) {
+        // the navigation card moves up into the header's place, and stays on the screen
+        await until(() => page.evaluate(() => Math.round(document.querySelector('aside').getBoundingClientRect().top) === 24), 'the card 24px from the top');
+      }
       await scrollTo(page, 1400);
-      await until(async () => !(await hidden()) && (await onScreen(menu)), 'header back on scroll up');
+      await until(async () => !(await hidden()) && (await onScreen(search)), 'header back on scroll up');
       await scrollTo(page, 2500);
       await until(() => hidden(), 'hidden again reading down');
       await scrollTo(page, 0);
       await until(async () => !(await hidden()), 'shown at the top');
     },
-    { only: 'phone', smoke: true }
+    { smoke: true }
   );
 });

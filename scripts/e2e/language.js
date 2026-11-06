@@ -16,12 +16,22 @@ const TOPIC = 'hadeethenc';
 const cardName = (page, slug) =>
   page.locator(`section[aria-labelledby="home-books"] a[href="/books/${slug}"] span[class*="name"]`).first().innerText().then(norm);
 const menuButton = (page) => page.locator('button[data-language-menu]').filter({ visible: true }).first();
+// the same when none is on show: the page has the desktop header's, hidden, whatever the screen
+const anyMenuButton = (page) => page.locator('button[data-language-menu]').first();
+// On a phone's reading page the menu is at the foot of the navigation drawer.
+async function reachMenu(page) {
+  if (await menuButton(page).count()) return;
+  await page.locator('[class*="titleButton"]').click();
+  await page.locator('.MuiDrawer-paper[role="dialog"]').waitFor();
+  await menuButton(page).waitFor();
+}
 // the open panel (its name is the interface's word for "language")
 const panel = (page) => page.locator('[role="dialog"][id^="language-menu-"]');
 const rows = (page) => page.locator('[role="menuitemradio"]');
 const htmlLang = (page) => page.evaluate(() => document.documentElement.lang);
 
 async function openMenu(page) {
+  await reachMenu(page);
   await menuButton(page).click();
   await rows(page).first().waitFor();
   return panel(page);
@@ -32,7 +42,7 @@ async function choose(page, code, ui) {
   const dialog = await openMenu(page);
   await dialog.locator('input[type="search"]').fill(code === 'bn' ? 'beng' : code === 'id' ? 'indo' : code === 'vi' ? 'viet' : code);
   await dialog.locator(`[role="menuitemradio"][data-language="${code}"]`).click();
-  await until(async () => (await htmlLang(page)) === ui && (await menuButton(page).getAttribute('data-language-menu')) === code, `the page in ${code}`);
+  await until(async () => (await htmlLang(page)) === ui && (await anyMenuButton(page).getAttribute('data-language-menu')) === code, `the page in ${code}`);
   await page.waitForLoadState('networkidle');
 }
 
@@ -45,6 +55,7 @@ module.exports = spec(module, 'language menu', (h) => {
       const languages = await api('/languages');
       const english = languages.find((l) => l.code === 'en');
       const { page } = await h.open(t, `/books/${BUKHARI}`);
+      await reachMenu(page);
       const button = menuButton(page);
       assert.equal(await button.getAttribute('aria-label'), 'Ngôn ngữ: Tiếng Việt');
       assert.equal(await button.getAttribute('aria-haspopup'), 'dialog');
@@ -138,13 +149,15 @@ module.exports = spec(module, 'language menu', (h) => {
       const chapterRows = (await page.locator('#book-chapters + ol li').allInnerTexts()).map(norm);
       assert.ok(chapterRows[0].includes(norm(book.chapters[0].name)), `chapter 1 keeps the API name: ${chapterRows[0]}`);
       if (h.desktop) {
-        const sidebar = (await page.locator('aside div[class*="sidebar_branch"] > a').allInnerTexts()).map(norm);
-        assert.ok(sidebar.some((text) => text.startsWith(name)), 'the sidebar names the book');
-        assert.ok(sidebar.some((text) => text.startsWith(unnamed.name)), `a book the names do not have keeps the API name (${unnamed.slug})`);
+        assert.ok(norm(await page.locator('aside a[class*="crumbLink"]').innerText()).startsWith(name), 'the navigation names the book');
+        await page.locator('aside').getByRole('button', { name: bn('goBack') }).click();
+        const row = (text) => page.locator('aside nav button').filter({ hasText: text });
+        await row(name).first().waitFor();
+        assert.equal(await row(unnamed.name).count(), 1, `a book the names do not have keeps the API name (${unnamed.slug})`);
       }
       if (!fixture) t.diagnostic('NAMES_FIXTURE is not set: the names expected are those of lib/names/bn.json, else the API');
 
-      // a hadith: citation, breadcrumbs and the reader bar
+      // a hadith: citation, breadcrumbs and the chapter in the navigation
       await h.goto(page, `/books/${BUKHARI}/hadiths/1`);
       await waitForH1(page, `${name} 1`);
       assert.deepEqual(
@@ -152,8 +165,7 @@ module.exports = spec(module, 'language menu', (h) => {
         [bn('home'), bn('books'), name, bn('chapterNumber', { number: 1 }), bn('hadithNumbered', { number: 1 })]
       );
       assert.equal(norm(await page.title()), `${name} 1 | ${bn('siteHeading')} | Hadith.vn`);
-      const bar = (await page.locator('[class*="ReaderBar"] a').allInnerTexts()).map(norm);
-      assert.ok(bar.includes(norm(bn('chapterNumberName', { number: 1, name: chapter1.chapter.name }))), `reader bar: ${bar.join(' | ')}`);
+      if (h.desktop) assert.ok(norm(await page.locator('aside a[aria-current="page"]').last().innerText()).includes(norm(chapter1.chapter.name)), 'the chapter marked');
 
       // a chapter: the API's name in the title and the h1, the book's in Bengali
       await h.goto(page, `/books/${BUKHARI}/chapters/2`);
@@ -215,8 +227,10 @@ module.exports = spec(module, 'language menu', (h) => {
     const kept = all.length - empty.length;
     await waitForText(page.locator('main header p[class*="meta"] span').first(), `${viNumber(kept)} danh mục`);
     if (h.desktop) {
-      await page.locator('aside nav a[href^="/categories/"]').first().waitFor();
-      assert.deepEqual((await hrefs(page.locator('aside nav a[href^="/categories/"]'))).filter((href) => hidden.has(href)), [], 'the sidebar too');
+      const row = page.locator('aside nav a, aside nav button');
+      await row.first().waitFor();
+      const shown = (await row.allInnerTexts()).map(norm).join('|');
+      assert.deepEqual(topEmpty.filter((category) => !category.parentId && shown.includes(norm(category.title))), [], 'the navigation too');
     }
 
     await h.goto(page, '/');

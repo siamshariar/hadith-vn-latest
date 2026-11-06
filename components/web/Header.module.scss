@@ -3,19 +3,23 @@
 }
 
 @media only screen and (min-width: 1024px) {
-  // On the page's own paper, closed by a hairline: no shadow, no ribbon (the
-  // logo carries the site's colours).
+  // White, across the screen, its contents on the frame of the page (--frame:
+  // layouts/Layout.module.scss). It slides away while reading down (ScrollFrame).
   .header {
     display: block;
     width: 100%;
     position: absolute;
     top: 0;
     left: 0;
-    height: 64px;
-    padding: 0 var(--space-5);
-    border-bottom: 1px solid var(--hairline);
-    background: var(--canvas);
+    height: var(--header-height);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
     z-index: 999;
+    transition: transform 250ms var(--ease);
+  }
+
+  :global(html.header-hidden) .header {
+    transform: translateY(-100%);
   }
 
   .content {
@@ -25,6 +29,9 @@
     justify-content: space-between;
     gap: var(--space-4);
     height: 100%;
+    max-width: var(--frame);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
   }
 
   .left {
@@ -34,32 +41,25 @@
     gap: var(--space-6);
   }
 
-  // Books · Categories: words, the current one underlined in the brand green
+  // Books · Categories: words (text pages)
   .nav {
     display: flex;
     align-items: stretch;
     gap: var(--space-1);
-    height: 64px;
+    height: var(--header-height);
   }
 
   .navLink {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--space-3);
-    border-bottom: 2px solid transparent;
     color: var(--text-secondary);
     font-size: var(--text-base);
-    font-weight: 500;
     white-space: nowrap;
-    transition: color var(--duration) var(--ease), border-color var(--duration) var(--ease);
+    transition: color var(--duration) var(--ease);
 
     &:hover {
-      color: var(--ink);
-    }
-
-    &[aria-current] {
-      border-bottom-color: var(--accent);
-      color: var(--ink);
+      color: var(--link);
     }
 
     &:focus-visible {
@@ -120,13 +120,10 @@
     max-width: 320px;
     height: var(--tap);
     margin-right: var(--space-2);
-    border: 1px solid var(--control-edge);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    transition: border-color var(--duration) var(--ease);
+    border-radius: var(--radius-pill);
+    background: var(--surface-soft);
 
     &:focus-within {
-      border-color: var(--accent);
       outline: 2px solid var(--focus-ring);
       outline-offset: 2px;
     }
@@ -135,7 +132,7 @@
       flex: 1 1 auto;
       min-width: 0;
       height: 100%;
-      padding: 0 var(--space-1) 0 var(--space-3);
+      padding: 0 var(--space-1) 0 var(--space-4);
       border: 0;
       background: transparent;
       color: var(--text);
@@ -160,7 +157,7 @@
       width: 42px;
       height: 42px;
       border: 0;
-      border-radius: var(--radius-sm);
+      border-radius: 50%;
       background: transparent;
       cursor: pointer;
 
@@ -213,6 +210,12 @@
     font-size: 15px;
     color: var(--text);
     padding-right: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .header {
+    transition: none;
   }
 }
 

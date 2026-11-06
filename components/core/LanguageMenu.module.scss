@@ -27,17 +27,14 @@
   }
 }
 
-// "🌐 Tiếng Việt ▾": a secondary button like the reading bar's translations chip,
-// 44px tall, radius 8px (docs/hadith-design-system.md: never a pill).
+// "Tiếng Việt ▾": quiet in the header, 44px tall.
 .desktop {
   height: 44px;
   padding-block: 0;
-  padding-inline: 12px 14px;
-  border: 1px solid var(--control-edge);
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  font-size: var(--text-sm);
-  transition: border-color var(--duration) var(--ease), background-color var(--duration) var(--ease);
+  padding-inline: 12px 10px;
+  border-radius: 22px;
+  font-size: 15px;
+  transition: background-color var(--duration) var(--ease);
 
   svg {
     width: 20px;
@@ -46,15 +43,38 @@
   }
 
   &[aria-expanded="true"] {
-    border-color: var(--accent);
-    background: var(--accent-wash);
+    background: var(--hover);
+  }
+}
+
+// The foot of the navigation drawer: as its neighbours (components/mobile/NavDrawer).
+.foot {
+  display: flex;
+  flex: 1 1 0;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
 @media (hover: hover) {
-  .desktop:hover {
-    border-color: var(--accent);
-    background: var(--accent-wash);
+  .desktop:hover,
+  .foot:hover {
+    background: var(--hover);
   }
 
   .phone:hover,
@@ -180,7 +200,7 @@
 .title {
   color: var(--ink);
   font-size: var(--text-md);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .close {
@@ -236,9 +256,9 @@
   min-height: 44px;
   padding-block: 0;
   padding-inline: 42px 12px;
-  border: 1px solid var(--control-edge);
-  border-radius: var(--radius-md); // a field: 8px
-  background: var(--surface);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
   color: var(--text);
   font: inherit;
   font-size: 16px; // no zoom on focus in iOS Safari
@@ -249,7 +269,6 @@
   }
 
   &:focus-visible {
-    border-color: var(--accent);
     outline: 2px solid var(--focus-ring);
     outline-offset: 1px;
   }

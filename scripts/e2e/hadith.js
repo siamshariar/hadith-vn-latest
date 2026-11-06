@@ -43,9 +43,8 @@ module.exports = spec(module, 'hadith page', (h) => {
         await until(async () => (await translationBlock(page, code).count()) === 1, `${code} translation shown`);
         assert.equal(squash(await translationBlock(page, code).innerText()), squash(cleanText(data.translation.text)), `${code} text is the API's`);
         assert.equal(data.translation.isFallback, false);
-        // the label names the language; the interface is that language's and nothing is saved
-        const tr = await interfaceStrings(code);
-        await waitForText(page.locator('section[class*="translationBlock"] span[class*="label"]').first(), tr.language(code));
+        // the page's own language needs no label; the interface is that language's and nothing is saved
+        assert.equal(await page.locator('section[class*="translationBlock"] span[class*="label"]').count(), 0);
         assert.equal(await anyChip(page).getAttribute('data-translations'), code);
         assert.equal(await languageCookie(context), undefined, 'no language cookie written');
         assert.equal((await meta(page)).lang, code);
@@ -147,7 +146,7 @@ module.exports = spec(module, 'hadith page', (h) => {
     const body = url.searchParams.get('body');
     assert.ok(body.startsWith(`Hadith: Sahih Muslim 8a\nLiên kết: ${canonical}\n`), `body: ${JSON.stringify(body)}`);
     // the same address in the ⋯ menu
-    await page.locator('header').getByRole('button', { name: 'Thêm thao tác' }).click();
+    await page.locator('article > header').getByRole('button', { name: 'Tùy chọn hadith' }).click();
     assert.equal(await page.getByRole('menuitem', { name: 'Báo lỗi' }).getAttribute('href'), href);
   });
 
@@ -215,7 +214,6 @@ module.exports = spec(module, 'hadith page', (h) => {
       await h.goto(page, `/hadiths/${muslim.id}`);
       assert.equal(muslim.referenceNumber, '8.01');
       await waitForH1(page, 'Sahih Muslim 8a');
-      assert.equal(norm(await page.getByText('Số hadith:').textContent()), 'Số hadith: 8a');
       const crumbs = await page.locator(BREADCRUMB_NAV).locator('li').allTextContents();
       assert.equal(norm(crumbs[crumbs.length - 1]), 'Hadith 8a');
       assert.equal(norm(await arabicBlock(page).innerText()), norm(cleanText(muslim.arabic)));

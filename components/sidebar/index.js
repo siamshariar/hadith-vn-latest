@@ -1,26 +1,35 @@
 "use client";
 
-import { useState, useEffect, useId, useMemo, useContext } from "react";
+import { forwardRef, useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import Skeleton from "react-loading-skeleton";
-import Collapse from "@mui/material/Collapse";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CloseIcon from "@mui/icons-material/Close";
-import Scrollbar from "../core/scrollbar";
 import ErrorState from "../core/error";
+import ReaderSettings from "../hadith/ReaderSettings";
+import BackIcon from "../icons/NavigateBefore";
+import BookmarkIcon from "../icons/BookmarkBorder";
+import ChevronRightIcon from "../icons/ChevronRight";
+import CloseIcon from "../icons/Close";
+import ListIcon from "../icons/FormatListBulleted";
+import MenuBookIcon from "../icons/MenuBook";
+import PanelCloseIcon from "../icons/PanelClose";
+import PanelOpenIcon from "../icons/PanelOpen";
 import SearchIcon from "../icons/Search";
-import { SettingsContext } from "../../contexts/SettingsContext";
+import SettingsIcon from "../icons/SettingsOutlined";
 import { useLocale } from "../../contexts/LocaleContext";
 import useApi from "../../hooks/useApi";
-import { buildCategoryTree, getBook, getBooks, getCategories, readableCategories } from "../../lib/api";
+import { getBook, getBooks, getCategories, readableCategories } from "../../lib/api";
 import {
   UNASSIGNED_CHAPTER,
   bookPath,
   categoryHadithsPath,
   categoryPath,
   chapterPath,
+  isCategoryBook,
   shortBookName,
 } from "../../lib/hadith";
+import { NAV_KEY } from "../../lib/settings";
+import { keptQuery } from "../../lib/translations";
 import styles from "./index.module.scss";
 
 // Case- and accent-insensitive matching, so "giao ly" finds "Giáo lý".
@@ -31,257 +40,396 @@ const fold = (value) =>
     .replace(/đ/gi, "d")
     .toLowerCase();
 
-// A branch of the tree: its link, then a separate toggle for what is under it
-// (the disclosure pattern; a link inside the toggle's button would be a control
-// inside a control). The toggle names what it shows: "Books of Sahih al-Bukhari".
-function Branch({ id, open, onToggle, label, link, children }) {
-  return (
-    <div>
-      <div className={styles.branch}>
-        {link}
-        <button
-          type="button"
-          className={styles.toggle}
-          aria-expanded={open ? "true" : "false"}
-          aria-controls={id}
-          aria-label={label}
-          onClick={onToggle}
-        >
-          <ExpandMoreIcon />
-        </button>
-      </div>
-      <Collapse in={open} unmountOnExit>
-        <div id={id} className={styles.branchBody}>
-          {children}
-        </div>
-      </Collapse>
-    </div>
-  );
-}
-
-function SidebarSkeleton() {
+function NavSkeleton() {
   return (
     <div className={styles.skeleton} aria-hidden="true">
-      <Skeleton count={10} height={22} style={{ marginBottom: 10 }} />
+      <Skeleton count={10} height={30} style={{ marginBottom: 12 }} />
     </div>
   );
 }
 
 // Parent categories open the category page (subcategories); leaf categories
 // open their hadith list.
-const categoryHref = (category) =>
-  category.totalChildren > 0 || (category.children && category.children.length > 0)
-    ? categoryPath(category)
-    : categoryHadithsPath(category);
+const categoryHref = (category) => (category.totalChildren > 0 ? categoryPath(category) : categoryHadithsPath(category));
 
-function CategoryLink({ category, active, level, parent }) {
-  return (
-    <Link
-      href={categoryHref(category)}
-      className={`${styles.list} ${active ? styles.active : ""} ${parent ? styles.parent : ""}`}
-      aria-current={active ? "page" : undefined}
-      style={{ paddingLeft: `${5 + level * 4}px` }}
-    >
-      <bdi>{category.title}</bdi>
-      {category.totalHadith > 0 && <span className={styles.count}> ({category.totalHadith})</span>}
-    </Link>
+// One row of the list: a link to a page, or (`onClick`) a button that goes down a level.
+function Row({ href, onClick, current, number, name, note, count, more, label }) {
+  const inner = (
+    <>
+      {number != null && <span className={styles.num}>{number}</span>}
+      <span className={styles.name}>
+        {name}
+        {note && <small>{note}</small>}
+      </span>
+      {count != null && <span className={styles.count}>{count}</span>}
+      {more && (
+        <span className={styles.go}>
+          <ChevronRightIcon />
+        </span>
+      )}
+    </>
   );
-}
-
-// The category ids to open so that `selectedId` is visible.
-function branchTo(categories, selectedId) {
-  const open = new Set();
-  if (selectedId == null || !categories.length) return open;
-  const byId = new Map(categories.map((category) => [category.id, category]));
-  let current = byId.get(selectedId);
-  if (current && current.totalChildren > 0) open.add(current.id);
-  while (current && current.parentId != null) {
-    open.add(current.parentId);
-    current = byId.get(current.parentId);
-  }
-  return open;
-}
-
-// `initial`: { categories, partial } from the server. A partial list (the
-// top level and the open branch) paints at once; the full list, needed for
-// the other branches and the filter, follows in the background. Only the
-// categories with something to read in the language (lib/api
-// readableCategories), like the server's.
-function CategoryTree({ selectedCategoryId, filter, initial, enabled }) {
-  const { lang, t } = useLocale();
-  const treeId = useId();
-  const partial = Boolean(initial && initial.partial);
-  const { data, error, retry } = useApi(`categories:${lang}`, () => getCategories(lang), {
-    enabled: enabled && (!initial || partial),
-  });
-  const categories = useMemo(
-    () => (Array.isArray(data) && data.length ? readableCategories(data, lang) : (initial && initial.categories) || []),
-    [initial, data, lang]
-  );
-  const tree = useMemo(() => buildCategoryTree(categories), [categories]);
-  // Server-provided data renders the open branch on the first paint.
-  const [expanded, setExpanded] = useState(() => branchTo(categories, selectedCategoryId));
-
-  // Open the branch that leads to the current category.
-  useEffect(() => {
-    const open = branchTo(categories, selectedCategoryId);
-    if (open.size) setExpanded((previous) => new Set([...previous, ...open]));
-  }, [selectedCategoryId, categories]);
-
-  if (error && !categories.length) return <ErrorState error={error} onRetry={retry} compact />;
-  if (!categories.length) return <SidebarSkeleton />;
-
-  if (filter) {
-    const query = fold(filter);
-    const matches = categories.filter(
-      (category) => fold(category.title).includes(query) || fold(category.titleArabic).includes(query)
-    );
-    if (!matches.length) return <div className={styles.empty}>{t("noHadiths")}</div>;
-    return matches.map((category) => (
-      <CategoryLink key={category.id} category={category} active={category.id === selectedCategoryId} level={0} />
-    ));
-  }
-
-  const toggle = (id) =>
-    setExpanded((previous) => {
-      const next = new Set(previous);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const renderNodes = (nodes, level = 0) =>
-    nodes.map((category) => {
-      const active = category.id === selectedCategoryId;
-      if (!category.children.length && !(category.totalChildren > 0)) {
-        return <CategoryLink key={category.id} category={category} active={active} level={level} />;
-      }
-      return (
-        <Branch
-          key={category.id}
-          id={`${treeId}-${category.id}`}
-          open={expanded.has(category.id)}
-          onToggle={() => toggle(category.id)}
-          label={`${t("subcategories")}: ${category.title}`}
-          link={<CategoryLink category={category} active={active} level={level} parent />}
-        >
-          {/* children not in the partial list yet: the full list is on its way */}
-          {category.children.length ? (
-            renderNodes(category.children, level + 1)
-          ) : (
-            <Skeleton count={3} height={18} style={{ marginBottom: 8 }} />
-          )}
-        </Branch>
-      );
-    });
-
-  return renderNodes(tree);
-}
-
-function BookChapters({ book, selectedChapterNo, active, initial }) {
-  const { lang, t } = useLocale();
-  const { data, error, retry } = useApi(`book:${book.slug}:${lang}`, () => getBook(book.slug, lang), {
-    enabled: !initial,
-  });
-  const chapters = initial || (data && data.chapters);
-
-  if (error && !chapters) return <ErrorState error={error} onRetry={retry} compact />;
-  if (!chapters) return <Skeleton count={4} height={18} style={{ marginBottom: 8 }} />;
-
-  return chapters.map((chapter) => {
-    const isActive = active && chapter.chapterNo === selectedChapterNo;
-    const label = chapter.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : chapter.name;
+  if (href) {
     return (
-      <Link
-        key={chapter.chapterNo}
-        href={chapterPath(book.slug, chapter.chapterNo)}
-        className={`${styles.list} ${styles.chapter} ${isActive ? styles.active : ""}`}
-        aria-current={isActive ? "page" : undefined}
-      >
-        {chapter.chapterNo !== UNASSIGNED_CHAPTER && <span className={styles.chapterNo}>{chapter.chapterNo}.</span>}
-        <span>{label}</span>
-        <span className={styles.count}> ({chapter.totalHadith})</span>
+      <Link href={href} className={styles.row} aria-current={current ? "page" : undefined} aria-label={label}>
+        {inner}
       </Link>
     );
-  });
+  }
+  return (
+    <button type="button" className={styles.row} onClick={onClick} aria-current={current ? "true" : undefined} aria-label={label}>
+      {inner}
+    </button>
+  );
 }
 
-function BookTree({ selectedBookSlug, selectedChapterNo, filter, initial, enabled }) {
-  const { lang, t } = useLocale();
-  const treeId = useId();
-  const initialBooks = initial && initial.books;
-  const initialChapters = (initial && initial.chapters) || {};
-  const { data, error, retry } = useApi(`books:${lang}`, () => getBooks(lang), {
-    enabled: enabled && !initialBooks,
+// The navigation of the reading pages, the same on the web (the side card) and on phones and
+// tablets (components/mobile/NavDrawer): two tabs, a filter, and one level of the tree at a
+// time, books → chapters and categories → subcategories, the reader's place marked and in
+// view. `mode` is the tab the page belongs to. `data`: what the page's server props already
+// hold (components/sidebar/data.js), rendered on the first paint; anything else loads in the
+// browser, only `enabled`. `after`: what follows the rows inside the list (the drawer's links).
+export const Nav = forwardRef(function Nav(
+  { mode = "categories", selectedCategoryId = null, selectedBookSlug = null, selectedChapterNo = null, data, enabled = true, after = null },
+  ref
+) {
+  const { lang, t, formatNumber } = useLocale();
+  const router = useRouter();
+  // From chapter to chapter, a shared link's ?lang= and ?tr= and the "only readable" filter stay.
+  const keepView = keptQuery(router.query, ["translated"]);
+  const ids = useId();
+  // Where the reader has gone in the list; undefined: where the page is. A new page starts over.
+  const [tabState, setTabState] = useState();
+  const [bookState, setBookState] = useState();
+  const [levelState, setLevelState] = useState();
+  const [query, setQuery] = useState("");
+  const pageKey = `${mode}|${selectedBookSlug}|${selectedChapterNo}|${selectedCategoryId}`;
+  const [seen, setSeen] = useState(pageKey);
+  if (seen !== pageKey) {
+    setSeen(pageKey);
+    setTabState(undefined);
+    setBookState(undefined);
+    setLevelState(undefined);
+    setQuery("");
+  }
+  const tab = tabState || (mode === "books" ? "books" : "categories");
+  const q = fold(query.trim());
+
+  // ---- books
+  const initialBooks = data && data.books ? data.books : null;
+  const initialChapters = (data && data.chapters) || {};
+  const booksApi = useApi(`books:${lang}`, () => getBooks(lang), { enabled: enabled && tab === "books" && !initialBooks });
+  const books = initialBooks || (Array.isArray(booksApi.data) ? booksApi.data : []);
+  const openSlug = bookState === undefined ? selectedBookSlug : bookState;
+  const openBook = openSlug ? books.find((book) => book.slug === openSlug) : null;
+  const inBook = tab === "books" && Boolean(openBook) && !isCategoryBook(openBook);
+  const needChapters = inBook && !initialChapters[openSlug];
+  const chaptersApi = useApi(needChapters ? `book:${openSlug}:${lang}` : null, () => getBook(openSlug, lang), { enabled });
+  const chapters =
+    initialChapters[openSlug] || (chaptersApi.data && chaptersApi.data.slug === openSlug ? chaptersApi.data.chapters : null);
+
+  // ---- categories: `partial` from the server (the top level and the open branch) paints at
+  // once; the whole list, needed for the other branches and the filter, follows.
+  const initialCategories = data && data.categories ? data : null;
+  const partial = Boolean(initialCategories && initialCategories.partial);
+  const categoriesApi = useApi(`categories:${lang}`, () => getCategories(lang), {
+    enabled: enabled && tab === "categories" && (!initialCategories || partial),
   });
-  const books = initialBooks || (Array.isArray(data) ? data : []);
-  const [expanded, setExpanded] = useState(() => new Set(selectedBookSlug ? [selectedBookSlug] : []));
-
-  useEffect(() => {
-    if (selectedBookSlug) setExpanded((previous) => new Set([...previous, selectedBookSlug]));
-  }, [selectedBookSlug]);
-
-  // Load the open book's chapters together with the list, not after it
-  // (getBook is memoised, so BookChapters reuses this request).
-  useEffect(() => {
-    if (enabled && selectedBookSlug && !initialChapters[selectedBookSlug]) {
-      getBook(selectedBookSlug, lang).catch(() => {});
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, selectedBookSlug, lang]);
-
-  if (error && !books.length) return <ErrorState error={error} onRetry={retry} compact />;
-  if (!books.length) return <SidebarSkeleton />;
-
-  const query = fold(filter);
-  const visible = query
-    ? books.filter((book) => [book.name, book.nameEnglish, book.nameArabic].some((name) => fold(name).includes(query)))
-    : books;
-  if (!visible.length) return <div className={styles.empty}>{t("noHadiths")}</div>;
-
-  const toggle = (slug) =>
-    setExpanded((previous) => {
-      const next = new Set(previous);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      return next;
+  const categories = useMemo(
+    () =>
+      Array.isArray(categoriesApi.data) && categoriesApi.data.length
+        ? readableCategories(categoriesApi.data, lang)
+        : (initialCategories && initialCategories.categories) || [],
+    [initialCategories, categoriesApi.data, lang]
+  );
+  const byId = useMemo(() => new Map(categories.map((category) => [category.id, category])), [categories]);
+  const kids = useMemo(() => {
+    const map = new Map();
+    categories.forEach((category) => {
+      const key = category.parentId == null ? "root" : category.parentId;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(category);
     });
+    return map;
+  }, [categories]);
+  const selected = selectedCategoryId != null ? byId.get(selectedCategoryId) : null;
+  const pageLevel = selected ? (selected.totalChildren > 0 ? selected.id : selected.parentId ?? null) : null;
+  const level = levelState === undefined ? pageLevel : levelState;
+  const levelCategory = level != null ? byId.get(level) : null;
 
-  return visible.map((book) => {
-    const active = book.slug === selectedBookSlug;
-    const isOpen = expanded.has(book.slug);
-    const current = active && selectedChapterNo == null;
+  const countOf = (value) => (value > 0 ? formatNumber(value) : null);
+  const bookNote = (book) =>
+    [
+      t("hadithCount", { count: book.totalHadith }),
+      book.totalChapter > 1 ? t("chapterCount", { count: book.totalChapter }) : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  const pathOf = (category) => {
+    const names = [];
+    for (let node = byId.get(category.parentId); node; node = byId.get(node.parentId)) names.unshift(node.title);
+    return names.join(" › ");
+  };
+
+  // ---- the list's place and focus
+  const list = useRef(null);
+  const crumb = useRef(null);
+  const field = useRef(null);
+  const moved = useRef(false);
+  // The current row in view, or the top of a new level.
+  const reveal = useCallback(() => {
+    const box = list.current;
+    if (!box) return;
+    const current = box.querySelector("[aria-current]");
+    box.scrollTop = current ? Math.max(0, current.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 80) : 0;
+  }, []);
+  const chaptersShown = Boolean(chapters);
+  useEffect(() => {
+    reveal();
+    if (!moved.current) return;
+    moved.current = false;
+    // on the way back up, into a level whose row the reader came from; else its first
+    const box = list.current;
+    const target = (crumb.current && crumb.current.querySelector("button")) || (box && (box.querySelector("[aria-current]") || box.querySelector("a, button")));
+    if (target) target.focus({ preventScroll: true });
+  }, [reveal, tab, openSlug, level, Boolean(q), chaptersShown, categories.length, books.length, selectedChapterNo, selectedCategoryId]);
+
+  const go = (change) => {
+    moved.current = true;
+    change();
+  };
+  const showTab = (name) => {
+    setTabState(name);
+    setQuery("");
+  };
+  useImperativeHandle(ref, () => ({ showTab, reveal }), [reveal]);
+
+  const tabs = [
+    { name: "books", label: t("books") },
+    { name: "categories", label: t("categories") },
+  ];
+  const tabId = (name) => `${ids}-tab-${name}`;
+  const onTabKey = (event) => {
+    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const next = tab === "books" ? "categories" : "books";
+    showTab(event.key === "Home" ? "books" : event.key === "End" ? "categories" : next);
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById(tabId(event.key === "Home" ? "books" : event.key === "End" ? "categories" : next));
+      if (el) el.focus();
+    });
+  };
+
+  // ---- the rows
+  const bookRow = (book, index) => {
+    const topic = isCategoryBook(book);
     return (
-      <Branch
+      <Row
         key={book.slug}
-        id={`${treeId}-${book.slug}`}
-        open={isOpen}
-        onToggle={() => toggle(book.slug)}
-        label={t("chaptersOf", { name: shortBookName(book) })}
-        link={
-          <Link
-            href={bookPath(book)}
-            className={`${styles.list} ${current ? styles.active : ""} ${styles.parent}`}
-            aria-current={current ? "page" : undefined}
-          >
-            <span>{shortBookName(book)}</span>
-            <span className={styles.count}> ({book.totalHadith})</span>
-          </Link>
-        }
-      >
-        <BookChapters
-          book={book}
-          selectedChapterNo={selectedChapterNo}
-          active={active}
-          initial={initialChapters[book.slug]}
-        />
-      </Branch>
+        onClick={() => {
+          setQuery("");
+          if (topic) go(() => showTab("categories"));
+          else go(() => setBookState(book.slug));
+        }}
+        current={book.slug === selectedBookSlug}
+        number={index == null ? null : formatNumber(index + 1)}
+        name={shortBookName(book)}
+        note={bookNote(book)}
+        more
+      />
     );
-  });
-}
+  };
+  const chapterRow = (chapter, book, note) => {
+    const unassigned = chapter.chapterNo === UNASSIGNED_CHAPTER;
+    return (
+      <Row
+        key={`${book.slug}-${chapter.chapterNo}`}
+        href={`${chapterPath(book.slug, chapter.chapterNo)}${keepView}`}
+        current={book.slug === selectedBookSlug && chapter.chapterNo === selectedChapterNo}
+        number={unassigned ? "–" : formatNumber(chapter.chapterNo)}
+        name={unassigned ? t("unassignedChapter") : chapter.name}
+        note={note}
+        count={countOf(chapter.totalHadith)}
+      />
+    );
+  };
+  // `found`: a filter's result: a link to its page, with where it is in the tree.
+  const categoryRow = (category, number, found = false) => {
+    const parent = category.totalChildren > 0;
+    const current = category.id === selectedCategoryId;
+    const name = <bdi>{category.title}</bdi>;
+    if (parent && !found) {
+      return (
+        <Row
+          key={category.id}
+          onClick={() => {
+            setQuery("");
+            go(() => setLevelState(category.id));
+          }}
+          current={current}
+          number={number}
+          name={name}
+          count={countOf(category.totalHadith)}
+          more
+        />
+      );
+    }
+    return (
+      <Row
+        key={category.id}
+        href={categoryHref(category)}
+        current={current}
+        number={number}
+        name={name}
+        note={found ? pathOf(category) : null}
+        count={countOf(category.totalHadith)}
+      />
+    );
+  };
 
-// Only shown from 1024px (the layouts' aside); phones get the tree in a
-// dialog (CategoryModal), which loads it when opened.
+  // ---- what the list shows
+  let rows;
+  let heading = null;
+  if (tab === "books") {
+    if (booksApi.error && !books.length) {
+      rows = <ErrorState error={booksApi.error} onRetry={booksApi.retry} compact />;
+    } else if (!books.length) {
+      rows = <NavSkeleton />;
+    } else if (q) {
+      const foundBooks = books.filter((book) => [book.name, book.nameEnglish, book.nameArabic].some((name) => fold(name).includes(q)));
+      const foundChapters = openBook && chapters ? chapters.filter((chapter) => fold(chapter.name).includes(q)) : [];
+      rows =
+        foundBooks.length + foundChapters.length ? (
+          <>
+            {foundBooks.map((book) => bookRow(book, null))}
+            {foundChapters.map((chapter) => chapterRow(chapter, openBook, shortBookName(openBook)))}
+          </>
+        ) : (
+          <p className={styles.empty}>{t("noHadiths")}</p>
+        );
+    } else if (inBook) {
+      heading = (
+        <div className={styles.crumb} ref={crumb}>
+          <button type="button" className={styles.up} onClick={() => go(() => setBookState(null))} aria-label={t("goBack")} title={t("goBack")}>
+            <BackIcon />
+          </button>
+          <Link href={bookPath(openBook)} className={styles.crumbLink} aria-current={openSlug === selectedBookSlug && selectedChapterNo == null ? "page" : undefined}>
+            {shortBookName(openBook)}
+            <small>{bookNote(openBook)}</small>
+          </Link>
+        </div>
+      );
+      if (chaptersApi.error && !chapters) rows = <ErrorState error={chaptersApi.error} onRetry={chaptersApi.retry} compact />;
+      else if (!chapters) rows = <NavSkeleton />;
+      else rows = chapters.map((chapter) => chapterRow(chapter, openBook));
+    } else {
+      rows = books.map((book, index) => bookRow(book, index));
+    }
+  } else if (categoriesApi.error && !categories.length) {
+    rows = <ErrorState error={categoriesApi.error} onRetry={categoriesApi.retry} compact />;
+  } else if (!categories.length) {
+    rows = <NavSkeleton />;
+  } else if (q) {
+    const found = categories.filter((category) => fold(category.title).includes(q) || fold(category.titleArabic).includes(q)).slice(0, 80);
+    rows = found.length ? (
+      found.map((category) => categoryRow(category, null, true))
+    ) : (
+      <p className={styles.empty}>{t("noHadiths")}</p>
+    );
+  } else if (levelCategory) {
+    heading = (
+      <div className={styles.crumb} ref={crumb}>
+        <button
+          type="button"
+          className={styles.up}
+          onClick={() => go(() => setLevelState(levelCategory.parentId ?? null))}
+          aria-label={t("goBack")}
+          title={t("goBack")}
+        >
+          <BackIcon />
+        </button>
+        <Link href={categoryPath(levelCategory)} className={styles.crumbLink} aria-current={levelCategory.id === selectedCategoryId ? "page" : undefined}>
+          <bdi>{levelCategory.title}</bdi>
+          <small>{t("hadithCount", { count: levelCategory.totalHadith })}</small>
+        </Link>
+      </div>
+    );
+    const children = kids.get(level) || [];
+    // not in the partial list yet: the whole list is on its way
+    if (children.length) rows = children.map((category) => categoryRow(category));
+    else if (categoriesApi.error) rows = <ErrorState error={categoriesApi.error} onRetry={categoriesApi.retry} compact />;
+    else rows = <NavSkeleton />;
+  } else {
+    rows = (kids.get("root") || []).map((category, index) => categoryRow(category, formatNumber(index + 1)));
+  }
+
+  const named = tab === "books" ? t("books") : t("categories");
+
+  return (
+    <div className={styles.nav}>
+      <div className={styles.tabs} role="tablist" aria-label={`${t("books")} / ${t("categories")}`}>
+        {tabs.map(({ name, label }) => (
+          <button
+            key={name}
+            type="button"
+            role="tab"
+            id={tabId(name)}
+            className={styles.tab}
+            aria-selected={tab === name ? "true" : "false"}
+            aria-controls={`${ids}-panel`}
+            tabIndex={tab === name ? 0 : -1}
+            onClick={() => showTab(name)}
+            onKeyDown={onTabKey}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className={styles.filter}>
+        <SearchIcon />
+        <input
+          ref={field}
+          type="search"
+          name="filter"
+          value={query}
+          placeholder={t("search")}
+          aria-label={named}
+          autoComplete="off"
+          spellCheck={false}
+          enterKeyHint="search"
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || !query) return;
+            event.preventDefault();
+            event.stopPropagation();
+            setQuery("");
+          }}
+        />
+        {query && (
+          <button
+            type="button"
+            className={styles.clear}
+            onClick={() => {
+              setQuery("");
+              if (field.current) field.current.focus();
+            }}
+            aria-label={t("clearFilter")}
+            title={t("clearFilter")}
+          >
+            <CloseIcon />
+          </button>
+        )}
+      </div>
+      {heading}
+      <div id={`${ids}-panel`} className={styles.list} role="tabpanel" aria-labelledby={tabId(tab)} ref={list}>
+        <nav aria-label={named}>{rows}</nav>
+        {!q && after}
+      </div>
+    </div>
+  );
+});
+
+// Only shown from 1024px (the layouts' aside); phones get it in a drawer, which loads it when opened.
 const DESKTOP = "(min-width: 1024px)";
 
 function useShown(lazy) {
@@ -297,83 +445,84 @@ function useShown(lazy) {
   return shown;
 }
 
-// `data`: what the page's server props already hold (components/sidebar/
-// data.js), rendered on the first paint: { books, chapters: { slug: [...] } }
-// or { categories, partial }. Anything missing is loaded in the browser; with `lazy`,
-// only on screens that show the sidebar.
-export default function Sidebar({
-  mode = "categories",
-  selectedCategoryId,
-  selectedBookSlug,
-  selectedChapterNo,
-  data,
-  lazy = false,
-}) {
-  const { theme } = useContext(SettingsContext);
-  const { t } = useLocale();
-  const isBooksMode = mode === "books";
-  const [search, setSearch] = useState("");
+// Closed down to the rail or not: on <html> (data-nav, set before the first paint by
+// pages/_document.js) and saved, so the choice holds on every page. The styles show one or the
+// other; both are in the page, so nothing here depends on the server knowing the choice.
+function saveClosed(closed) {
+  const html = document.documentElement;
+  if (closed) html.setAttribute("data-nav", "closed");
+  else html.removeAttribute("data-nav");
+  try {
+    if (closed) localStorage.setItem(NAV_KEY, "closed");
+    else localStorage.removeItem(NAV_KEY);
+  } catch (_) {
+    // storage unavailable (private mode): this page only
+  }
+}
+
+// The side card of the web layout: the navigation, with Saved, the settings and the button that
+// closes it down to quran.vn's 70px rail, where each icon opens it again.
+export default function Sidebar({ lazy = false, ...where }) {
+  const { t, lang } = useLocale();
   const enabled = useShown(lazy);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const nav = useRef(null);
+  const railOpen = useRef(null);
+
+  const close = () => {
+    saveClosed(true);
+    if (railOpen.current) railOpen.current.focus({ preventScroll: true });
+  };
+  const open = (tab) => {
+    saveClosed(false);
+    if (nav.current) {
+      if (tab) nav.current.showTab(tab);
+      else nav.current.reveal();
+    }
+    window.requestAnimationFrame(() => {
+      const current = document.querySelector('aside [role="tab"][aria-selected="true"]');
+      if (current) current.focus({ preventScroll: true });
+      if (nav.current) nav.current.reveal();
+    });
+  };
 
   return (
-    <div className={`${styles.wrapper} ${theme}`}>
-      <div className={styles.top}>
-        <div className={styles.search}>
-          <span className={`${styles.icon} ${styles.search_icon}`}>
-            <SearchIcon />
-          </span>
-          {search && (
-            <button
-              type="button"
-              className={`${styles.icon} ${styles.close_icon}`}
-              onClick={() => setSearch("")}
-              aria-label={t("clearFilter")}
-            >
-              <CloseIcon />
-            </button>
-          )}
-          <input
-            type="search"
-            name="filter"
-            value={search}
-            placeholder={isBooksMode ? t("books") : t("categories")}
-            aria-label={isBooksMode ? t("books") : t("categories")}
-            className={styles.input}
-            autoComplete="off"
-            spellCheck={false}
-            enterKeyHint="search"
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key !== "Escape" || !search) return;
-              e.preventDefault();
-              e.stopPropagation();
-              setSearch("");
-            }}
-          />
+    <div className={styles.sidebar}>
+      <div className={styles.rail}>
+        <button type="button" ref={railOpen} onClick={() => open()} aria-expanded="false" aria-label={t("menu")} title={t("menu")}>
+          <PanelOpenIcon />
+        </button>
+        <button type="button" onClick={() => open("books")} aria-label={t("books")} title={t("books")}>
+          <MenuBookIcon />
+        </button>
+        <button type="button" onClick={() => open("categories")} aria-label={t("categories")} title={t("categories")}>
+          <ListIcon />
+        </button>
+        <Link href="/bookmarks" aria-label={t("savedLists")} title={t("savedLists")}>
+          <BookmarkIcon />
+        </Link>
+        <button type="button" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog" aria-label={t("readerSettings")} title={t("readerSettings")}>
+          <SettingsIcon />
+        </button>
+      </div>
+      <div className={styles.panel}>
+        {/* a new language starts afresh: the lists of the last one must not show */}
+        <Nav key={lang} ref={nav} {...where} enabled={enabled} />
+        <div className={styles.foot}>
+          <Link href="/bookmarks">
+            <BookmarkIcon />
+            <span>{t("savedLists")}</span>
+          </Link>
+          <button type="button" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog">
+            <SettingsIcon />
+            <span>{t("settings")}</span>
+          </button>
+          <button type="button" className={styles.collapse} onClick={close} aria-expanded="true" aria-label={t("close")} title={t("close")}>
+            <PanelCloseIcon />
+          </button>
         </div>
       </div>
-      <div className={styles.content}>
-        <Scrollbar className={styles.category}>
-          <nav className={styles.lists} aria-label={isBooksMode ? t("books") : t("categories")}>
-            {isBooksMode ? (
-              <BookTree
-                selectedBookSlug={selectedBookSlug}
-                selectedChapterNo={selectedChapterNo}
-                filter={search.trim()}
-                initial={data && data.books ? data : null}
-                enabled={enabled}
-              />
-            ) : (
-              <CategoryTree
-                selectedCategoryId={selectedCategoryId}
-                filter={search.trim()}
-                initial={data && data.categories ? data : null}
-                enabled={enabled}
-              />
-            )}
-          </nav>
-        </Scrollbar>
-      </div>
+      <ReaderSettings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { getBook, getBooks, getCategories, readableCategories } from "../../lib/
 // sidebar shows (and filters by: the English name too, under a name in the
 // reader's language or the topic collection's interface name); getBooks / getBook / getCategories are memoised in
 // lib/api, so pages that already fetched them pay nothing.
-const slimBook = ({ slug, code, source, name, nameEnglish, nameArabic, totalHadith }) => ({
+const slimBook = ({ slug, code, source, name, nameEnglish, nameArabic, totalHadith, totalChapter }) => ({
   slug,
   code,
   source,
@@ -14,19 +14,21 @@ const slimBook = ({ slug, code, source, name, nameEnglish, nameArabic, totalHadi
   nameEnglish: nameEnglish || null,
   nameArabic: nameArabic || null,
   totalHadith,
+  totalChapter: totalChapter || 0,
 });
 
 const slimChapter = ({ chapterNo, name, totalHadith }) => ({ chapterNo, name, totalHadith });
 
 // Books mode. `book` is a slug or an already fetched book (its chapters).
 export async function sidebarBooksData(lang, { book = null, books = null } = {}) {
+  // Null when the API fails: the page still opens, and the navigation loads them in the browser.
   const [list, current] = await Promise.all([
-    books || getBooks(lang),
+    books || getBooks(lang).catch(() => null),
     typeof book === "string" ? getBook(book, lang).catch(() => null) : book,
   ]);
   const chapters = {};
   if (current && Array.isArray(current.chapters)) chapters[current.slug] = current.chapters.map(slimChapter);
-  return { books: (list || []).map(slimBook), chapters };
+  return { books: list ? list.map(slimBook) : null, chapters };
 }
 
 const slimCategory = ({ id, parentId, slug, title, totalHadith, totalChildren }) => ({

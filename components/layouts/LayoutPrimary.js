@@ -15,11 +15,11 @@ const Layout = ({ children }) => {
       <PinContextProvider>
         <BookmarkContextProvider>
           <SidenavContextProvider>
-            <div className={styles.wrapper}>
+            <div className={`${styles.wrapper} ${styles.home}`}>
               <SkipLink />
-              <div className={styles.header}>
+              <div className={styles.header} data-site-header="">
                 <HeaderWeb page="home" />
-                <HeaderMobile />
+                <HeaderMobile navMode={children.props && children.props.navMode} />
               </div>
 
               <main id="viewport" className="viewport" tabIndex={-1}>

@@ -7,7 +7,7 @@ import { config } from "../../lib/config";
 
 // The browser's bar (and an installed app's status bar) continues the header: the
 // page colour of the reader's theme (styles/_variables --canvas).
-const BAR_COLOUR = { light: "#F5F6F1", dark: "#181A17" };
+const BAR_COLOUR = { light: "#FFFFFF", dark: "#232A3B" };
 
 // The browser fetches from the API too (the sidebar, the translation picker): its
 // connection opens while the page is still loading.

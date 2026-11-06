@@ -30,7 +30,7 @@
   margin-bottom: var(--space-3);
   color: var(--ink);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: var(--leading-snug);
 }
 
@@ -51,7 +51,7 @@
 }
 
 .note_text span {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .divider {
@@ -105,7 +105,7 @@
   background: transparent;
   color: var(--link);
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -121,7 +121,7 @@
   color: var(--link) !important;
   font-family: inherit !important;
   font-size: var(--text-sm) !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   line-height: 1.4 !important;
   letter-spacing: 0 !important; // MUI's button tracking would space Bengali letters apart
   text-decoration: underline !important;
@@ -240,7 +240,7 @@
   border-radius: var(--radius-md);
   color: #f1f2ec; // the dark theme's ink
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 42px;
   text-align: center;
   cursor: pointer;
@@ -353,4 +353,12 @@
   color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.5;
+}
+
+@media only screen and (min-width: 1024px) {
+  // the card or the dialog has the padding
+  .wrapper {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }

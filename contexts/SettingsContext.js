@@ -7,11 +7,13 @@ import { settings as defaultSettings, fontStacks } from "../lib/settings";
 //   controls were hidden), so they get the new defaults;
 // - 2 → 3: the default translation face changes from Roboto to Be Vietnam
 //   Pro (full Vietnamese support); saved Roboto (the old default) follows it;
-// - 3 → 4: adds the reader settings (show the Arabic, text order).
+// - 3 → 4: adds the reader settings (show the Arabic, text order);
+// - 4 → 5: the reading design. The sizes follow the screen until the reader sets one, and the
+//   default faces change: a saved old default (28px, 18px, Amiri, Be Vietnam Pro) follows.
 const migrateSettings = (saved) => {
   if (!saved || typeof saved !== "object") return defaultSettings;
   let next = saved;
-  if (![2, 3, 4].includes(next.version)) {
+  if (![2, 3, 4, 5].includes(next.version)) {
     next = {
       ...defaultSettings,
       ...next,
@@ -43,7 +45,34 @@ const migrateSettings = (saved) => {
   if (next.version === 3) {
     next = { ...next, reader: { ...defaultSettings.reader, ...(next.reader || {}) }, version: 4 };
   }
+  if (next.version === 4) {
+    const size = next.fontSize || {};
+    const family = next.fontFamily || {};
+    next = {
+      ...next,
+      fontSize: {
+        arabic: size.arabic > 0 && size.arabic !== 28 ? size.arabic : null,
+        translation: size.translation > 0 && size.translation !== 18 ? size.translation : null,
+      },
+      fontFamily: {
+        arabic: !family.arabic || family.arabic === "Amiri" ? defaultSettings.fontFamily.arabic : family.arabic,
+        translation: !family.translation || family.translation === "BeVietnamPro" ? defaultSettings.fontFamily.translation : family.translation,
+      },
+      version: 5,
+    };
+  }
   return next;
+};
+
+// The sizes the steppers show while the reader has not chosen one: the stylesheet's for this
+// screen, read once in the browser (the first render must match the server's).
+const SCREEN_SIZES = { arabic: 36, translation: 18 };
+const sizesOnScreen = () => {
+  const read = (name, fallback) => {
+    const value = parseInt(getComputedStyle(document.documentElement).getPropertyValue(name), 10);
+    return value > 0 ? value : fallback;
+  };
+  return { arabic: read("--fs-arabic", SCREEN_SIZES.arabic), translation: read("--fs-trans", SCREEN_SIZES.translation) };
 };
 
 const readerOf = (settings) => ({ ...defaultSettings.reader, ...((settings && settings.reader) || {}) });
@@ -55,10 +84,13 @@ const applyTypography = (settings) => {
   const root = document.documentElement.style;
   const size = settings.fontSize || defaultSettings.fontSize;
   const family = settings.fontFamily || defaultSettings.fontFamily;
-  root.setProperty("--fs-arabic", `${size.arabic || defaultSettings.fontSize.arabic}px`);
-  root.setProperty("--fs-trans", `${size.translation || defaultSettings.fontSize.translation}px`);
-  root.setProperty("--font-arabic", fontStacks[family.arabic] || fontStacks.Amiri);
-  root.setProperty("--font-trans", fontStacks[family.translation] || fontStacks.BeVietnamPro);
+  // Unset, the size is the stylesheet's, which depends on the screen.
+  if (size.arabic > 0) root.setProperty("--fs-arabic", `${size.arabic}px`);
+  else root.removeProperty("--fs-arabic");
+  if (size.translation > 0) root.setProperty("--fs-trans", `${size.translation}px`);
+  else root.removeProperty("--fs-trans");
+  root.setProperty("--font-arabic", fontStacks[family.arabic] || fontStacks.PDMSIslam);
+  root.setProperty("--font-trans", fontStacks[family.translation] || fontStacks.Roboto);
   // Read by the hadith card and detail styles.
   const reader = readerOf(settings);
   const html = document.documentElement;
@@ -73,7 +105,15 @@ export const SettingsContext = createContext();
 const SettingsContextProvider = ({ children }) => {
   // state declare
   const [settings, setSettings] = useState(defaultSettings);
+  const [screenSizes, setScreenSizes] = useState(SCREEN_SIZES);
   const router = useRouter();
+
+  useEffect(() => {
+    const update = () => setScreenSizes(sizesOnScreen());
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [settings]);
 
   // first render
   useEffect(() => {
@@ -140,7 +180,7 @@ const SettingsContextProvider = ({ children }) => {
 
     const obj = {
       arabic: value,
-      translation: settings.fontSize.translation,
+      translation: settings.fontSize ? settings.fontSize.translation : null,
     };
     const newSettings = { ...settings, ["fontSize"]: obj };
     applyTypography(newSettings);
@@ -152,7 +192,7 @@ const SettingsContextProvider = ({ children }) => {
     if (value > 40 || value < 12) return;
 
     const obj = {
-      arabic: settings.fontSize.arabic,
+      arabic: settings.fontSize ? settings.fontSize.arabic : null,
       translation: value,
     };
     const newSettings = { ...settings, ["fontSize"]: obj };
@@ -253,9 +293,9 @@ const SettingsContextProvider = ({ children }) => {
         changeView,
         theme: settings.theme,
         changeTheme,
-        fontSizeArabic: settings.fontSize?.arabic ?? defaultSettings.fontSize.arabic,
+        fontSizeArabic: settings.fontSize?.arabic || screenSizes.arabic,
         changeFontSizeArabic,
-        fontSizeTranslation: settings.fontSize?.translation ?? defaultSettings.fontSize.translation,
+        fontSizeTranslation: settings.fontSize?.translation || screenSizes.translation,
         changeFontSizeTranslation,
         fontFamilyArabic: settings.fontFamily?.arabic ?? defaultSettings.fontFamily.arabic,
         changeFontFamilyArabic,

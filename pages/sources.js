@@ -294,7 +294,7 @@ export default function Sources({ books, coverage, translators, topicLanguages }
 }
 
 Sources.getLayout = function getLayout(page) {
-  return <Layout>{page}</Layout>;
+  return <Layout title={({ t }) => t("dataAndMethod")}>{page}</Layout>;
 };
 
 // Translators by language from /hadith/editions: one row per language, one entry per

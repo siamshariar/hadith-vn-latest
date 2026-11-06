@@ -67,12 +67,12 @@ const SEPARATOR = (
 
 // " · Muhsin Khan" after the language: the translator, when the source names
 // one (lib/citation translatorName); nothing otherwise.
-export function Translator({ entry }) {
+export function Translator({ entry, first = false }) {
   const name = entry ? translatorName(entry.author, entry.edition) : null;
   if (!name) return null;
   return (
     <>
-      {SEPARATOR}
+      {!first && SEPARATOR}
       <bdi className={styles.creditName}>{name}</bdi>
     </>
   );
@@ -107,21 +107,26 @@ export function Translation({ translation, clamped = false, showNote = false, ot
 
   const code = translation.languageCode;
   const isFallback = Boolean(translation.isFallback);
+  // The reader's own language, alone on the page, needs no label: only a translator, if named.
+  const named = isFallback || code !== lang || othersShown;
+  const credit = translation ? translatorName(translation.author, translation.edition) : null;
 
   return (
     <div className={styles.translation}>
-      <div className={styles.labelRow}>
-        {isFallback ? (
-          <span className={styles.fallbackBadge}>
-            {code === "en" ? t("fallbackTranslation") : t("translationIn", { language: languageName(code) })}
-          </span>
-        ) : (
-          <span className={styles.label}>
-            <bdi>{languageName(code)}</bdi>
-          </span>
-        )}
-        <Translator entry={translation} />
-      </div>
+      {(named || credit) && (
+        <div className={styles.labelRow}>
+          {isFallback ? (
+            <span className={styles.fallbackBadge}>
+              {code === "en" ? t("fallbackTranslation") : t("translationIn", { language: languageName(code) })}
+            </span>
+          ) : named ? (
+            <span className={styles.label}>
+              <bdi>{languageName(code)}</bdi>
+            </span>
+          ) : null}
+          <Translator entry={translation} first={!named} />
+        </div>
+      )}
       {isFallback && showNote && (
         <p className={styles.fallbackNote}>{t("fallbackNote", { language: languageName(lang) })}</p>
       )}

@@ -1,9 +1,7 @@
-// The hadith page (docs/hadith-design-system.md, "Reading"): one reading column on
-// the page's paper. The Arabic runs the full width of the column, a little larger
-// than in lists; the translation keeps a comfortable measure under it. A hairline
-// separates the two, whichever the reader's settings put first.
+// The hadith page (docs/hadith-design-system.md, "Reading"): as a hadith in a list, with all
+// that belongs to it below the text: how to cite it, the explanation, its categories, where
+// else it is. Space separates the parts; hairlines only inside them.
 .detail {
-  container-type: inline-size;
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -15,99 +13,45 @@
   gap: var(--space-5);
 }
 
-.arabicBlock {
-  padding-top: var(--space-2);
-
-  [lang="ar"] {
-    font-size: calc(var(--fs-arabic) * 0.93);
-  }
-}
-
+.arabicBlock,
 .translationBlock {
   display: block;
-  max-width: 44rem;
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--hairline);
+  min-width: 0;
 }
 
 // Reader settings (set on <html> by SettingsContext). Without any
 // translation the Arabic stays, even when the reader hides it.
-:global(html[data-text-order="translation"]) {
-  .translationBlock {
-    order: -1;
-    padding-top: 0;
-    border-top: 0;
-  }
-  .arabicBlock {
-    padding-top: var(--space-5);
-    border-top: 1px solid var(--hairline);
-  }
+:global(html[data-text-order="translation"]) .translationBlock {
+  order: -1;
 }
 
-:global(html[data-arabic="hidden"]) {
-  .arabicBlock:not(.arabicOnly) {
-    display: none;
-  }
-  .translationBlock {
-    padding-top: 0;
-    border-top: 0;
-  }
+:global(html[data-arabic="hidden"]) .arabicBlock:not(.arabicOnly) {
+  display: none;
 }
 
 .arabicOnly {
   display: block;
 }
 
-// previous / next hadith: two link cards, the same size whatever the labels
-.navigation {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding-top: var(--space-3);
-}
-
+// previous / next hadith, in the page's pager (components/content/Page.module.scss)
 .navLink {
-  display: flex;
-  flex: 0 1 48%;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
-  min-height: 64px;
   max-width: 48%;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: var(--text);
-  transition: border-color var(--duration) var(--ease);
-
-  &:hover,
-  &:focus-visible {
-    border-color: var(--control-edge);
-
-    .navRef {
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-  }
 }
 
-.navNext {
-  align-items: flex-end;
-  text-align: end;
-}
-
-.navDirection {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
+.navWords {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
 .navRef {
   color: var(--link);
-  font-weight: 600;
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
-// title, facts and actions; space, not a rule, separates them from the text
+// the title, the reference line and what applies to the text
 .header {
   display: flex;
   flex-direction: column;
@@ -116,27 +60,38 @@
 
 .title {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 1.625rem;
-  font-weight: 400;
-  line-height: var(--leading-tight);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .facts {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-4);
+  gap: 6px 10px;
+  min-height: 36px;
   color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
-.fact strong {
-  color: var(--ink);
-  font-weight: 600;
+// the citation's tag, as in lists
+.citation {
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--chip);
+  color: var(--on-chip);
+  line-height: 22px;
 }
 
-// The translations chip, at the end of the row.
+.options {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+// The translations chip, with ⋮ at the end of the line.
 .picker {
   display: inline-flex;
   min-width: 0;
@@ -154,7 +109,7 @@
     display: inline-block;
     padding: 2px 0;
     color: var(--link);
-    font-weight: 600;
+    font-weight: 500;
 
     &:hover,
     &:focus-visible {
@@ -175,9 +130,8 @@
 .sectionTitle {
   margin-bottom: var(--space-3);
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 400;
+  font-size: var(--text-md);
+  font-weight: 500;
   line-height: var(--leading-tight);
 }
 
@@ -186,7 +140,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  max-width: 44rem;
 }
 
 .fallbackNote {
@@ -212,7 +165,7 @@
 .prose {
   color: var(--text);
   font-family: var(--font-trans);
-  font-size: calc(var(--fs-trans) * 0.92);
+  font-size: calc(var(--fs-trans) * 0.9);
   line-height: var(--leading-reading);
   white-space: pre-line;
 }
@@ -224,7 +177,7 @@
   color: var(--text);
   font-family: var(--font-trans);
   font-size: calc(var(--fs-trans) * 0.9);
-  line-height: 1.7;
+  line-height: var(--leading-reading);
 
   li {
     position: relative;
@@ -256,7 +209,7 @@
   dt {
     margin-bottom: var(--space-1);
     color: var(--ink);
-    font-weight: 600;
+    font-weight: 500;
   }
 
   dd {
@@ -268,8 +221,8 @@
 .reference {
   color: var(--text-secondary);
   font-family: var(--font-arabic);
-  font-size: 18px;
-  line-height: 1.9;
+  font-size: 22px;
+  line-height: 1.7;
   white-space: pre-line;
   text-align: right;
 }
@@ -284,7 +237,7 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 32px;
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
@@ -310,32 +263,20 @@
   }
 }
 
-@media only screen and (max-width: 599px) {
-  .picker {
-    margin-inline-start: 0;
-  }
-}
-
-@media only screen and (min-width: 600px) {
-  .prose {
-    font-size: var(--fs-trans);
-  }
-  .hints {
-    font-size: calc(var(--fs-trans) * 0.95);
-  }
-}
-
+// From 1024px, the title in the page's grey bar.
 @media only screen and (min-width: 1024px) {
-  .detail {
-    gap: var(--space-6);
-  }
   .title {
-    font-size: 2.125rem;
-  }
-  .arabicBlock [lang="ar"] {
-    font-size: calc(var(--fs-arabic) * 1.1);
+    min-height: 49px;
+    margin-bottom: 8px;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+    color: var(--text);
+    font-size: var(--text-xl);
+    font-weight: 400;
+    line-height: 33px;
   }
   .sectionTitle {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
 }

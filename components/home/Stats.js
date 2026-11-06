@@ -1,4 +1,3 @@
-import Container from "../core/container";
 import { useLocale } from "../../contexts/LocaleContext";
 import styles from "./Stats.module.scss";
 
@@ -34,7 +33,6 @@ export default function Stats({ totals }) {
   if (!items.length) return null;
 
   return (
-    <Container>
       <dl className={styles.stats}>
         {items.map((item) => (
           <div key={item.key} className={`${styles.item} ${item.wide ? styles.wide : ""}`}>
@@ -44,6 +42,5 @@ export default function Stats({ totals }) {
           </div>
         ))}
       </dl>
-    </Container>
   );
 }

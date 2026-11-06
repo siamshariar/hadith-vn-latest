@@ -1,61 +1,67 @@
-// A collection: its name and Arabic name, the counts, and how much of it reads in
-// the reader's language. A hairline-edged surface; no shadow, also on hover.
+// A collection on the home page and /books: the number in a disc, the name and the counts, the
+// Arabic name at the end; as the Quran sites' surah cards. On phones, rows on the white page.
 .item {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-3);
   width: 100%;
-  padding: var(--space-4) var(--space-5) var(--space-4);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-lg);
+  min-height: 80px;
+  padding: 18px 15px;
   background: var(--surface);
   color: var(--text);
-  transition: border-color var(--duration) var(--ease);
+  transition: box-shadow 200ms var(--ease);
 
-  &:hover,
   &:focus-visible {
-    border-color: var(--control-edge);
-
-    .name {
-      color: var(--link);
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 3px;
-    }
+    outline-offset: -2px;
   }
 }
 
-// name and Arabic name side by side; the Arabic wraps under a long name
-.top {
+.number {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0 var(--space-3);
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--text);
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .name {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: var(--ink);
-  font-size: var(--text-md);
-  font-weight: 600;
-  line-height: var(--leading-snug);
+  color: var(--text);
+  font-size: var(--text-base);
+  line-height: 1.35;
 }
 
 .arabic {
-  flex: 0 1 auto;
-  margin-inline-start: auto;
-  color: var(--ink);
+  flex: 0 0 auto;
+  max-width: 38%;
+  overflow: hidden;
+  color: var(--text);
   font-family: var(--font-arabic);
-  font-size: 22px;
-  line-height: 1.6;
+  font-size: var(--text-xl);
+  line-height: 1.4;
   text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bottom {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
+  color: var(--muted);
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -67,5 +73,34 @@
 
 .hasTranslation {
   color: var(--grade-txt);
-  font-weight: 600;
+  font-weight: 500;
+}
+
+@media only screen and (min-width: 1024px) {
+  .item {
+    min-height: 104px;
+    padding: 26px 20px;
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+  }
+
+  .number {
+    width: 38px;
+    height: 38px;
+    font-size: var(--text-base);
+  }
+
+  .name {
+    font-size: var(--text-md);
+  }
+
+  .bottom {
+    font-size: var(--text-sm);
+  }
+}
+
+@media only screen and (min-width: 1024px) and (hover: hover) {
+  .item:hover {
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.12);
+  }
 }

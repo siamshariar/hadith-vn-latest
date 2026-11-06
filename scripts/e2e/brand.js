@@ -1,9 +1,8 @@
-// The brand (docs/hadith-design-system.md): the header on the page's own paper,
-// closed by a hairline, with the colour logo on every page (the dark logo in the
-// dark theme) and no ribbon; the masthead on the same paper, its heading in the
-// display serif, no texture or ornament; the brand green on the search button;
-// the hadith of the day and the figures right after the search; and computed
-// colours that keep text readable in both themes. "Báo lỗi" writes to the
+// The brand (docs/hadith-design-system.md), the Quran sites' look: a grey page with a white
+// header and white cards on the web, plain white reading pages on phones; the colour logo on
+// every page (the dark logo in the dark theme); the band in the site's colours behind the home
+// page's two cards, on the web only; the green on the search button; the frame of the reading
+// page; and computed colours that keep text readable in both themes. "Báo lỗi" writes to the
 // site's contact address.
 'use strict';
 
@@ -17,15 +16,15 @@ const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || (countries[COUNTR
 
 const DARK = JSON.stringify({
   view: { arabic: true, translation: true, tafseer: true },
-  fontSize: { arabic: 28, translation: 18 },
-  fontFamily: { arabic: 'Amiri', translation: 'BeVietnamPro' },
+  fontSize: { arabic: null, translation: null },
+  fontFamily: { arabic: 'PDMSIslam', translation: 'Roboto' },
   theme: 'dark',
   reader: { showArabic: true, textOrder: 'arabic' },
   verseMode: 'scroll',
   activeVerse: 1,
   autoScroll: true,
   notification: false,
-  version: 4,
+  version: 5,
 });
 
 // Computed colours of the visible header, its logo and the hero.
@@ -73,51 +72,50 @@ function contrast(a, b) {
 
 module.exports = spec(module, 'brand', (h) => {
   h.test(
-    'light: header on the paper, colour logo, hairline; masthead in the display serif, the brand green',
+    'light: the white header on the grey page, colour logo, the band on the web, the green',
     async (t) => {
       const { page } = await h.open(t, '/');
       await waitForH1(page, 'Hadith tiếng Việt');
       const c = await page.evaluate(brandColours);
-      assert.equal(c.body, 'rgb(245, 246, 241)', 'page #F5F6F1');
-      assert.equal(c.header, 'rgb(245, 246, 241)', 'the header on the page colour');
-      assert.equal(c.headerRule, '1px rgb(220, 222, 212)', 'closed by the #DCDED4 hairline');
-      assert.equal(c.ribbon, 'none', 'no ribbon under the header');
+      assert.equal(c.body, 'rgb(244, 244, 244)', 'page #F4F4F4');
+      assert.equal(c.header, 'rgb(255, 255, 255)', 'a white header');
       assert.equal(c.logo, '/img/logo.png', 'the colour logo');
       assert.equal(c.logoLoaded, true);
-      assert.equal(c.heroImage, 'none', 'no texture or gradient behind the masthead');
-      assert.equal(c.bar, null, 'no ornament under the heading');
-      assert.equal(c.h1, 'rgb(20, 20, 19)', 'heading in ink #141413');
-      assert.match(c.h1Font, /displayFont/, 'heading in the display serif');
-      assert.equal(c.tagline, 'rgb(85, 87, 79)', 'tagline #55574F');
-      assert.deepEqual(c.button, ['rgb(23, 58, 29)', 'rgb(245, 246, 241)'], 'button #173A1D, #F5F6F1 text');
-      assert.ok(contrast(c.h1, c.body) >= 4.5 && contrast(c.tagline, c.body) >= 4.5, 'masthead text readable');
+      if (h.desktop) assert.match(c.heroImage, /linear-gradient/, 'the band in the site\'s colours');
+      else assert.equal(c.heroImage, 'none', 'no band on phones');
+      assert.deepEqual(c.button, ['rgb(70, 101, 72)', 'rgb(255, 255, 255)'], 'button #466548, white text');
       assert.ok(contrast(c.button[0], c.button[1]) >= 4.5, 'button text readable');
 
-      // the hadith of the day and the figures come right after the search
+      // the two cards: side by side on the web; on phones the way in comes first
       const order = await page.evaluate(() => {
-        const top = (el) => (el ? el.getBoundingClientRect().top + window.scrollY : null);
-        return {
-          hero: top(document.querySelector('#site-heading')),
-          daily: top(document.querySelector('#daily-hadith')),
-          stats: top(document.querySelector('main dl')),
-          books: top(document.querySelector('#home-books')),
-        };
+        const box = (el) => el.getBoundingClientRect();
+        const daily = box(document.querySelector('#daily-hadith').closest('article'));
+        const find = box(document.querySelector('form[role="search"]').parentElement);
+        return { daily: [Math.round(daily.top), Math.round(daily.left)], find: [Math.round(find.top), Math.round(find.left)] };
       });
-      assert.ok(order.hero < order.daily && order.daily < order.stats && order.stats < order.books, JSON.stringify(order));
+      if (h.desktop) assert.ok(order.find[1] > order.daily[1], JSON.stringify(order));
+      else assert.ok(order.find[0] < order.daily[0], JSON.stringify(order));
 
-      // the same header on a content page
+      // a reading page: the same header; the reading faces and sizes
       const home = await api(`/home${loc()}`);
-      await h.goto(page, `/books/${home.books[0].slug}`);
+      await h.goto(page, `/books/${home.books[0].slug}/chapters/1`);
       const content = await page.evaluate(brandColours);
-      assert.equal(content.header, 'rgb(245, 246, 241)');
-      assert.equal(content.headerRule, '1px rgb(220, 222, 212)');
-      assert.equal(content.logo, '/img/logo.png');
+      assert.equal(content.header, 'rgb(255, 255, 255)');
+      assert.equal(content.logo, h.desktop ? '/img/logo.png' : null, 'the reading page\'s phone header has its title instead');
+      const reading = await page.evaluate(() => {
+        const arabic = getComputedStyle(document.querySelector('article div[lang="ar"]'));
+        const card = document.querySelector('main div[class*="Page_page"]');
+        return { arabicFace: arabic.fontFamily, arabicSize: arabic.fontSize, arabicLeading: arabic.lineHeight, card: getComputedStyle(card).backgroundColor, bodyBehind: getComputedStyle(card.closest('div[class*="Layout_body"]')).backgroundColor };
+      });
+      assert.match(reading.arabicFace, /arabicFont/, 'the Arabic in PDMS');
+      assert.equal(reading.card, 'rgb(255, 255, 255)');
+      assert.equal(reading.bodyBehind, h.desktop ? 'rgba(0, 0, 0, 0)' : 'rgb(255, 255, 255)', 'white to the edges on phones');
     },
     { smoke: true }
   );
 
   h.test(
-    'dark: the paper at night, the dark logo, the light brand green',
+    'dark: the Quran sites\' night colours, the dark logo, the light green',
     async (t) => {
       const { page } = await h.open(t, null, { initScript: `localStorage.setItem('settings', ${JSON.stringify(DARK)})` });
       await h.goto(page, '/');
@@ -126,16 +124,11 @@ module.exports = spec(module, 'brand', (h) => {
       assert.equal(await page.getAttribute('html', 'data-theme'), 'dark');
       await until(async () => /rgb\(168, 213, 176\)/.test(JSON.stringify((await page.evaluate(brandColours)).button)), 'the dark button');
       const c = await page.evaluate(brandColours);
-      assert.equal(c.body, 'rgb(24, 26, 23)', 'page #181A17');
-      assert.equal(c.header, 'rgb(24, 26, 23)', 'the header on the page colour');
-      assert.equal(c.headerRule, '1px rgb(53, 56, 49)', 'closed by the #353831 hairline');
+      assert.equal(c.body, 'rgb(41, 49, 69)', 'page #293145');
+      assert.equal(c.header, 'rgb(35, 42, 59)', 'header #232A3B');
       assert.equal(c.logo, '/img/logo_dark.png', 'the dark logo');
       assert.equal(c.logoLoaded, true, 'logo_dark.png is served');
-      assert.equal(c.heroImage, 'none', 'no texture or gradient behind the masthead');
-      assert.equal(c.h1, 'rgb(241, 242, 236)', 'heading #F1F2EC');
-      assert.equal(c.tagline, 'rgb(191, 194, 183)', 'tagline #BFC2B7');
       assert.deepEqual(c.button, ['rgb(168, 213, 176)', 'rgb(16, 38, 26)'], 'button #A8D5B0 with #10261A');
-      assert.ok(contrast(c.h1, c.body) >= 4.5 && contrast(c.tagline, c.body) >= 4.5, 'masthead text readable');
       assert.ok(contrast(c.button[0], c.button[1]) >= 4.5, 'button text readable');
 
       // links on cards and the page
@@ -166,7 +159,7 @@ module.exports = spec(module, 'brand', (h) => {
     const { page } = await h.open(t, '/books/sahih-muslim/hadiths/8a');
     const href = await page.locator('section[aria-label="Tham chiếu"] a[href^="mailto:"]').getAttribute('href');
     assert.equal(new URL(href).pathname, CONTACT_EMAIL);
-    await page.locator('article > header').getByRole('button', { name: 'Thêm thao tác' }).click();
+    await page.locator('article > header').getByRole('button', { name: 'Tùy chọn hadith' }).click();
     assert.equal(await page.getByRole('menuitem', { name: 'Báo lỗi' }).getAttribute('href'), href, 'the ⋯ menu too');
   });
 });
