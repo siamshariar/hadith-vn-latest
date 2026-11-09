@@ -1,5 +1,5 @@
 import { server, shareImage } from "../../lib/config";
-import { buildCategoryTree, getCategories, loadPage, readableCategories } from "../../lib/api";
+import { buildCategoryTree, getCategories, loadStatic, readableCategories } from "../../lib/api";
 import { useLocale } from "../../contexts/LocaleContext";
 import Meta from "../../components/core/meta";
 import Breadcrumbs from "../../components/core/breadcrumbs";
@@ -9,7 +9,7 @@ import { sidebarCategoriesData } from "../../components/sidebar/data";
 import CategoryList from "../../components/home/category-list";
 import styles from "../../components/content/Page.module.scss";
 
-// The HadeethEnc category tree: top-level categories with their children, those with
+// The HadeethEnc category tree: each top-level category over its children's cards, those with
 // something to read in the language (lib/api readableCategories; their pages still open).
 export default function Categories({ categories, total, error }) {
   const { t, formatNumber } = useLocale();
@@ -38,7 +38,7 @@ export default function Categories({ categories, total, error }) {
           )}
         </header>
 
-        {error ? <ErrorState error={error} /> : <CategoryList categories={categories} />}
+        {error ? <ErrorState error={error} /> : <CategoryList categories={categories} grouped />}
       </div>
     </>
   );
@@ -48,8 +48,8 @@ Categories.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };
 
-export async function getServerSideProps(context) {
-  return loadPage(context, async (lang) => {
+export async function getStaticProps() {
+  return loadStatic(async (lang) => {
     const all = readableCategories(await getCategories(lang), lang);
     // Two levels are enough here; deeper levels are on each category page.
     const categories = buildCategoryTree(all).map(({ children, ...category }) => ({

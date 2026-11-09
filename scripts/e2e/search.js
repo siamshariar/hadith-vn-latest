@@ -1,7 +1,6 @@
-// Search: Vietnamese, Arabic, English (?lang=en) and no results; the book
-// and language filters of the "Bộ lọc" panel; pagination and the count line;
-// highlighting (whole words only); the "search the English translations" link.
-// A search in another language (?lang=en) has that language's interface.
+// Search: Vietnamese, Arabic and no results, in the site's one language (an old ?lang= is
+// ignored); the book filter of the "Bộ lọc" panel; the pager and the count line; highlighting
+// (whole words only).
 'use strict';
 
 const { api, assert, interfaceStrings, loc, norm, spec, until, waitForText, viNumber } = require('./harness');
@@ -102,30 +101,18 @@ module.exports = spec(module, 'search', (h) => {
     assert.ok(found.every((mark) => mark.lang === 'ar'), 'only the Arabic is marked');
   });
 
-  h.test('English with ?lang=en: the English translations, in the English interface', async (t) => {
-    const en = await interfaceStrings('en');
-    const results = await apiSearch(EN, 'en');
-    const { page, context } = await h.open(t, searchPath(EN, { lang: 'en' }));
-    await waitForText(page.locator('#search-results'), en('searchResultsFor', { query: EN }));
-    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
-    await expectCountLine(page, results, en);
-    assert.equal(norm(await page.locator('p[class*="searchedIn"] span').first().textContent()), en('searchedLanguage', { language: en.language('en') }));
-    assert.deepEqual(await cardCitations(page), results.hadiths.map((hadith) => String(hadith.id)));
-    const found = await until(async () => {
-      const list = await marks(page);
-      return list.length ? list : null;
-    }, 'English highlights');
-    for (const mark of found) {
-      assert.ok(!LETTER.test(mark.before) && !LETTER.test(mark.after), `"${mark.before}[${mark.text}]${mark.after}" is a whole word`);
-      assert.ok(mark.text.toLowerCase().startsWith(EN), `"${mark.text}" starts with the query`);
-    }
-    // book › chapter above each result, linked
+  h.test('one language: an old ?lang=en is ignored, the search is in Vietnamese; results show book › chapter', async (t) => {
+    const { page, context } = await h.open(t, searchPath(AR, { lang: 'en' }));
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'vi');
+    const results = await apiSearch(AR);
+    await expectCountLine(page, results);
+    // book › chapter above each result outside the topic collection, linked
     const first = results.hadiths.find((hadith) => hadith.bookSlug !== 'hadeethenc');
     if (first) {
-      const context = await page.locator(`#hadith-${first.id} header p a`).evaluateAll((links) => links.map((a) => a.getAttribute('href')));
-      assert.deepEqual(context, [`/books/${first.bookSlug}`, `/books/${first.bookSlug}/chapters/${first.chapterNo}`]);
+      const links = await page.locator(`#hadith-${first.id} header p a`).evaluateAll((items) => items.map((a) => a.getAttribute('href')));
+      assert.deepEqual(links, [`/books/${first.bookSlug}`, `/books/${first.bookSlug}/chapters/${first.chapterNo}`]);
     }
-    // a one-off ?lang= does not become the saved preference
+    assert.equal(await page.locator('select[name="lang"]').count(), 0, 'no search language to choose');
     assert.equal((await context.cookies()).find((c) => c.name === 'hadith_lang'), undefined);
   });
 
@@ -145,40 +132,32 @@ module.exports = spec(module, 'search', (h) => {
     assert.equal(await page.locator('article[id^="hadith-"]').count(), 0);
   });
 
-  h.test('filters: collection and search language, kept in the URL', async (t) => {
-    // book names and the interface come in the content language (here the ?lang=en override)
-    const en = await interfaceStrings('en');
-    const books = await api(`/books${loc('en')}`);
-    const { page } = await h.open(t, searchPath(EN, { lang: 'en' }));
-    let panel = await filters(h, page);
+  h.test('filters: the collection, kept in the URL', async (t) => {
+    const vi = await interfaceStrings('vi');
+    const books = await api(`/books${loc()}`);
+    const { page } = await h.open(t, searchPath(VI));
+    const panel = await filters(h, page);
     const bookSelect = panel.locator('select[name="book"]');
     const options = await bookSelect.locator('option').evaluateAll((items) => items.map((o) => [o.value, o.textContent.trim()]));
     assert.deepEqual(
       options,
       // the topic collection is named by the interface (lib/names), never by its source
-      [['', en('searchAllBooks')], ...books.map((b) => [b.slug, b.code === 'hadeethenc' ? en('topicCollection') : b.name])],
+      [['', vi('searchAllBooks')], ...books.map((b) => [b.slug, b.code === 'hadeethenc' ? vi('topicCollection') : b.name])],
       'every collection in the book filter'
     );
+    assert.equal(await panel.locator('select[name="lang"]').count(), 0, 'no language filter');
 
-    await bookSelect.selectOption('sahih-al-bukhari');
-    await h.waitForPath(page, (url) => url.searchParams.get('book') === 'sahih-al-bukhari' && url.searchParams.get('lang') === 'en', 'book filter');
-    const inBukhari = await apiSearch(EN, 'en', { book: 'sahih-al-bukhari' });
-    await expectCountLine(page, inBukhari, en);
-    assert.deepEqual(await cardCitations(page), inBukhari.hadiths.map((hadith) => String(hadith.id)));
-    assert.ok(inBukhari.hadiths.every((hadith) => hadith.bookSlug === 'sahih-al-bukhari'));
-    // the active filters are counted on the toggle
-    assert.equal(norm(await filterToggle(page).textContent()).replace(/\s+/g, ''), `${en('filters')}2`.replace(/\s+/g, ''));
-
-    panel = await filters(h, page);
-    await panel.locator('select[name="lang"]').selectOption('vi');
-    await h.waitForPath(page, (url) => url.searchParams.get('lang') === 'vi', 'language filter');
-    const viBukhari = await apiSearch(EN, 'vi', { book: 'sahih-al-bukhari' });
-    await waitForText(page.locator('p[class*="searchedIn"] span').first(), viBukhari.searchedLanguage === 'vi' ? 'Đã tìm trong bản dịch tiếng Việt.' : /Đã tìm/);
-    assert.equal(new URL(page.url()).searchParams.get('book'), 'sahih-al-bukhari', 'the book filter is kept');
+    await bookSelect.selectOption('hadeethenc');
+    await h.waitForPath(page, (url) => url.searchParams.get('book') === 'hadeethenc', 'book filter');
+    const inTopic = await apiSearch(VI, 'vi', { book: 'hadeethenc' });
+    await expectCountLine(page, inTopic);
+    assert.deepEqual(await cardCitations(page), inTopic.hadiths.map((hadith) => String(hadith.id)));
+    // the active filter is counted on the toggle
+    assert.equal(norm(await filterToggle(page).textContent()).replace(/\s+/g, ''), `${vi('filters')}1`.replace(/\s+/g, ''));
   });
 
   h.test(
-    'pagination: ?page=2, next and previous, page numbers',
+    'pagination: one pager, the Quran sites\', previous and next with the page between',
     async (t) => {
       const [p1, p2, p3] = await Promise.all([apiSearch(VI), apiSearch(VI, 'vi', { page: '2' }), apiSearch(VI, 'vi', { page: '3' })]);
       assert.ok(p1.pagination.lastPage >= 3, 'the query has at least three pages');
@@ -186,52 +165,31 @@ module.exports = spec(module, 'search', (h) => {
       await expectCountLine(page, p2);
       assert.deepEqual(await cardCitations(page), p2.hadiths.map((hadith) => String(hadith.id)));
       const pager = page.getByRole('navigation', { name: 'Trang', exact: true });
-      await waitForText(pager.locator('p'), `21–40 trong ${viNumber(p1.pagination.total)}`);
+      assert.equal(await pager.count(), 1, 'one pager');
+      await waitForText(pager.locator('span[class*="count"]'), `Trang 2/${viNumber(p1.pagination.lastPage)}`);
 
       await pager.getByRole('link', { name: /Sau/ }).click();
       await h.waitForPath(page, (url) => url.searchParams.get('page') === '3', 'next page');
       await expectCountLine(page, p3);
-      // the count line reads the same on every page: wait for page 3's cards themselves
       const third = JSON.stringify(p3.hadiths.map((hadith) => String(hadith.id)));
       await until(async () => JSON.stringify(await cardCitations(page)) === third, "page 3's cards");
 
       await pager.getByRole('link', { name: /Trước/ }).click();
       await h.waitForPath(page, (url) => url.searchParams.get('page') === '2', 'previous page');
       await expectCountLine(page, p2);
-
-      if (h.desktop) {
-        await pager.getByRole('link', { name: 'Trang 1', exact: true }).click();
-      } else {
-        await pager.getByRole('link', { name: /Trước/ }).click();
-      }
+      await pager.getByRole('link', { name: /Trước/ }).click();
       await h.waitForPath(page, (url) => url.pathname === '/search' && !url.searchParams.get('page'), 'first page');
       await expectCountLine(page, p1);
-      assert.equal(await pager.locator('[aria-disabled="true"]').first().textContent().then(norm), '‹ Trước');
+      assert.equal(await pager.getByRole('link', { name: /Trước/ }).count(), 0, 'nothing before the first page');
     },
     { smoke: true }
   );
 
-  h.test('"Tìm trong bản dịch tiếng Anh" repeats the search in English, in the English interface', async (t) => {
-    const tr = await interfaceStrings('en');
-    const en = await apiSearch(VI, 'en');
+  h.test('the note says how much reads in Vietnamese, and offers no other language', async (t) => {
     const { page } = await h.open(t, searchPath(VI));
-    const link = page.getByRole('link', { name: 'Tìm trong bản dịch tiếng Anh' });
-    await link.click();
-    await h.waitForPath(page, (url) => url.searchParams.get('lang') === 'en' && url.searchParams.get('q') === VI, 'English search');
-    await waitForText(page.locator('p[class*="searchedIn"] span').first(), tr('searchedLanguage', { language: tr.language('en') }));
-    if (en.pagination.total > 0) await expectCountLine(page, en, tr);
-    else await waitForText(page.locator('#search-results'), tr('searchNoResults', { query: VI }));
-  });
-
-  h.test('go to hadith from the filter panel of a results page', async (t) => {
-    const hadith = await api(`/books/bukhari/hadiths/7${loc()}`);
-    const { page } = await h.open(t, searchPath(VI));
-    await filters(h, page);
-    const field = page.getByLabel('Đi tới hadith', { exact: true });
-    await field.fill('bukhari 7');
-    await field.press('Enter');
-    await h.waitForPath(page, (url) => url.pathname === `/hadiths/${hadith.id}` || url.pathname === '/books/sahih-al-bukhari/hadiths/7', 'go to from search');
-    await waitForText(page.locator('h1'), 'Sahih al-Bukhari 7');
+    await page.locator('#search-results').waitFor();
+    assert.equal(await page.getByRole('link', { name: 'Tìm trong bản dịch tiếng Anh' }).count(), 0);
+    assert.equal(await page.locator('#search-filters input[name="go"]').count(), 0, 'no go-to field: a citation in the search opens the hadith');
   });
 
   h.test('Vietnamese query typed without diacritics still highlights whole words', async (t) => {

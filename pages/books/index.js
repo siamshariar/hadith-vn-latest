@@ -1,5 +1,5 @@
 import { server, shareImage } from "../../lib/config";
-import { getBooks, loadPage } from "../../lib/api";
+import { getBooks, loadStatic } from "../../lib/api";
 import { useLocale } from "../../contexts/LocaleContext";
 import Meta from "../../components/core/meta";
 import Breadcrumbs from "../../components/core/breadcrumbs";
@@ -52,7 +52,7 @@ export default function Books({ books, error }) {
                 {t("contentLanguageNote")}
               </p>
             )}
-            <BookGroups books={list} showTranslation level={2} />
+            <BookGroups books={list} level={2} />
           </>
         )}
       </div>
@@ -64,14 +64,9 @@ Books.getLayout = function getLayout(page) {
   return <Layout sidebar="books">{page}</Layout>;
 };
 
-export async function getServerSideProps(context) {
-  // Old links used /books?book={id}; the book page now lives at /books/{book}.
-  const legacyBook = context.query.book;
-  if (legacyBook && /^[\w-]+$/.test(String(legacyBook))) {
-    return { redirect: { destination: `/books/${legacyBook}`, permanent: true } };
-  }
-
-  return loadPage(context, async (lang) => {
+// (Old links used /books?book={id}: next.config.js sends them to /books/{book}.)
+export async function getStaticProps() {
+  return loadStatic(async (lang) => {
     const books = await getBooks(lang);
     return {
       props: {

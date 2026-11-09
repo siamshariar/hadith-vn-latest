@@ -77,11 +77,6 @@
     min-width: 0;
   }
 
-  // the language menu
-  .language {
-    margin-right: 6px;
-  }
-
   .btn {
     width: var(--tap) !important;
     min-width: var(--tap) !important;
@@ -110,80 +105,6 @@
 
   .btn:hover svg {
     fill: var(--ink);
-  }
-
-  // search box
-  .search {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    max-width: 320px;
-    height: var(--tap);
-    margin-right: var(--space-2);
-    border-radius: var(--radius-pill);
-    background: var(--surface-soft);
-
-    &:focus-within {
-      outline: 2px solid var(--focus-ring);
-      outline-offset: 2px;
-    }
-
-    input {
-      flex: 1 1 auto;
-      min-width: 0;
-      height: 100%;
-      padding: 0 var(--space-1) 0 var(--space-4);
-      border: 0;
-      background: transparent;
-      color: var(--text);
-      font: inherit;
-      font-size: 15px;
-      appearance: none;
-
-      &::placeholder {
-        color: var(--muted);
-      }
-
-      &:focus-visible {
-        outline: none; // the box shows focus (:focus-within)
-      }
-    }
-
-    button {
-      display: flex;
-      flex: 0 0 auto;
-      align-items: center;
-      justify-content: center;
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 50%;
-      background: transparent;
-      cursor: pointer;
-
-      svg {
-        width: 20px;
-        height: 20px;
-        fill: var(--text-secondary);
-      }
-
-      &:hover svg {
-        fill: var(--link);
-      }
-
-      // busy (styles/_core): the turning ring takes the glyph's place
-      &[aria-busy="true"] {
-        color: var(--text-secondary);
-
-        svg {
-          display: none;
-        }
-
-        &::after {
-          margin: 0;
-        }
-      }
-    }
   }
 
   // the menu (popover)

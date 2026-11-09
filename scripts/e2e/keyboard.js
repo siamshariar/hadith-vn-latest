@@ -93,11 +93,13 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
 
       await aside.getByRole('button', { name: 'Quay lại' }).focus();
       await page.keyboard.press('Enter');
-      await until(async () => (await nav.getByRole('button').count()) > 5, 'Enter goes up to the collections');
-      assert.ok(await page.evaluate(() => document.activeElement.closest('nav') !== null), 'focus on the first row');
+      const collections = nav.locator('a[href^="/books/"]:not([href*="/chapters/"])');
+      await until(async () => (await collections.count()) > 5, 'Enter goes up to the collections');
+      assert.ok(await page.evaluate(() => document.activeElement.closest('nav') !== null), 'focus on a row');
+      // a collection is a link: its page comes, and the list goes down into it at once
       await page.keyboard.press('Enter');
       await until(async () => (await aside.getByRole('button', { name: 'Quay lại' }).count()) === 1, 'Enter goes down into a collection');
-      assert.equal((await focused(page)).name, 'Quay lại', 'focus on the way back up');
+      await until(async () => (await focused(page)).name === 'Quay lại', 'focus on the way back up');
     },
     { only: 'desktop' }
   );
@@ -162,7 +164,7 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
       translationSize: '22px',
       translationFace: true,
       arabic: 'hidden',
-      order: 'translation',
+      order: null,
       nav: 'closed',
     });
   });
@@ -187,6 +189,23 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
     { smoke: true }
   );
 
+  // Some in-app browsers and every http address have no clipboard API: the old way (a selected
+  // text field) still copies there. Only when both ways are refused does the reader hear it failed.
+  h.test(
+    'copying works where there is no clipboard API',
+    async (t) => {
+      const { page } = await h.open(t, CHAPTER, {
+        initScript: () => {
+          Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+        },
+      });
+      await page.locator('article[id^="hadith-"]').first().getByRole('button', { name: 'Tùy chọn hadith' }).click();
+      await page.getByRole('menuitem', { name: 'Copy liên kết' }).click();
+      await waitForText(page.locator('.MuiSnackbar-root'), 'Đã được copy');
+    },
+    { smoke: true }
+  );
+
   h.test(
     'a failed copy says so',
     async (t) => {
@@ -196,6 +215,7 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
             value: { writeText: () => Promise.reject(new Error('denied')) },
             configurable: true,
           });
+          document.execCommand = () => false;
         },
       });
       await page.locator('article[id^="hadith-"]').first().getByRole('button', { name: 'Tùy chọn hadith' }).click();

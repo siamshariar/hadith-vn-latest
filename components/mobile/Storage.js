@@ -82,13 +82,11 @@ export default function Save() {
         }}
         value={value}
         onChange={handleChange}
+        variant="fullWidth"
         aria-label={t("savedLists")}
       >
         <Tab
-          classes={{
-            root: styles.tab,
-            wrapper: styles.tab_wrapper,
-          }}
+          classes={{ root: styles.tab }}
           icon={<BookmarkBorderIcon />}
           label={t("bookmarks")}
           disableRipple
@@ -97,10 +95,7 @@ export default function Save() {
         />
 
         <Tab
-          classes={{
-            root: styles.tab,
-            wrapper: styles.tab_wrapper,
-          }}
+          classes={{ root: styles.tab }}
           icon={<PinIcon />}
           label={t("pins")}
           disableRipple
@@ -109,10 +104,7 @@ export default function Save() {
         />
 
         <Tab
-          classes={{
-            root: styles.tab,
-            wrapper: styles.tab_wrapper,
-          }}
+          classes={{ root: styles.tab }}
           icon={<AutoStoriesIcon />}
           label={t("lastRead")}
           disableRipple

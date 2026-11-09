@@ -267,6 +267,45 @@ module.exports = spec(module, 'hadith actions', (h) => {
     assert.equal(await page.locator('main').getByRole('tabpanel').getByRole('link', { name: /Học tập/ }).count(), 0, 'still gone after a reload');
   });
 
+  // The tunnel in front of the API answers 404 with its own page when the API is offline: that is
+  // an outage (try again), not a saved hadith that is gone (remove it). The API's own 404 is JSON.
+  h.test('a saved hadith during an API outage offers to try again, not to remove it', async (t) => {
+    const hadith = await api(`/books/bukhari/hadiths/1${loc()}`);
+    const ref = { v: 2, id: hadith.id, book_slug: BUKHARI, book_name: 'Sahih al-Bukhari', hadith_number: String(hadith.referenceNumber), chapter_no: hadith.chapterNo ?? null, title: hadith.title || null };
+    const { page, context } = await h.open(t, null, {
+      initScript: `localStorage.setItem('bookmarks', ${JSON.stringify(JSON.stringify({ favorites: { name: 'Favorites', entry: [ref] } }))});`,
+      allow: [/Failed to load resource/],
+    });
+    const offline = /\/hadith\/(hadiths|books)\//;
+    await context.route(offline, (route) => route.fulfill({ status: 404, headers: { 'content-type': 'text/html', 'ngrok-error-code': 'ERR_NGROK_3200' }, body: '<!doctype html><p>The endpoint is offline.</p>' }));
+    await h.goto(page, '/bookmarks?key=favorites');
+    const main = page.locator('main');
+    await main.getByRole('button', { name: 'Thử lại', exact: true }).waitFor();
+    assert.equal(await main.getByRole('button', { name: 'Xoá', exact: true }).count(), 0, 'not offered for removal');
+    assert.equal(await main.getByText(/HTTP|hadith API/).count(), 0, "the API's own (English) words are not shown");
+    // back online: trying again shows it
+    await context.unroute(offline);
+    await main.getByRole('button', { name: 'Thử lại', exact: true }).click();
+    await main.getByRole('link', { name: `Sahih al-Bukhari ${hadith.referenceNumber}` }).first().waitFor();
+  });
+
+  // The saved lists load after the first render; that must not move the focus to a saved
+  // hadith's ⋮ (a focus ring on load, and Tab starting in the middle of the page).
+  h.test('a saved and pinned hadith does not take the focus when its page opens', async (t) => {
+    const hadith = await api(`/books/bukhari/hadiths/1${loc()}`);
+    const ref = { v: 2, id: hadith.id, book_slug: BUKHARI, book_name: 'Sahih al-Bukhari', hadith_number: String(hadith.referenceNumber), chapter_no: hadith.chapterNo ?? null, title: hadith.title || null };
+    const { page } = await h.open(t, `/books/${BUKHARI}/chapters/1`, {
+      initScript: `localStorage.setItem('bookmarks', ${JSON.stringify(JSON.stringify({ favorites: { name: 'Favorites', entry: [ref] } }))}); localStorage.setItem('pin', ${JSON.stringify(JSON.stringify([ref]))});`,
+    });
+    const card = page.locator(`#hadith-${hadith.id}`);
+    await card.getByRole('button', { name: 'Bỏ ghim', exact: true }).waitFor();
+    await page.waitForTimeout(300);
+    assert.equal(await page.evaluate(() => !document.activeElement || !document.activeElement.closest('article')), true, 'no hadith control focused after load');
+    // the inline Unpin still hands the focus to ⋮
+    await card.getByRole('button', { name: 'Bỏ ghim', exact: true }).click();
+    await until(async () => (await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('aria-label'))) === HADITH_OPTIONS, 'focus on ⋮ after unpin');
+  });
+
   h.test(
     'pin and unpin; pins and the reading history survive a reload; "Tiếp tục đọc"',
     async (t) => {
@@ -330,6 +369,13 @@ module.exports = spec(module, 'hadith actions', (h) => {
         const box = await page.locator(`#hadith-${first.id}`).boundingBox();
         return box && box.y >= 0 && box.y < 400;
       }, 'scrolled to the pinned card');
+
+      // unpinned from the list itself
+      await h.goto(page, '/bookmarks');
+      await page.getByRole('tab', { name: 'Đã ghim' }).click();
+      await page.locator('main').getByRole('tabpanel').getByRole('button', { name: `Bỏ ghim: Sahih al-Bukhari ${first.referenceNumber}` }).click();
+      await until(async () => ((await stored(page, 'pin')) || []).length === 0, 'pin removed from the list');
+      await waitForText(page.locator('main').getByRole('tabpanel'), 'Chưa có hadith nào được ghim.');
     },
     { smoke: true }
   );

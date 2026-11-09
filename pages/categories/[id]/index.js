@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { server, shareImage } from "../../../lib/config";
-import { booksForHadiths, getCategory, getCategoryHadiths, loadPage } from "../../../lib/api";
-import { categoryCrumbs, categoryHadithsPath, categoryPath } from "../../../lib/hadith";
+import { booksForHadiths, getCategory, getCategoryHadiths, loadStatic, staticPaths } from "../../../lib/api";
+import { categoryCrumbs, categoryHadithsPath, categoryPath, listPath } from "../../../lib/hadith";
 import { useLocale } from "../../../contexts/LocaleContext";
 import Meta from "../../../components/core/meta";
 import Breadcrumbs from "../../../components/core/breadcrumbs";
@@ -9,11 +9,11 @@ import ErrorState, { EmptyState } from "../../../components/core/error";
 import Layout from "../../../components/layouts/LayoutSecondary";
 import { sidebarCategoriesData } from "../../../components/sidebar/data";
 import HadithCard, { HadithList } from "../../../components/hadith/HadithCard";
+import CategoryList from "../../../components/home/category-list";
 import styles from "../../../components/content/Page.module.scss";
 
 const PREVIEW_SIZE = 5;
 
-const childHref = (child) => (child.totalChildren > 0 ? categoryPath(child) : categoryHadithsPath(child));
 
 export default function Category({ category, preview, previewFiltered, books, error }) {
   const { t, lang, formatNumber, languageName } = useLocale();
@@ -37,7 +37,7 @@ export default function Category({ category, preview, previewFiltered, books, er
     <>
       <Meta
         title={category.title}
-        description={`${category.title}${category.titleArabic ? ` (${category.titleArabic})` : ""}: ${t("hadithCount", { count: total })}.`}
+        description={`${category.title}: ${t("hadithCount", { count: total })}.`}
         url={`${server}${categoryPath(category)}`}
         image={shareImage}
         type="website"
@@ -48,11 +48,6 @@ export default function Category({ category, preview, previewFiltered, books, er
 
         <header className={styles.header}>
           <h1 className={styles.title}>{category.title}</h1>
-          {category.titleArabic && (
-            <p className={styles.titleArabic} dir="rtl" lang="ar">
-              {category.titleArabic}
-            </p>
-          )}
           <p className={styles.meta}>
             <span>
               {t("hadithCount", { count: total })}
@@ -73,33 +68,7 @@ export default function Category({ category, preview, previewFiltered, books, er
                 {t("subcategories")}
               </h2>
             </div>
-            <ul className={styles.grid}>
-              {children.map((child) => (
-                <li key={child.id}>
-                  <Link
-                    href={childHref(child)}
-                    className={`${styles.tile} ${showTranslated && child.totalTranslated === 0 ? styles.tileMuted : ""}`}
-                  >
-                    <span className={styles.tileBody}>
-                      <bdi className={styles.tileTitle}>{child.title}</bdi>
-                      {child.titleArabic && (
-                        <span className={styles.tileArabic} dir="rtl" lang="ar">
-                          {child.titleArabic}
-                        </span>
-                      )}
-                      <span className={styles.tileMeta}>
-                        {t("hadithCount", { count: child.totalHadith })}
-                        {showTranslated &&
-                          child.totalTranslated != null &&
-                          ` · ${t("countTranslated", { count: formatNumber(child.totalTranslated), language })}`}
-                        {child.totalChildren > 0 &&
-                          ` · ${t("subcategoryCount", { count: child.totalChildren })}`}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <CategoryList categories={children} />
           </section>
         )}
 
@@ -115,11 +84,20 @@ export default function Category({ category, preview, previewFiltered, books, er
           ) : (
             <HadithList
               hadiths={hadiths}
+              extras={{
+                key: `${categoryPath(category)}:preview:${previewFiltered}`,
+                fetch: (codes) =>
+                  getCategoryHadiths(category.id, lang, {
+                    perPage: PREVIEW_SIZE,
+                    translated: previewFiltered,
+                    translations: codes,
+                  }).then((result) => result.hadiths),
+              }}
               renderCard={(hadith) => <HadithCard key={hadith.id} hadith={hadith} book={books[hadith.bookSlug]} />}
             />
           )}
 
-          {/* The hadith list defaults to the translated ones (see its ?all=1). */}
+          {/* The hadith list defaults to the translated ones (see its /all). */}
           {previewFiltered ? (
             <p className={styles.more}>
               {translated > hadiths.length && (
@@ -128,7 +106,7 @@ export default function Category({ category, preview, previewFiltered, books, er
                 </Link>
               )}{" "}
               {total > translated && (
-                <Link href={`${categoryHadithsPath(category)}?all=1`} className={`${styles.button} ${styles.buttonGhost}`}>
+                <Link href={listPath(categoryHadithsPath(category), { all: true })} className={`${styles.button} ${styles.buttonGhost}`}>
                   {t("viewAllInCategory", { count: formatNumber(total) })}
                 </Link>
               )}
@@ -157,19 +135,23 @@ Category.getLayout = function getLayout(page) {
   );
 };
 
-export async function getServerSideProps(context) {
-  const { id } = context.params;
-  return loadPage(context, async (lang, { translations }) => {
+export async function getStaticPaths() {
+  return staticPaths();
+}
+
+export async function getStaticProps({ params }) {
+  const { id } = params;
+  return loadStatic(async (lang) => {
     // Preview the hadiths translated into the reader's language first,
     // like the full list; fall back to all when none are.
     let previewFiltered = lang !== "ar";
     const [category, firstPreview] = await Promise.all([
       getCategory(id, lang),
-      getCategoryHadiths(id, lang, { perPage: PREVIEW_SIZE, translated: previewFiltered, translations }),
+      getCategoryHadiths(id, lang, { perPage: PREVIEW_SIZE, translated: previewFiltered }),
     ]);
     let preview = firstPreview;
     if (previewFiltered && preview.pagination.total === 0) {
-      preview = await getCategoryHadiths(id, lang, { perPage: PREVIEW_SIZE, translations });
+      preview = await getCategoryHadiths(id, lang, { perPage: PREVIEW_SIZE });
       previewFiltered = false;
     }
     return {

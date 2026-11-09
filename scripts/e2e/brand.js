@@ -36,7 +36,7 @@ function brandColours() {
   const hero = h1 && h1.closest('section');
   const tagline = hero && hero.querySelector('p');
   const bar = hero && hero.querySelector('span[class*="titleBar"]');
-  const button = hero && hero.querySelector('form[role="search"] button[type="submit"]');
+  const link = hero && [...hero.querySelectorAll('a[class*="more"]')].find(visible);
   // a computed property, null when the element is not on this page
   const css = (el, name, pseudo) => (el ? getComputedStyle(el, pseudo)[name] : null);
   return {
@@ -52,7 +52,7 @@ function brandColours() {
     tagline: css(tagline, 'color'),
     bar: css(bar, 'backgroundImage'),
     barSize: bar ? `${bar.getBoundingClientRect().width}x${bar.getBoundingClientRect().height}` : null,
-    button: button ? [css(button, 'backgroundColor'), css(button, 'color')] : null,
+    link: link ? [css(link, 'color'), css(link.parentElement, 'backgroundColor')] : null,
   };
 }
 
@@ -83,18 +83,20 @@ module.exports = spec(module, 'brand', (h) => {
       assert.equal(c.logoLoaded, true);
       if (h.desktop) assert.match(c.heroImage, /linear-gradient/, 'the band in the site\'s colours');
       else assert.equal(c.heroImage, 'none', 'no band on phones');
-      assert.deepEqual(c.button, ['rgb(70, 101, 72)', 'rgb(255, 255, 255)'], 'button #466548, white text');
-      assert.ok(contrast(c.button[0], c.button[1]) >= 4.5, 'button text readable');
+      assert.deepEqual(c.link, ['rgb(70, 101, 72)', 'rgb(255, 255, 255)'], 'the cards\' links #466548 on white');
+      assert.ok(contrast(c.link[0], c.link[1]) >= 4.5, 'link text readable');
 
-      // the two cards: side by side on the web; on phones the way in comes first
-      const order = await page.evaluate(() => {
-        const box = (el) => el.getBoundingClientRect();
-        const daily = box(document.querySelector('#daily-hadith').closest('article'));
-        const find = box(document.querySelector('form[role="search"]').parentElement);
-        return { daily: [Math.round(daily.top), Math.round(daily.left)], find: [Math.round(find.top), Math.round(find.left)] };
-      });
-      if (h.desktop) assert.ok(order.find[1] > order.daily[1], JSON.stringify(order));
-      else assert.ok(order.find[0] < order.daily[0], JSON.stringify(order));
+      // the band's cards: three in a row on the web, the hadith of the day first; on phones it alone
+      const cards = await page.evaluate(() =>
+        [...document.querySelectorAll('section[aria-labelledby="site-heading"] h2')]
+          .map((h2) => h2.parentElement.getBoundingClientRect())
+          .filter((box) => box.width > 0)
+          .map((box) => [Math.round(box.top), Math.round(box.left)])
+      );
+      if (h.desktop) {
+        assert.equal(cards.length, 3, JSON.stringify(cards));
+        assert.ok(cards.every((box) => box[0] === cards[0][0]) && cards[0][1] < cards[1][1] && cards[1][1] < cards[2][1], JSON.stringify(cards));
+      } else assert.equal(cards.length, 1, JSON.stringify(cards));
 
       // a reading page: the same header; the reading faces and sizes
       const home = await api(`/home${loc()}`);
@@ -122,14 +124,14 @@ module.exports = spec(module, 'brand', (h) => {
       // set before the first paint (pages/_document.js), on <html> and <body>
       await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark theme');
       assert.equal(await page.getAttribute('html', 'data-theme'), 'dark');
-      await until(async () => /rgb\(168, 213, 176\)/.test(JSON.stringify((await page.evaluate(brandColours)).button)), 'the dark button');
+      await until(async () => /rgb\(168, 213, 176\)/.test(JSON.stringify((await page.evaluate(brandColours)).link)), 'the light green links of the cards');
       const c = await page.evaluate(brandColours);
       assert.equal(c.body, 'rgb(41, 49, 69)', 'page #293145');
       assert.equal(c.header, 'rgb(35, 42, 59)', 'header #232A3B');
       assert.equal(c.logo, '/img/logo_dark.png', 'the dark logo');
       assert.equal(c.logoLoaded, true, 'logo_dark.png is served');
-      assert.deepEqual(c.button, ['rgb(168, 213, 176)', 'rgb(16, 38, 26)'], 'button #A8D5B0 with #10261A');
-      assert.ok(contrast(c.button[0], c.button[1]) >= 4.5, 'button text readable');
+      assert.deepEqual(c.link, ['rgb(168, 213, 176)', 'rgb(35, 42, 59)'], 'the cards\' links #A8D5B0 on #232A3B');
+      assert.ok(contrast(c.link[0], c.link[1]) >= 4.5, 'link text readable');
 
       // links on cards and the page
       const links = await page.evaluate(() => {

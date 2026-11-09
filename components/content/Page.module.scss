@@ -1,10 +1,10 @@
 // Shared layout for the data pages (books, chapters, categories, search, hadith).
-// docs/hadith-design-system.md: one white surface, plain to the edges on phones and tablets, a
-// card on the web; a reading column of 720px inside it, whatever the card's width.
+// docs/hadith-design-system.md: one white surface, as on the Quran sites: plain to the edges on
+// phones and tablets with 16px at the sides, a card on the web with 32px inside on every side.
 
 .page {
   width: 100%;
-  padding: var(--space-5) max(var(--space-4), calc((100% - 760px) / 2)) var(--space-2);
+  padding: var(--space-5) var(--space-4) var(--space-2);
   background: var(--surface);
 }
 
@@ -414,7 +414,7 @@
 
 @media only screen and (min-width: 1024px) {
   .page {
-    padding: var(--space-6) max(var(--space-6), calc((100% - var(--reading-measure)) / 2));
+    padding: 32px;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
   }
@@ -520,11 +520,6 @@
 
 .more .button + .button {
   margin-inline-start: var(--space-2);
-}
-
-// "go to hadith" row under a page header
-.goRow {
-  margin-bottom: var(--space-5);
 }
 
 // numbered list of a collection's books/chapters: a contents page, ruled by hairlines

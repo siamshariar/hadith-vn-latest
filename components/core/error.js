@@ -2,6 +2,8 @@ import { useRouter } from "next/router";
 import { useLocale } from "../../contexts/LocaleContext";
 import styles from "./error.module.scss";
 
+const DEVELOPMENT = process.env.NODE_ENV !== "production";
+
 // Shown when the hadith API fails. There is deliberately no local fallback
 // content: the reader gets a clear message and a way to retry.
 export default function ErrorState({ error, onRetry, compact = false }) {
@@ -17,7 +19,8 @@ export default function ErrorState({ error, onRetry, compact = false }) {
       </svg>
       <h2 className={styles.title}>{t("errorTitle")}</h2>
       {!compact && <p className={styles.message}>{t("errorMessage")}</p>}
-      {error && error.message && <p className={styles.detail}>{error.message}</p>}
+      {/* the API's own words are English and technical: for the developer, not the reader */}
+      {DEVELOPMENT && error && error.message && <p className={styles.detail}>{error.message}</p>}
       <button type="button" className={styles.retry} onClick={retry}>
         {t("retry")}
       </button>

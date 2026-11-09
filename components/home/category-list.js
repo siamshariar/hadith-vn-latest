@@ -1,16 +1,55 @@
+import Link from "next/link";
+import { useLocale } from "../../contexts/LocaleContext";
+import { categoryPath } from "../../lib/hadith";
 import CategoryCard from "./category-card";
 import styles from "./category-list.module.scss";
 
-// `compact` (home): the top level only, as cards of three columns; else with their children.
-export default function CategoryList({ categories, columns = 1, compact = false }) {
+// The categories as cards. `grouped` (the categories page): each top-level category is a
+// heading over its subcategories' cards; else the top level alone (the home page).
+export default function CategoryList({ categories, grouped = false }) {
+  const { t } = useLocale();
   if (!categories || !categories.length) return null;
+  if (!grouped) {
+    return (
+      <ul className={styles.grid}>
+        {categories.map((category) => (
+          <li key={category.id}>
+            <CategoryCard category={category} />
+          </li>
+        ))}
+      </ul>
+    );
+  }
   return (
-    <ol className={`${styles.list} ${columns === 2 ? styles.twoColumns : ""} ${compact ? styles.compact : ""}`}>
-      {categories.map((category, index) => (
-        <li key={category.id}>
-          <CategoryCard category={category} number={compact ? index + 1 : null} compact={compact} />
-        </li>
-      ))}
-    </ol>
+    <div className={styles.groups}>
+      {categories.map((category) => {
+        const children = category.children || [];
+        return (
+          <section key={category.id} className={styles.group} aria-labelledby={`category-${category.id}`}>
+            <h2 id={`category-${category.id}`} className={styles.groupTitle}>
+              <Link href={categoryPath(category)} prefetch={false}>
+                <bdi>{category.title}</bdi>
+              </Link>
+              <span className={styles.groupCount}>{t("hadithCount", { count: category.totalHadith })}</span>
+            </h2>
+            {children.length > 0 ? (
+              <ul className={styles.grid}>
+                {children.map((child) => (
+                  <li key={child.id}>
+                    <CategoryCard category={child} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className={styles.grid}>
+                <li>
+                  <CategoryCard category={category} />
+                </li>
+              </ul>
+            )}
+          </section>
+        );
+      })}
+    </div>
   );
 }

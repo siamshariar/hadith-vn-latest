@@ -1,4 +1,4 @@
-import { getHadith } from "../../lib/api";
+import { getHadith, staticPaths } from "../../lib/api";
 import HadithPage, { hadithLayout, loadHadithPage } from "../../components/hadith/HadithPage";
 
 export default function Hadith(props) {
@@ -7,8 +7,13 @@ export default function Hadith(props) {
 
 Hadith.getLayout = hadithLayout;
 
-export async function getServerSideProps(context) {
-  const { id } = context.params;
+// Built on the first visit, then kept (lib/api loadStatic).
+export async function getStaticPaths() {
+  return staticPaths();
+}
+
+export async function getStaticProps({ params }) {
+  const { id } = params;
   if (!/^\d+$/.test(String(id))) return { notFound: true };
-  return loadHadithPage(context, (lang, { translations }) => getHadith(id, lang, { translations }));
+  return loadHadithPage((lang) => getHadith(id, lang));
 }

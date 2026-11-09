@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useCallback, useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Skeleton from "react-loading-skeleton";
@@ -26,11 +26,14 @@ import {
   categoryPath,
   chapterPath,
   isCategoryBook,
+  listPath,
   shortBookName,
 } from "../../lib/hadith";
 import { NAV_KEY } from "../../lib/settings";
-import { keptQuery } from "../../lib/translations";
 import styles from "./index.module.scss";
+
+// Before the browser paints, so the list never jumps to the reader's place (useEffect on the server).
+const useBeforePaint = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 // Case- and accent-insensitive matching, so "giao ly" finds "Giáo lý".
 const fold = (value) =>
@@ -52,7 +55,8 @@ function NavSkeleton() {
 // open their hadith list.
 const categoryHref = (category) => (category.totalChildren > 0 ? categoryPath(category) : categoryHadithsPath(category));
 
-// One row of the list: a link to a page, or (`onClick`) a button that goes down a level.
+// One row of the list: a link to a page (with `onClick` too, the list also goes down a level
+// at once, while the page comes), or with `onClick` alone a button that goes down a level.
 function Row({ href, onClick, current, number, name, note, count, more, label }) {
   const inner = (
     <>
@@ -71,7 +75,14 @@ function Row({ href, onClick, current, number, name, note, count, more, label })
   );
   if (href) {
     return (
-      <Link href={href} className={styles.row} aria-current={current ? "page" : undefined} aria-label={label}>
+      <Link
+        href={href}
+        className={styles.row}
+        onClick={onClick}
+        prefetch={false}
+        aria-current={current ? (typeof current === "string" ? current : "page") : undefined}
+        aria-label={label}
+      >
         {inner}
       </Link>
     );
@@ -95,8 +106,8 @@ export const Nav = forwardRef(function Nav(
 ) {
   const { lang, t, formatNumber } = useLocale();
   const router = useRouter();
-  // From chapter to chapter, a shared link's ?lang= and ?tr= and the "only readable" filter stay.
-  const keepView = keptQuery(router.query, ["translated"]);
+  // From chapter to chapter, the "only readable" filter stays (it is in the path).
+  const translatedView = /\/translated(\/|$)/.test(String(router.asPath || "").split(/[?#]/)[0]);
   const ids = useId();
   // Where the reader has gone in the list; undefined: where the page is. A new page starts over.
   const [tabState, setTabState] = useState();
@@ -176,15 +187,19 @@ export const Nav = forwardRef(function Nav(
   const crumb = useRef(null);
   const field = useRef(null);
   const moved = useRef(false);
-  // The current row in view, or the top of a new level.
+  // The current row in view, or the top of a new level. The list scrolls by itself, except in the
+  // drawer on a short screen (a phone on its side), where the whole drawer does
+  // (NavDrawer.module.scss).
   const reveal = useCallback(() => {
-    const box = list.current;
+    const rows = list.current;
+    if (!rows) return;
+    const box = getComputedStyle(rows).overflowY === "visible" ? rows.closest(".MuiDrawer-paper") : rows;
     if (!box) return;
-    const current = box.querySelector("[aria-current]");
+    const current = rows.querySelector("[aria-current]");
     box.scrollTop = current ? Math.max(0, current.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 80) : 0;
   }, []);
   const chaptersShown = Boolean(chapters);
-  useEffect(() => {
+  useBeforePaint(() => {
     reveal();
     if (!moved.current) return;
     moved.current = false;
@@ -226,12 +241,15 @@ export const Nav = forwardRef(function Nav(
     return (
       <Row
         key={book.slug}
+        href={bookPath(book)}
         onClick={() => {
+          // the book's page comes (its chapters on the right) and the list shows them at once,
+          // the focus going into them as when going down a level
           setQuery("");
-          if (topic) go(() => showTab("categories"));
+          if (topic) showTab("categories");
           else go(() => setBookState(book.slug));
         }}
-        current={book.slug === selectedBookSlug}
+        current={book.slug === selectedBookSlug ? (selectedChapterNo == null ? "page" : "true") : false}
         number={index == null ? null : formatNumber(index + 1)}
         name={shortBookName(book)}
         note={bookNote(book)}
@@ -244,7 +262,7 @@ export const Nav = forwardRef(function Nav(
     return (
       <Row
         key={`${book.slug}-${chapter.chapterNo}`}
-        href={`${chapterPath(book.slug, chapter.chapterNo)}${keepView}`}
+        href={listPath(chapterPath(book.slug, chapter.chapterNo), { translated: translatedView })}
         current={book.slug === selectedBookSlug && chapter.chapterNo === selectedChapterNo}
         number={unassigned ? "–" : formatNumber(chapter.chapterNo)}
         name={unassigned ? t("unassignedChapter") : chapter.name}
@@ -262,7 +280,9 @@ export const Nav = forwardRef(function Nav(
       return (
         <Row
           key={category.id}
+          href={categoryPath(category)}
           onClick={() => {
+            // the category's page comes (its subcategories on the right), the list goes down
             setQuery("");
             go(() => setLevelState(category.id));
           }}

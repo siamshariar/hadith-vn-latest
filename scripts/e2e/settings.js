@@ -89,11 +89,11 @@ function lowContrast(minimum) {
 
 module.exports = spec(module, 'settings', (h) => {
   h.test(
-    'reader settings: sizes, hide Arabic, translation first; at once and after a reload',
+    'reader settings: sizes, hide Arabic; the translation first, the Arabic under it; at once and after a reload',
     async (t) => {
       const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
-      // until the reader chooses, the sizes are the screen's
-      const [arabicStart, translationStart] = h.desktop ? [36, 20] : [30, 18];
+      // until the reader chooses, the Quran sites' sizes, on every screen
+      const [arabicStart, translationStart] = [36, 18];
       const arabicBefore = await fontSize(arabicText(page));
       const translationBefore = await fontSize(translationText(page));
       assert.deepEqual([arabicBefore, translationBefore], [arabicStart, translationStart]);
@@ -108,25 +108,20 @@ module.exports = spec(module, 'settings', (h) => {
       assert.equal(await fontSize(arabicText(page)), arabicStart + 2);
       assert.equal(await fontSize(translationText(page)), translationStart + 1);
 
-      // translation first
-      await dialog.locator('label', { hasText: 'Bản dịch trước' }).click();
-      assert.equal(await dialog.getByRole('radio', { name: 'Bản dịch trước' }).isChecked(), true);
-      const order = () =>
-        page.evaluate(() => {
-          const arabic = document.querySelector('section[class*="arabicBlock"]').getBoundingClientRect();
-          const translation = document.querySelector('section[class*="translationBlock"]').getBoundingClientRect();
-          return { stacked: Math.abs(arabic.left - translation.left) < 2, translationFirst: translation.top < arabic.top - 1 };
-        });
-      await until(async () => (await page.evaluate(() => document.documentElement.dataset.textOrder)) === 'translation', 'order set on <html>');
-      const layout = await order();
-      if (layout.stacked) assert.ok(layout.translationFirst, 'translation above the Arabic');
+      // the translation first, then the Arabic (no setting for the order)
+      const order = await page.evaluate(() => {
+        const arabic = document.querySelector('section[class*="arabicBlock"]').getBoundingClientRect();
+        const translation = document.querySelector('section[class*="translationBlock"]').getBoundingClientRect();
+        return translation.top < arabic.top;
+      });
+      assert.ok(order, 'translation above the Arabic');
+      assert.equal(await dialog.getByRole('radio', { name: 'Bản dịch trước' }).count(), 0, 'no order to choose');
 
-      // hide the Arabic: gone at once, and the order no longer applies
+      // hide the Arabic: gone at once
       const show = dialog.getByRole('switch', { name: 'Hiện nguyên văn tiếng Ả Rập' });
       assert.equal(await show.isChecked(), true);
       await show.uncheck();
       await until(async () => !(await arabicText(page).isVisible()), 'Arabic hidden');
-      assert.equal(await dialog.getByRole('radio', { name: 'Bản dịch trước' }).isDisabled(), true);
       await dialog.getByRole('button', { name: 'Đóng' }).click();
       await dialog.waitFor({ state: 'hidden' });
 
@@ -136,28 +131,28 @@ module.exports = spec(module, 'settings', (h) => {
       await until(async () => !(await arabicText(page).isVisible()), 'Arabic still hidden after a reload');
       const saved = await stored(page, 'settings');
       assert.deepEqual(saved.fontSize, { arabic: arabicStart + 2, translation: translationStart + 1 });
-      assert.deepEqual(saved.reader, { showArabic: false, textOrder: 'translation' });
+      assert.equal(saved.reader.showArabic, false);
       await h.goto(page, `/books/${BUKHARI}/chapters/1`);
-      await until(async () => (await page.locator('article[id^="hadith-"] div[lang="ar"]').first().isVisible()) === false, 'card Arabic hidden');
+      const fold = page.locator('article[id^="hadith-"] details').first();
+      await until(async () => (await fold.isVisible()) === false, 'card Arabic hidden');
 
       dialog = await openReaderSettings(page);
       assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), String(arabicStart + 2));
       await dialog.getByRole('switch', { name: 'Hiện nguyên văn tiếng Ả Rập' }).check();
-      await until(() => page.locator('article[id^="hadith-"] div[lang="ar"]').first().isVisible(), 'card Arabic back');
+      await until(() => fold.isVisible(), 'card Arabic back, folded under the translation');
       const card = await page.locator('article[id^="hadith-"]').first().evaluate((article) => {
-        const arabic = article.querySelector('div[lang="ar"]').getBoundingClientRect();
+        const arabic = article.querySelector('details').getBoundingClientRect();
         const translation = article.querySelector('div[class*="translationCol"]').getBoundingClientRect();
-        return { stacked: Math.abs(arabic.left - translation.left) < 40, translationFirst: translation.top < arabic.top - 1 };
+        return translation.top < arabic.top;
       });
-      if (card.stacked) assert.ok(card.translationFirst, 'card: translation above the Arabic');
+      assert.ok(card, 'card: translation above the Arabic');
 
       await dialog.getByRole('button', { name: 'Đặt lại mặc định' }).click();
-      await until(async () => (await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập')) === String(arabicStart), 'the screen\'s size again');
+      await until(async () => (await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập')) === String(arabicStart), 'the default size again');
       assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart));
-      assert.equal(await dialog.getByRole('radio', { name: 'Tiếng Ả Rập trước' }).isChecked(), true);
       await page.keyboard.press('Escape');
       await dialog.waitFor({ state: 'hidden' });
-      assert.deepEqual((await stored(page, 'settings')).reader, { showArabic: true, textOrder: 'arabic' });
+      assert.equal((await stored(page, 'settings')).reader.showArabic, true);
     },
     { smoke: true }
   );
@@ -169,7 +164,7 @@ module.exports = spec(module, 'settings', (h) => {
       if (h.desktop) {
         await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
         await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-        return page.locator('[role="presentation"]').filter({ has: page.getByText('Ngôn ngữ', { exact: true }) }).last();
+        return page.locator('[role="presentation"]').filter({ has: page.getByText('Chọn phông chữ tiếng Ả Rập', { exact: true }) }).last();
       }
       await page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true }).click();
       await page.getByRole('dialog', { name: 'Cài đặt hiển thị' }).getByRole('link', { name: /Cài đặt/ }).click();
@@ -178,12 +173,12 @@ module.exports = spec(module, 'settings', (h) => {
     };
     const before = await fontSize(arabicText(page));
     let settings = await openSettings();
-    await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).waitFor({ state: 'visible' });
+    await settings.getByText('Chọn phông chữ tiếng Ả Rập').waitFor({ state: 'visible' });
     if (h.desktop) assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
-    assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).inputValue(), 'vi');
+    assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).count(), 0, 'no language to choose');
 
     await settings.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
-    await until(async () => (await stored(page, 'settings')).fontSize.arabic === before + 1, 'Arabic size saved, one up from the screen\'s');
+    await until(async () => (await stored(page, 'settings')).fontSize.arabic === before + 1, 'Arabic size saved, one up from the default');
     if (h.desktop) await until(async () => (await fontSize(arabicText(page))) > before, 'Arabic bigger at once');
 
     await settings.getByText('Chọn phông chữ tiếng Ả Rập').click();
@@ -238,43 +233,13 @@ module.exports = spec(module, 'settings', (h) => {
       const { page, response } = await h.open(t, '/settings');
       assert.equal(response.status(), 200);
       await waitForH1(page, 'Cài đặt');
-      await page.getByRole('combobox', { name: 'Ngôn ngữ' }).waitFor();
-      const start = h.desktop ? 20 : 18;
+      assert.equal(await page.getByRole('combobox', { name: 'Ngôn ngữ' }).count(), 0, 'no language section');
+      const start = 18;
       await page.getByRole('button', { name: 'Tăng cỡ chữ bản dịch' }).click();
-      await until(async () => (await stored(page, 'settings')).fontSize.translation === start + 1, 'one up from the screen\'s size');
+      await until(async () => (await stored(page, 'settings')).fontSize.translation === start + 1, 'one up from the default size');
     },
     { smoke: true }
   );
-
-  h.test('the language: saved in a cookie, the pages and their interface follow it', async (t) => {
-    const en = await api(`/books/bukhari/hadiths/1${loc('en')}`);
-    const tr = await interfaceStrings('en');
-    const { page, context } = await h.open(t, '/settings');
-    const select = page.getByRole('combobox', { name: 'Ngôn ngữ' });
-    // every language of the API, Arabic (the original) included; the list loads in the browser
-    const total = (await api('/languages')).length;
-    await until(async () => (await select.locator('option').count()) === total, `the ${total} languages listed`);
-    await select.selectOption('en');
-    await until(async () => (await context.cookies()).some((c) => c.name === 'hadith_lang' && c.value === 'en'), 'cookie saved');
-    // the settings page itself, at once
-    await waitForH1(page, tr('settingsTitle'));
-    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
-    await h.goto(page, `/books/${BUKHARI}/hadiths/1`);
-    // English content, and the English interface (a catalog exists for it)
-    const squash = (value) => String(value || '').replace(/\s+/g, '');
-    await until(
-      async () => squash(await page.locator('section[class*="translationBlock"] div[lang="en"]').first().innerText()) === squash(en.translation.text),
-      'the English translation is shown'
-    );
-    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
-    assert.ok((await page.title()).endsWith(` | ${tr('siteHeading')} | Hadith.vn`), `English title: ${await page.title()}`);
-
-    await h.goto(page, '/settings');
-    await page.getByRole('combobox', { name: tr('language') }).selectOption('vi');
-    await until(async () => (await context.cookies()).some((c) => c.name === 'hadith_lang' && c.value === 'vi'), 'cookie back to vi');
-    await h.goto(page, '/');
-    await waitForH1(page, 'Hadith tiếng Việt');
-  });
 
   h.test(
     'theme toggle: dark and back, kept after a reload',

@@ -38,6 +38,36 @@ import EastIcon from "../icons/East";
 
 import styles from "./HadithOptions.module.scss";
 
+// Copies through the page's selection (document.execCommand), as the copy-to-clipboard library
+// does: a hidden span selected with a range. No focus moves, so it also works while a menu holds
+// the focus (MUI's focus trap pulls it back from a text field, and the copy then fails in Safari).
+// The reader's own selection is put back.
+function copyBySelection(text) {
+  if (typeof window === "undefined" || !window.getSelection || !document.createRange) return false;
+  const selection = window.getSelection();
+  const saved = [];
+  for (let i = 0; i < selection.rangeCount; i += 1) saved.push(selection.getRangeAt(i));
+  const mark = document.createElement("span");
+  mark.textContent = text;
+  mark.setAttribute("aria-hidden", "true");
+  mark.style.cssText = "all:unset;position:fixed;top:0;left:0;clip:rect(0,0,0,0);white-space:pre;-webkit-user-select:text;user-select:text";
+  document.body.appendChild(mark);
+  let copied = false;
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(mark);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    copied = document.execCommand("copy");
+  } catch (_) {
+    copied = false;
+  }
+  selection.removeAllRanges();
+  saved.forEach((range) => selection.addRange(range));
+  mark.remove();
+  return copied;
+}
+
 // A hadith's ⋮, as on the Quran sites (cards and the detail page), one 44px button and one menu:
 // bookmark and pin; copy the Arabic, the translations, everything, the citation or the link;
 // share, details and "report an error". A bookmark or a pin also shows beside it. `hadith` is an
@@ -58,15 +88,15 @@ const HadithOptions = ({ hadith, book, updateBookmarksData, isBookmarkPage, show
 
   const copy = (text) => {
     setMenuAnchor(null);
-    const failed = () => setMessage(t("copyFailed"));
-    if (typeof navigator === "undefined" || !navigator.clipboard) {
-      failed();
+    const done = () => setMessage(t("copied"));
+    // Some browsers have no clipboard API or refuse it (in-app browsers, an http address): the
+    // old way, through the selection, still works in most of them.
+    const fallback = () => (copyBySelection(text) ? done() : setMessage(t("copyFailed")));
+    if (typeof navigator === "undefined" || !navigator.clipboard || !navigator.clipboard.writeText) {
+      fallback();
       return;
     }
-    navigator.clipboard
-      .writeText(text)
-      .then(() => setMessage(t("copied")))
-      .catch(failed);
+    navigator.clipboard.writeText(text).then(done).catch(fallback);
   };
 
   const share = () => {
@@ -110,12 +140,17 @@ const HadithOptions = ({ hadith, book, updateBookmarksData, isBookmarkPage, show
   };
 
   // The inline Unpin or Remove goes away with what it removes: focus moves to ⋮, not the page.
+  // Only after the reader used one of them: the saved lists also load after the first render,
+  // and that change must not pull the focus (and a focus ring) to a saved hadith's ⋮.
   const more = useRef(null);
+  const acted = useRef(false);
   const marks = `${isBookmarked}|${isPinned}`;
   const lastMarks = useRef(marks);
   useEffect(() => {
     if (lastMarks.current === marks) return undefined;
     lastMarks.current = marks;
+    if (!acted.current) return undefined;
+    acted.current = false;
     const timer = window.setTimeout(() => {
       const el = document.activeElement;
       if ((!el || el === document.body) && more.current) more.current.focus({ preventScroll: true });
@@ -137,12 +172,30 @@ const HadithOptions = ({ hadith, book, updateBookmarksData, isBookmarkPage, show
       <div className={styles.row} role="group" aria-label={t("hadithActions")}>
         {/* What the reader has marked stays in view, and can be taken back at once. */}
         {isBookmarked && (
-          <button type="button" className={`${styles.button} ${styles.active}`} onClick={() => setRemoveBookmarkOpen(true)} aria-label={bookmarkLabel} title={bookmarkLabel}>
+          <button
+            type="button"
+            className={`${styles.button} ${styles.active}`}
+            onClick={() => {
+              acted.current = true;
+              setRemoveBookmarkOpen(true);
+            }}
+            aria-label={bookmarkLabel}
+            title={bookmarkLabel}
+          >
             <BookmarkIcon />
           </button>
         )}
         {isPinned && (
-          <button type="button" className={`${styles.button} ${styles.active}`} onClick={togglePin} aria-label={t("unpin")} title={t("unpin")}>
+          <button
+            type="button"
+            className={`${styles.button} ${styles.active}`}
+            onClick={() => {
+              acted.current = true;
+              togglePin();
+            }}
+            aria-label={t("unpin")}
+            title={t("unpin")}
+          >
             <UnpinIcon />
           </button>
         )}

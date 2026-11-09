@@ -24,48 +24,13 @@ import AutoStoriesIcon from "../icons/AutoStories";
 import SettingsIcon from "../icons/SettingsOutlined";
 import SearchIcon from "../icons/Search";
 import { useLocale } from "../../contexts/LocaleContext";
-import useSubmitBusy from "../../hooks/useSubmitBusy";
 import HeaderLogo from "./HeaderLogo";
-import LanguageMenu from "../core/LanguageMenu";
-
-// Compact search box (GET /search?q=, so it also works before hydration).
-function HeaderSearch() {
-  const router = useRouter();
-  const { t } = useLocale();
-  const [query, setQuery] = useState("");
-  const [busy, startBusy] = useSubmitBusy();
-
-  const submit = (event) => {
-    event.preventDefault();
-    const q = query.trim();
-    startBusy();
-    router.push(q ? { pathname: "/search", query: { q } } : "/search");
-  };
-
-  return (
-    <form action="/search" method="get" role="search" className={styles.search} onSubmit={submit}>
-      <input
-        type="search"
-        name="q"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={t("searchPlaceholder")}
-        aria-label={t("search")}
-        autoComplete="off"
-        enterKeyHint="search"
-      />
-      <button type="submit" aria-label={t("searchButton")} title={t("searchButton")} aria-busy={busy || undefined}>
-        <SearchIcon />
-      </button>
-    </form>
-  );
-}
 
 // Desktop header (1024px and up), a white bar on the page's frame: the colour logo (the
-// dark one in the dark theme); on the right search, the language menu ("Tiếng Việt ▾",
-// components/core/LanguageMenu), the theme and the menu. The home and search pages have their
-// own search box, so the header only links to /search there. `sections`: the two ways into
-// the library as words, on the pages that have no navigation card to show them.
+// dark one in the dark theme); on the right the search icon (the search page, the one place
+// with a search field), the theme and the menu. Each site reads in its own language, so there
+// is no language menu. `sections`: the two ways into the library as words, on the pages that
+// have no navigation card to show them.
 const SECTIONS = [
   { href: "/books", label: "books" },
   { href: "/categories", label: "categories" },
@@ -120,8 +85,6 @@ export default function HeaderWeb({ page, sections = false }) {
     }
   };
 
-  const searchBox = page !== "home" && router.pathname !== "/search";
-
   return (
     <>
       <Modal
@@ -144,15 +107,9 @@ export default function HeaderWeb({ page, sections = false }) {
           </div>
 
           <div className={styles.right}>
-            {searchBox && <HeaderSearch />}
-
-            {!searchBox && (
-              <IconButton component={Link} href="/search" className={styles.btn} aria-label={t("search")} title={t("search")}>
-                <SearchIcon />
-              </IconButton>
-            )}
-
-            <LanguageMenu variant="desktop" className={styles.language} />
+            <IconButton component={Link} href="/search" className={styles.btn} aria-label={t("search")} title={t("search")}>
+              <SearchIcon />
+            </IconButton>
 
             <IconButton
               className={styles.btn}

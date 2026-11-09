@@ -96,8 +96,8 @@ const applyTypography = (settings) => {
   const html = document.documentElement;
   if (reader.showArabic) html.removeAttribute("data-arabic");
   else html.setAttribute("data-arabic", "hidden");
-  if (reader.textOrder === "translation") html.setAttribute("data-text-order", "translation");
-  else html.removeAttribute("data-text-order");
+  // the order is no longer a setting: the translation, then the Arabic folded under it
+  html.removeAttribute("data-text-order");
 };
 
 export const SettingsContext = createContext();

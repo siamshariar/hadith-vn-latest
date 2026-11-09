@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useRef } from "react";
 import { useRouter } from "next/router";
 import { PinContext } from "../../contexts/PinContext";
 import { useLocale } from "../../contexts/LocaleContext";
@@ -6,6 +6,7 @@ import useNames from "../../hooks/useNames";
 import { storedRefHref, storedRefLabel, storedRefSource } from "../../lib/hadith";
 import PinIcon from "../icons/Pin";
 import AutoStoriesIcon from "../icons/AutoStories";
+import CloseIcon from "../icons/Close";
 import styles from "./list.module.scss";
 
 // `locale` is the interface locale from useLocale() (BCP 47, e.g. vi-VN, bn-BD).
@@ -23,7 +24,8 @@ const formatDate = (date, locale) => {
 // Entries are references (id, book, number); they open the current pages.
 // Books are named in the reader's language (lib/names).
 export default function StoredList({ kind, controller }) {
-  const { pin, lastRead, archived } = useContext(PinContext);
+  const { pin, lastRead, archived, removePin } = useContext(PinContext);
+  const list = useRef(null);
   const router = useRouter();
   const { t, lang, locale } = useLocale();
   const names = useNames(lang);
@@ -40,17 +42,28 @@ export default function StoredList({ kind, controller }) {
     router.push(href);
   };
 
+  // Unpinned from the list: the focus moves to the row that takes its place (or the one above),
+  // not to the top of the page.
+  const unpin = (item, index) => {
+    removePin(item);
+    requestAnimationFrame(() => {
+      const links = list.current ? list.current.querySelectorAll("a") : [];
+      const next = links[index] || links[index - 1];
+      if (next) next.focus();
+    });
+  };
+
   return (
     <div className={styles.content}>
       {archivedCount > 0 && <p className={styles.archived}>{t("legacyArchived", { count: archivedCount })}</p>}
 
-      <div className={styles.lists}>
-        {items.map((item) => {
+      <div className={styles.lists} ref={list}>
+        {items.map((item, index) => {
           const href = storedRefHref(item, { preferContext: isPin });
           const label = storedRefLabel(item, names, t("topicCollection"));
           const source = storedRefSource(item, names, t("topicCollection"));
           return (
-            <div key={item.id} className={styles.item}>
+            <div key={item.id} className={`${styles.item} ${isPin ? styles.withAction : ""}`}>
               <a href={href} className={styles.link} onClick={(event) => open(event, href)}>
                 <span className={styles.left}>
                   <span className={styles.icon}>
@@ -65,12 +78,23 @@ export default function StoredList({ kind, controller }) {
                   </span>
                 </span>
               </a>
+              {isPin && (
+                <button
+                  type="button"
+                  className={styles.delete_icon}
+                  onClick={() => unpin(item, index)}
+                  aria-label={`${t("unpin")}: ${label}`}
+                  title={t("unpin")}
+                >
+                  <CloseIcon />
+                </button>
+              )}
             </div>
           );
         })}
       </div>
 
-      {items.length === 0 && <h2 className={styles.no_record}>{isPin ? t("noPins") : t("noLastRead")}</h2>}
+      {items.length === 0 && <p className={styles.no_record}>{isPin ? t("noPins") : t("noLastRead")}</p>}
     </div>
   );
 }

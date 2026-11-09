@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Skeleton from "react-loading-skeleton";
 import { useLocale } from "../../contexts/LocaleContext";
+import { useWithExtras } from "../../contexts/ExtraTranslationsContext";
+import { INTERNATIONAL } from "../../lib/language";
 import {
   UNASSIGNED_CHAPTER,
   bookPath,
@@ -16,7 +18,7 @@ import { extraTranslations } from "../../lib/translations";
 import HadithOptions from "../content/HadithOptions";
 import { GradeBadge } from "./Grades";
 import { Highlighted } from "./Highlight";
-import { ArabicText, HadithTranslations, LinkedTranslationNote, shownTranslation } from "./HadithText";
+import { ArabicFold, ArabicText, HadithTranslations, LinkedTranslationNote, shownTranslation } from "./HadithText";
 import TranslationPicker from "./TranslationPicker";
 import styles from "./HadithCard.module.scss";
 
@@ -90,16 +92,23 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
         </Title>
       )}
 
-      {/* The Arabic, then the translation, as on the Quran sites; the reader settings choose
-          which comes first and can hide the Arabic. */}
-      <div className={styles.texts}>
-        <div className={`${styles.arabicCol} ${arabicOnly ? styles.arabicOnly : ""}`}>
+      {/* The translation, then the Arabic folded under it as a footnote is on the Quran sites
+          (open on a tap). With no translation at all, the Arabic is the text, open. The reader
+          settings can hide the Arabic. */}
+      {arabicOnly ? (
+        <div className={`${styles.arabicCol} ${styles.arabicOnly}`}>
           <ArabicText text={hadith.arabic} />
         </div>
-        <div className={styles.translationCol}>
-          <HadithTranslations hadith={hadith} book={book} compact collapsible />
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className={styles.translationCol}>
+            <HadithTranslations hadith={hadith} book={book} compact collapsible />
+          </div>
+          <div className={styles.arabicCol}>
+            <ArabicFold text={hadith.arabic} />
+          </div>
+        </>
+      )}
 
       <footer className={styles.foot}>
         <Link href={href} className={styles.details}>
@@ -120,16 +129,13 @@ export function HadithCardSkeleton({ count = 3 }) {
       <div className={styles.head}>
         <Skeleton width={160} height={18} />
       </div>
-      <div className={styles.texts}>
-        <div className={styles.skeletonArabic}>
-          <Skeleton count={2} height={26} />
-          <Skeleton width="60%" height={26} />
-        </div>
-        <div>
-          <Skeleton width={140} height={12} />
-          <Skeleton count={2} height={16} />
-          <Skeleton width="75%" height={16} />
-        </div>
+      <div className={styles.translationCol}>
+        <Skeleton width={140} height={12} />
+        <Skeleton count={2} height={16} />
+        <Skeleton width="75%" height={16} />
+      </div>
+      <div className={styles.skeletonFold}>
+        <Skeleton width={180} height={16} />
       </div>
     </div>
   ));
@@ -137,19 +143,20 @@ export function HadithCardSkeleton({ count = 3 }) {
 
 // A list of cards that switches to skeletons while the next page loads.
 // When cards show the topic collection's linked translations, what that label
-// means is said once, above the list (LinkedTranslationNote). `picker`: the
-// translations chip above the list ({ translations, book }) for lists
-// without a reader bar; the collection is the cards' own when they share one.
-export function HadithList({ hadiths, loading, renderCard, skeletonCount = 4, picker }) {
+// means is said once, above the list (LinkedTranslationNote). On the international site:
+// `picker`, the translations chip above the list ({ book }) for lists without one of their
+// own (the collection is the cards' own when they share one), and `extras`, how to load the
+// same list with the reader's extra translations ({ key, fetch(codes) }:
+// contexts/ExtraTranslationsContext).
+export function HadithList({ hadiths: given, loading, renderCard, skeletonCount = 4, picker, extras }) {
+  const hadiths = useWithExtras(extras ? extras.key : null, given, extras ? extras.fetch : null);
   const books = new Set((hadiths || []).map((hadith) => hadith.bookSlug));
-  const chip = picker ? (
-    <div className={styles.listTools}>
-      <TranslationPicker
-        translations={picker.translations}
-        book={picker.book || (books.size === 1 ? [...books][0] : null)}
-      />
-    </div>
-  ) : null;
+  const chip =
+    picker && INTERNATIONAL ? (
+      <div className={styles.listTools}>
+        <TranslationPicker book={picker.book || (books.size === 1 ? [...books][0] : null)} />
+      </div>
+    ) : null;
 
   if (loading) {
     return (

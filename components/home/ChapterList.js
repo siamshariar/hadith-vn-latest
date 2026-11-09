@@ -17,7 +17,7 @@ export default function ChapterList({ book, chapters }) {
         const range = chapterRange(chapter, book);
         return (
           <li key={chapter.chapterNo}>
-            <Link href={chapterPath(book.slug, chapter.chapterNo)} className={styles.chapterRow}>
+            <Link href={chapterPath(book.slug, chapter.chapterNo)} className={styles.chapterRow} prefetch={false}>
               <span className={styles.chapterNo} aria-hidden={unassigned ? "true" : undefined}>
                 {unassigned ? "–" : formatNumber(chapter.chapterNo)}
               </span>{" "}

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { server, shareImage } from "../lib/config";
-import { getBooks, getEditions, getLanguages, loadPage } from "../lib/api";
+import { getBooks, getEditions, getLanguages, loadStatic } from "../lib/api";
 import { translatorName } from "../lib/citation";
 import { bookPath, booksBySlug, shortBookName } from "../lib/hadith";
-import { DEFAULT_LANGUAGE, INTERNATIONAL, compareLanguages, resolveInterfaceLanguage } from "../lib/language";
+import { DEFAULT_LANGUAGE, compareLanguages, interfaceFor } from "../lib/language";
 import { site } from "../lib/sites";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
@@ -324,11 +324,10 @@ function translatorsByLanguage(editions, books) {
   return [...byCode.values()].sort(compareLanguages);
 }
 
-export async function getServerSideProps(context) {
-  return loadPage(context, async (lang) => {
-    // Coverage of the deployment's content language, on an international site the
-    // reader's (none for Arabic, the original).
-    const described = INTERNATIONAL ? lang : DEFAULT_LANGUAGE;
+export async function getStaticProps() {
+  return loadStatic(async (lang) => {
+    // Coverage of the site's content language (none for Arabic, the original).
+    const described = lang;
     const [books, languages, siteBooks] = await Promise.all([
       getBooks(lang),
       getLanguages().catch(() => []),
@@ -367,7 +366,7 @@ export async function getServerSideProps(context) {
         topicLanguages: editions
           ? editions.filter((edition) => edition.source === "hadeethenc" && edition.languageCode !== "ar").length
           : languages.filter((language) => language.code !== "ar").length,
-        contentTitle: (COPY[resolveInterfaceLanguage(context)] || COPY.en).title,
+        contentTitle: (COPY[interfaceFor(lang)] || COPY.en).title,
         sidebarData: await sidebarCategoriesData(lang),
         backLink: "/",
       },

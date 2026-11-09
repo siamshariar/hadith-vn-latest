@@ -5,15 +5,10 @@ import styles from "./book-list.module.scss";
 // The collections in groups, as on sunnah.com, by the API's book `code`.
 // A code not listed here (a collection added later) goes under "other".
 const GROUPS = [
-  {
-    key: "six",
-    title: "bookGroupSix",
-    arabic: "الكتب الستة",
-    codes: ["bukhari", "muslim", "abudawud", "tirmidhi", "nasai", "ibnmajah"],
-  },
-  { key: "other", title: "bookGroupOther", arabic: "المصادر الأصلية الأخرى", codes: ["malik"] },
-  { key: "forty", title: "bookGroupForty", arabic: "الأربعينات", codes: ["nawawi", "qudsi", "dehlawi"] },
-  { key: "topics", title: "bookGroupTopics", arabic: null, codes: ["hadeethenc"] },
+  { key: "six", title: "bookGroupSix", codes: ["bukhari", "muslim", "abudawud", "tirmidhi", "nasai", "ibnmajah"] },
+  { key: "other", title: "bookGroupOther", codes: ["malik"] },
+  { key: "forty", title: "bookGroupForty", codes: ["nawawi", "qudsi", "dehlawi"] },
+  { key: "topics", title: "bookGroupTopics", codes: ["hadeethenc"] },
 ];
 
 export function groupBooks(books) {
@@ -33,47 +28,41 @@ export function groupBooks(books) {
   return groups.filter((group) => group.books.length);
 }
 
-// `first`: the number of the first card (the numbers run on from group to group).
-export default function BookList({ books, showTranslation = false, first = null }) {
+// The collections as cards (components/home/EntryCard), in the groups' order.
+export default function BookList({ books }) {
   if (!books || !books.length) return null;
   return (
     <ul className={styles.list}>
-      {books.map((book, index) => (
+      {books.map((book) => (
         <li key={book.slug}>
-          <BookCard book={book} number={first == null ? null : first + index} showTranslation={showTranslation} />
+          <BookCard book={book} />
         </li>
       ))}
     </ul>
   );
 }
 
-// `level`: heading level of the group titles (3 under the home section's h2).
-export function BookGroups({ books, showTranslation = false, level = 3 }) {
+// The home page: one grid of cards, the groups' order kept.
+export function BookGrid({ books }) {
+  return <BookList books={groupBooks(books).flatMap((group) => group.books)} />;
+}
+
+// The collections page: each group under its heading. `level`: the headings' level.
+export function BookGroups({ books, level = 3 }) {
   const { t } = useLocale();
   const Heading = `h${level}`;
   const groups = groupBooks(books);
   if (!groups.length) return null;
-  let shown = 0;
-
   return (
     <div className={styles.groups}>
-      {groups.map((group) => {
-        const first = shown + 1;
-        shown += group.books.length;
-        return (
+      {groups.map((group) => (
         <section key={group.key} className={styles.group} aria-labelledby={`book-group-${group.key}`}>
           <Heading id={`book-group-${group.key}`} className={styles.groupTitle}>
-            <span>{t(group.title)}</span>
-            {group.arabic && (
-              <span className={styles.groupArabic} dir="rtl" lang="ar">
-                {group.arabic}
-              </span>
-            )}
+            {t(group.title)}
           </Heading>
-          <BookList books={group.books} showTranslation={showTranslation} first={first} />
+          <BookList books={group.books} />
         </section>
-        );
-      })}
+      ))}
     </div>
   );
 }

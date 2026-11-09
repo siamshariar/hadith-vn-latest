@@ -348,10 +348,26 @@ summary:focus-visible,
   outline-offset: 2px;
 }
 
+// A touch screen has no hover, and the browser's own tap flash is off (_utils.scss), so whatever
+// is pressed shows it: a tint laid over its own fill (an inset shadow sits between the background
+// and the text), which reads on a plain row and on a filled button alike and leaves both colours.
+@media (hover: none), (pointer: coarse) {
+  a:active,
+  button:active,
+  summary:active,
+  [role="button"]:active,
+  [role="tab"]:active,
+  [role="menuitem"]:active,
+  [role="option"]:active {
+    box-shadow: inset 0 0 0 100vmax var(--press);
+  }
+}
+
 // search matches (components/hadith/Highlight)
 mark {
   padding: 0 1px;
   border-radius: 2px;
   background: var(--mark-bg);
-  color: inherit;
+  // the reading colour, not the link's: a link's hover green on the dark theme's mark was 4.1:1
+  color: var(--text);
 }

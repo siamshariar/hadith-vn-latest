@@ -110,3 +110,12 @@ a.number:focus-visible {
     justify-content: space-between;
   }
 }
+
+// Touch screens: 44px page numbers and steps
+@media (pointer: coarse) {
+  .step,
+  .number {
+    min-width: var(--tap);
+    height: var(--tap);
+  }
+}

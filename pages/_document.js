@@ -32,7 +32,6 @@ if(z.translation>0)c.setProperty("--fs-trans",z.translation+"px");
 if(k.hasOwnProperty(f.arabic))c.setProperty("--font-arabic",k[f.arabic]);
 if(k.hasOwnProperty(f.translation))c.setProperty("--font-trans",k[f.translation]);
 if(r.showArabic===false)h.setAttribute("data-arabic","hidden");
-if(r.textOrder==="translation")h.setAttribute("data-text-order","translation");
 }}catch(e){}`;
 
 class CustomDocument extends Document {

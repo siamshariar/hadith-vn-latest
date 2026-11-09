@@ -1,5 +1,5 @@
 import { server, shareImage } from "../lib/config";
-import { loadPage } from "../lib/api";
+import { loadStatic } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
@@ -26,8 +26,8 @@ DeeniInfoTech.getLayout = function getLayout(page) {
   return <Layout>{page}</Layout>;
 };
 
-// Server-rendered in the reader's language (lib/api loadPage); the phone header shows the
+// Built once in the site's language (lib/api loadStatic); the phone header shows the
 // page title.
-export async function getServerSideProps(context) {
-  return loadPage(context, async () => ({ props: { contentTitle: "Deeni Info Tech" } }));
+export async function getStaticProps() {
+  return loadStatic(async () => ({ props: { contentTitle: "Deeni Info Tech" } }));
 }

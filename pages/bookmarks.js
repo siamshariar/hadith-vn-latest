@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { server, shareImage } from "../lib/config";
-import { loadPage } from "../lib/api";
+import { loadStatic } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Breadcrumbs from "../components/core/breadcrumbs";
@@ -48,8 +48,8 @@ Bookmark.getLayout = function getLayout(page) {
 
 // Server-rendered only to know the reader's language; the bookmarks
 // themselves live in this browser's localStorage.
-export async function getServerSideProps(context) {
-  return loadPage(context, async (lang) => ({
+export async function getStaticProps() {
+  return loadStatic(async (lang) => ({
     props: { sidebarData: await sidebarCategoriesData(lang), backLink: "/" },
   }));
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { server, config, shareImage } from "../lib/config";
@@ -7,26 +7,25 @@ import {
   MIN_SEARCH_LENGTH,
   getBookHadith,
   getBooks,
-  getLanguages,
   loadPage,
   parsePage,
   searchHadiths,
 } from "../lib/api";
 import { REFERENCE_NUMBER, parseReference } from "../lib/reference";
 import { booksBySlug, hadithPath, shortBookName } from "../lib/hadith";
-import { compareLanguages } from "../lib/language";
+import { INTERNATIONAL } from "../lib/language";
 import { useLocale } from "../contexts/LocaleContext";
 import useRouteLoading from "../hooks/useRouteLoading";
 import useSubmitBusy from "../hooks/useSubmitBusy";
 import Meta from "../components/core/meta";
 import Breadcrumbs from "../components/core/breadcrumbs";
 import ErrorState, { EmptyState } from "../components/core/error";
-import Pagination, { pageHref } from "../components/core/pagination";
+import { pageHref } from "../components/core/pagination";
+import Pager from "../components/core/Pager";
 import Layout from "../components/layouts/LayoutSecondary";
 import { sidebarCategoriesData } from "../components/sidebar/data";
 import HadithCard, { HadithList } from "../components/hadith/HadithCard";
 import { HighlightProvider } from "../components/hadith/Highlight";
-import { GoToHadith } from "../components/home/search";
 import SearchIcon from "../components/icons/Search";
 import TuneIcon from "../components/icons/Tune";
 import styles from "../components/content/Page.module.scss";
@@ -38,22 +37,25 @@ import searchStyles from "../components/home/search.module.scss";
 // results start on the first screen; from 768px the panel is always open.
 // The selects sit outside the <form> element (form="search-form") so the
 // panel can also hold the separate go-to form.
-function SearchForm({ query, book, books, languages, goTo }) {
+function SearchForm({ query, book, books }) {
   const router = useRouter();
-  const { t, lang, formatNumber } = useLocale();
+  const { t, formatNumber } = useLocale();
   const [value, setValue] = useState(query);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [busy, startBusy] = useSubmitBusy();
-  const active = (book ? 1 : 0) + (router.query.lang ? 1 : 0);
+  const active = book ? 1 : 0;
+  // The header's search icon brings the reader here: the field is ready to type in.
+  const field = useRef(null);
+  useEffect(() => {
+    if (!query && field.current) field.current.focus({ preventScroll: true });
+  }, [query]);
 
   const go = (overrides = {}) => {
     const q = (overrides.q ?? value).trim();
     if (q.length < MIN_SEARCH_LENGTH) return;
     const params = { q };
     const selectedBook = overrides.book ?? book;
-    const selectedLang = overrides.lang ?? (router.query.lang || "");
     if (selectedBook) params.book = selectedBook;
-    if (selectedLang) params.lang = selectedLang;
     startBusy();
     router.push({ pathname: "/search", query: params });
   };
@@ -75,6 +77,7 @@ function SearchForm({ query, book, books, languages, goTo }) {
             <SearchIcon />
           </span>
           <input
+            ref={field}
             type="search"
             name="q"
             value={value}
@@ -125,35 +128,14 @@ function SearchForm({ query, book, books, languages, goTo }) {
               </select>
             </label>
           )}
-          {languages.length > 0 && (
-            <label className={styles.filter}>
-              <span>{t("searchLanguage")}</span>
-              <select
-                name="lang"
-                form="search-form"
-                value={lang}
-                onChange={(event) => go({ lang: event.target.value })}
-                className={styles.select}
-              >
-                {languages.map((language) => (
-                  <option key={language.code} value={language.code}>
-                    {language.nativeName}
-                    {language.nativeName !== language.name ? ` (${language.name})` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
         </div>
-        {goTo}
       </div>
     </div>
   );
 }
 
-export default function Search({ query, book, results, books, languages, notFound, translations, error }) {
+export default function Search({ query, book, results, books, notFound, error }) {
   const { t, lang, languageInfo, formatNumber, languageName } = useLocale();
-  const router = useRouter();
   const loading = useRouteLoading();
   const bookList = books || [];
   const bookMap = booksBySlug(bookList);
@@ -178,8 +160,8 @@ export default function Search({ query, book, results, books, languages, notFoun
         }
       : null;
 
-  // Keep the query, book filter and any ?lang= override across pages.
-  const baseQuery = { q: query, book: book || undefined, lang: router.query.lang || undefined, tr: router.query.tr };
+  // Keep the query and the book filter across pages.
+  const baseQuery = { q: query, book: book || undefined };
 
   return (
     <>
@@ -198,20 +180,7 @@ export default function Search({ query, book, results, books, languages, notFoun
           <h1 className={styles.title}>{t("search")}</h1>
         </header>
 
-        <SearchForm
-          key={`${query}|${book}|${lang}`}
-          query={query || ""}
-          book={book || ""}
-          books={bookList}
-          languages={languages || []}
-          goTo={query ? <GoToHadith /> : null}
-        />
-
-        {!query && (
-          <div className={styles.goRow}>
-            <GoToHadith />
-          </div>
-        )}
+        <SearchForm key={`${query}|${book}`} query={query || ""} book={book || ""} books={bookList} />
 
         {notFound && (
           <p className={`${styles.notice} ${styles.warning}`} role="status">
@@ -261,11 +230,8 @@ export default function Search({ query, book, results, books, languages, notFoun
 
             {showCoverage && (
               <p className={`${styles.notice} ${styles.warning}`}>
-                {t("searchCoverage", {
-                  count: formatNumber(languageInfo.totalTranslated),
-                  language: languageName(lang),
-                })}{" "}
-                <Link href={pageHref("/search", { ...baseQuery, lang: "en" }, 1)}>{t("searchInEnglish")}</Link>
+                {/* how much there is to find in the site's language (no other to search in) */}
+                {t("booksCoverage", { count: languageInfo.totalTranslated, language: languageName(lang) })}
               </p>
             )}
 
@@ -282,7 +248,17 @@ export default function Search({ query, book, results, books, languages, notFoun
                 <HadithList
                   hadiths={results.hadiths}
                   loading={loading}
-                  picker={{ translations, book: book || null }}
+                  picker={INTERNATIONAL ? { book: book || null } : null}
+                  extras={{
+                    key: `search:${query}:${book}:${results.pagination.page}`,
+                    fetch: (codes) =>
+                      searchHadiths(query, lang, {
+                        page: results.pagination.page,
+                        perPage: results.pagination.perPage,
+                        book: book || undefined,
+                        translations: codes,
+                      }).then((result) => result.hadiths),
+                  }}
                   renderCard={(hadith) => (
                     <HadithCard key={hadith.id} hadith={hadith} book={bookMap[hadith.bookSlug]} showContext />
                   )}
@@ -290,10 +266,13 @@ export default function Search({ query, book, results, books, languages, notFoun
               </HighlightProvider>
             )}
 
-            <Pagination pagination={results.pagination} hrefFor={(page) => pageHref("/search", baseQuery, page)} />
           </section>
         )}
       </div>
+
+      {results && results.hadiths.length > 0 && (
+        <Pager pagination={results.pagination} hrefFor={(page) => pageHref("/search", baseQuery, page)} />
+      )}
     </>
   );
 }
@@ -309,11 +288,9 @@ export async function getServerSideProps(context) {
   const goTo = String(first(context.query.go) || "").trim().slice(0, 100);
   const rawBook = first(context.query.book);
   const book = /^[\w-]+$/.test(String(rawBook || "")) ? String(rawBook) : "";
-  const langOverride = first(context.query.lang);
-  const trOverride = context.query.tr === undefined ? undefined : String(first(context.query.tr));
 
-  return loadPage(context, async (lang, { translations }) => {
-    const [books, languages] = await Promise.all([getBooks(lang).catch(() => []), getLanguages().catch(() => [])]);
+  return loadPage(context, async (lang) => {
+    const books = await getBooks(lang).catch(() => []);
 
     // "Go to hadith": ?go=Bukhari 1, ?go=8a&book=sahih-muslim, or a search
     // query that is a reference ("Muslim 8a"). Found: open the hadith.
@@ -328,11 +305,7 @@ export async function getServerSideProps(context) {
     if (reference) {
       try {
         const hadith = await getBookHadith(reference.slug, reference.number, lang);
-        const keep = new URLSearchParams();
-        if (langOverride) keep.set("lang", langOverride);
-        if (trOverride !== undefined) keep.set("tr", trOverride);
-        const search = keep.toString().replace(/%2C/gi, ",");
-        return { redirect: { destination: `${hadithPath(hadith)}${search ? `?${search}` : ""}`, permanent: false } };
+        return { redirect: { destination: hadithPath(hadith), permanent: false } };
       } catch (error) {
         if (!(error instanceof ApiError && error.status === 404)) throw error;
         notFound = goTo || query;
@@ -347,7 +320,6 @@ export async function getServerSideProps(context) {
             page: parsePage(context.query.page),
             perPage: config.perPage,
             book: book || undefined,
-            translations,
           })
         : null;
 
@@ -365,11 +337,6 @@ export async function getServerSideProps(context) {
           source,
           totalHadith,
         })),
-        // the deployment's language first, then English, then by name
-        languages: languages
-          .filter((language) => language.code !== "ar")
-          .map(({ code, name, nativeName }) => ({ code, name, nativeName }))
-          .sort(compareLanguages),
         sidebarData: await sidebarCategoriesData(lang),
         backLink: "/",
       },

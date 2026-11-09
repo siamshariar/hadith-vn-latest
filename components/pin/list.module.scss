@@ -1,149 +1,139 @@
+// Pinned hadiths and the last-read history (components/pin/StoredList): one row per hadith, a
+// hairline between rows, the book and the date in the secondary colour. Pins have an unpin button.
 .content {
   width: 100%;
-  padding-top: 0;
-  padding-bottom: 0;
 }
 
 .lists {
-  width: 100%;
-  position: relative;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  width: 100%;
 }
 
 .item {
-  padding: 15px 0;
-  width: 100%;
   position: relative;
-  border-bottom: 1px dashed var(--hairline);
-}
-.item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  min-width: 0;
+
+  & + .item {
+    border-top: 1px solid var(--hairline-soft);
+  }
 }
 
 .link {
-  position: relative;
-  z-index: 9;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  min-height: 56px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
   cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--hover);
+    }
+  }
+
+  &:focus-visible {
+    outline-offset: -2px;
+  }
 }
 
-.item .left {
-  display: flex;
-  flex-direction: row;
-}
-.item .right {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+// room for the unpin button
+.withAction .link {
+  padding-inline-end: 52px;
 }
 
-.item .icon {
-  margin-right: 10px;
+.left {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.icon {
+  display: flex;
+  flex: 0 0 auto;
   padding-top: 2px;
-  display: flex;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--text-secondary);
+  }
 }
 
-.item .icon svg {
-  width: 20px;
-  height: 20px;
-  fill: var(--text-secondary);
-}
-
-.item .delete_icon {
-  position: absolute;
-  top: 50%;
-  right: 14px;
-  width: 18px;
-  height: 18px;
-  transform: translateY(-50%);
-  z-index: 9;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  background-color: var(--canvas);
-}
-
-.delete_icon svg {
-  width: 14px;
-  height: 14px;
-  fill: var(--text-secondary);
-}
-
-.item .desc {
+.desc {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
 }
 
-.item .desc span:nth-child(1) {
+.hadith_title {
+  color: var(--text);
   font-size: 15px;
-  word-wrap: break-word;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
-.item .desc span:nth-child(2) {
-  opacity: 0.6;
-  font-size: 14px;
-  margin-top: 6px;
+.source_info,
+.time {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.4;
 }
 
-.item .time {
-  color: inherit;
-  font-size: 14px;
-  //font-weight: bold;
-  text-align: right;
-  opacity: 0.6;
+// a 44px button at the end of the row, its circle tinted on hover
+.delete_icon {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 4px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+
+  svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+  }
+}
+
+// With a mouse it shows on the row under it or with focus inside; touch screens always show it.
+@media (hover: hover) and (pointer: fine) {
+  .delete_icon {
+    opacity: 0;
+  }
+
+  .item:hover .delete_icon,
+  .item:focus-within .delete_icon {
+    opacity: 1;
+  }
 }
 
 .no_record {
-  padding: 16px 0;
-  font-weight: 400;
-  font-family: "Roboto", sans-serif;
-}
-
-@media only screen and (min-width: 600px) {
-  .lists {
-    justify-content: space-between;
-  }
-  .item {
-    width: 100%;
-  }
-  .item .delete_icon {
-    right: 0;
-  }
-  .link {
-    flex-direction: column;
-  }
-  .item .right {
-    display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
-    padding-left: 28px;
-  }
-}
-
-@media only screen and (min-width: 1024px) {
-  .content {
-    padding-top: 0;
-    padding-bottom: 0;
-    border-top: 1px dashed var(--hairline);
-    margin-top: -2px;
-  }
-  .item .delete_icon {
-    visibility: hidden;
-    background-color: transparent;
-  }
-  .item:hover .delete_icon {
-    visibility: visible;
-  }
-  .item .delete_icon:hover {
-    background-color: var(--canvas);
-  }
+  padding: var(--space-4) 0;
+  color: var(--text-secondary);
 }
 
 .archived {
@@ -155,9 +145,4 @@
   color: var(--notice-txt);
   font-size: 13px;
   line-height: 1.5;
-}
-
-.item .desc .source_info {
-  font-size: 12px;
-  opacity: 0.7;
 }

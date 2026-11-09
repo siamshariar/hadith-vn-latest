@@ -56,6 +56,35 @@
   }
 }
 
+// A short screen (a phone on its side): the drawer scrolls as a whole, so the list is not left with
+// two rows between the tabs, the filter and the foot.
+@media (max-height: 500px) {
+  .paper {
+    overflow-y: auto !important;
+  }
+
+  .body {
+    flex: 0 0 auto;
+    min-height: auto;
+
+    > div,
+    [role="tabpanel"] {
+      flex: 0 0 auto;
+      height: auto;
+      min-height: auto;
+      overflow: visible;
+    }
+  }
+
+  // Saved, the language and the settings stay at hand at the bottom.
+  .foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    background: var(--surface);
+  }
+}
+
 // The site's other pages, under the rows of the list.
 .links {
   display: flex;

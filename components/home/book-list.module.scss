@@ -1,29 +1,31 @@
-// Grid of collection cards (home and /books), as many columns of 320px as fit: three on the home
-// page on the web, two inside a reading card or on a tablet, one on phones, where the cards
-// are white rows 10px apart on the grey page.
+// Grid of cards (components/home/EntryCard): as many columns of 300px as fit: three on the home
+// page on the web, two inside a reading card or on a tablet, one on phones.
 .list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: var(--space-3);
 
   > li {
     display: flex;
     min-width: 0;
+
+    > * {
+      flex: 1 1 auto;
+    }
   }
 }
 
 .groups {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
 
-// "The six books ——— الكتب الستة": a quiet label ruled to its Arabic name.
+// a group's name over its cards, ruled to the edge
 .groupTitle {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px var(--space-3);
+  align-items: center;
+  gap: var(--space-3);
   margin-bottom: var(--space-3);
   color: var(--text-secondary);
   font-size: var(--text-sm);
@@ -33,23 +35,6 @@
   &::after {
     content: "";
     flex: 1 1 40px;
-    order: 1;
-    align-self: center;
     border-top: 1px solid var(--hairline);
-  }
-}
-
-.groupArabic {
-  order: 2;
-  color: var(--text-secondary);
-  font-family: var(--font-arabic);
-  font-size: var(--text-lg);
-  font-weight: 400;
-  line-height: 1.4;
-}
-
-@media only screen and (min-width: 1024px) {
-  .list {
-    gap: var(--space-4);
   }
 }

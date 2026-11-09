@@ -75,12 +75,16 @@
     padding: 0 var(--space-5);
   }
 
+  // The Quran sites' footer (quran-apps components/web/footer): one white row, 24px above and
+  // below: the copyright on the left, the site's pages between thin bars in the middle, the
+  // credit on the right, all 14px.
   .bottom {
     flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: space-between;
     gap: 8px 24px;
-    padding: 16px 0;
+    padding: 24px 0;
     text-align: start;
   }
 
@@ -118,6 +122,15 @@
       padding: 0 12px;
       color: var(--text-secondary);
       font-weight: 400;
+    }
+  }
+
+  // with a mouse the row keeps the Quran's height; a finger keeps 44px links
+  @media (pointer: fine) {
+    .menu a,
+    .copyright a,
+    .credit a {
+      min-height: 24px;
     }
   }
 

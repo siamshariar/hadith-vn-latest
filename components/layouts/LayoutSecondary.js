@@ -40,7 +40,7 @@ const Layout = ({
                 <HeaderMobile where={where} backLink={pageProps.backLink} title={title} />
               </div>
 
-              <div className={styles.body}>
+              <div className={`${styles.body} ${styles.withNav}`}>
                 <aside className={styles.sidebar} aria-label={`${t("books")} / ${t("categories")}`}>
                   <Sidebar {...where} lazy />
                 </aside>

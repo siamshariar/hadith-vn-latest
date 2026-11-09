@@ -25,6 +25,75 @@
   overflow: hidden;
 }
 
+// The folded Arabic (ArabicFold), as the Quran sites' footnotes: 28px from the text above, a
+// 38px line (44px on touch screens) with the label in green, 14px, and a chevron that turns.
+.fold {
+  margin-top: 28px;
+}
+
+.foldSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 38px;
+  color: var(--link);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  @media (hover: hover) {
+    &:hover .foldLabel {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  }
+
+  @media (pointer: coarse) {
+    min-height: var(--tap);
+  }
+}
+
+.foldIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 3px;
+    transition: transform var(--duration) var(--ease);
+  }
+}
+
+.fold[open] .foldIcon svg {
+  transform: rotate(180deg);
+}
+
+.foldBody {
+  padding-top: var(--space-3);
+}
+
+@media print {
+  .foldIcon {
+    display: none;
+  }
+}
+
 // ---------------------------------------------------------------- translation
 
 .translation {
@@ -271,6 +340,7 @@
 }
 
 .linkedLink {
+  position: relative;
   display: inline-flex;
   align-items: center;
   min-height: 24px;
@@ -480,4 +550,24 @@
 // the chevron's own baseline: the summary is a flex row of glyph and words
 .fallbackDetails summary::before {
   align-self: center;
+}
+
+// Touch screens: small text controls keep their size and reach 44px to a finger, into the space
+// around them (nothing else to tap lies there).
+@media (pointer: coarse) {
+  .linkedLink::after {
+    content: "";
+    position: absolute;
+    inset: -10px 0;
+  }
+
+  .fallbackDetails summary {
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: -6px 0;
+    }
+  }
 }

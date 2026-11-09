@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Drawer from "@mui/material/Drawer";
-import LanguageMenu from "../core/LanguageMenu";
 import BookmarkIcon from "../icons/BookmarkBorder";
 import CloseIcon from "../icons/Close";
 import SettingsIcon from "../icons/SettingsOutlined";
@@ -13,7 +12,7 @@ import styles from "./NavDrawer.module.scss";
 // The navigation on phones and tablets: a drawer from the left, the same contents as the web's
 // side card, at most 380px wide, and always leaving 44px of the page to tap. Esc, ✕ or a tap on
 // the page closes it, and a link followed (the layout, and this drawer, stay mounted). Under
-// the list, the site's other pages; at its foot Saved, the language and the settings, so each is
+// the list, the site's other pages; at its foot Saved and the settings, so each is
 // within reach from any page.
 export default function NavDrawer({ open, onClose, where = {}, onSettings }) {
   const router = useRouter();
@@ -72,7 +71,6 @@ export default function NavDrawer({ open, onClose, where = {}, onSettings }) {
           <BookmarkIcon />
           <span>{t("savedLists")}</span>
         </Link>
-        <LanguageMenu variant="foot" />
         <button
           type="button"
           onClick={() => {

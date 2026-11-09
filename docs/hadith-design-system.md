@@ -44,6 +44,7 @@ sites' (`quran-apps/styles/_variables.scss`); where theirs fails AA, a comment i
 | `--surface-card` | `#eeeeee` | `#313a55` | Number discs, quiet fills |
 | `--surface-strong` | `#e4e4e6` | `#3a4462` | Pressed |
 | `--hover` | green at 5% | white at 5% | Hover fill |
+| `--press` | ink at 8% | white at 10% | Pressed on a touch screen, laid over the control's own fill |
 | `--hairline` | `#e8e8ea` | `#313a55` | Dividers and card edges |
 | `--hairline-soft` | `#eff1f2` | `#2c3550` | Dividers inside a card |
 | `--control-edge` | `#8a9096` (3.2:1) | `#77819a` (3.6:1) | Edges that identify a control: selects, outlined buttons, radios |
@@ -86,7 +87,7 @@ sites' (`quran-apps/styles/_variables.scss`); where theirs fails AA, a comment i
 ### The country's colours
 
 Each edition may have colour stops in `config/countries.json` (`accent`). They are the band behind
-the home page's two cards on the web (at night, a calm band of its own, `--brand-band`) and the 3px
+the home page's three cards on the web (at night, a calm band of its own, `--brand-band`) and the 3px
 bar under an edition's name when it has no logo image. Without stops, the brand green. No gradient
 appears anywhere else, and never near reading text.
 
@@ -117,14 +118,14 @@ appears anywhere else, and never near reading text.
 | Role | Size | Line-height | Use |
 |---|---|---|---|
 | Page title | 22px in the grey bar (web) / 18px 500 (phones) | 33px / 1.4 | `h1` of every reading page |
-| Arabic | `--fs-arabic`: 36px from 640px, 30px on phones | 1.6 | The reader can change it |
-| Translation | `--fs-trans`: 20px from 1024px, 18px below | 1.6; 1.8 for scripts with stacked signs (`styles/_core`) | The reader can change it |
+| Arabic | `--fs-arabic`: 36px on every screen (the Quran sites' default) | 1.6 | The reader can change it |
+| Translation | `--fs-trans`: 18px on every screen (the Quran sites' default) | 1.6; 1.8 for scripts with stacked signs (`styles/_core`) | The reader can change it |
 | `--text-md` | 18px | 1.5 | A hadith's title; section titles on phones |
 | `--text-base` | 16px | 1.6 | Interface text |
 | `--text-sm` | 14px | 1.5 | Labels, metadata, the citation's tag |
 | `--text-xs` | 12px | 1.4 | Counts, the source line |
 
-A saved size is set on `<html>`; while the reader has not chosen one, the sizes follow the screen
+A saved size is set on `<html>`; while the reader has not chosen one, the defaults above apply
 (`fontSize` is null in the settings).
 
 ### Rules
@@ -136,8 +137,8 @@ A saved size is set on `<html>`; while the reader has not chosen one, the sizes 
   text. The narrator line of English translations is the one exception (sunnah.com's convention).
 - **Figures.** Numbers in figures and tables use `tabular-nums`. All numbers are in Latin digits, as
   the hadith numbers they sit next to (`lib/i18n formatNumber`).
-- **Measure.** The reading column is 720px at 20px: about 77 characters a line, for hadith that run
-  ten or twenty times as long as a verse. (quran.vn's 876px at 18px is about 107.)
+- **Measure.** As on the Quran sites: the text fills the reading card inside its 32px (876px at
+  1440px), 18px; on phones and tablets 16px from the edges.
 
 ## Space, shape, elevation
 
@@ -154,6 +155,13 @@ A saved size is set on `<html>`; while the reader has not chosen one, the sizes 
 - **Touch.** On touch screens every control is at least 44×44px (`--tap`); inline links are at least
   24px tall. A citation's tag is small, with a 44px tap area.
 - **Hover** styles sit inside `@media (hover: hover)`, so a tap leaves no stuck colour.
+- **Pressed.** The browser's tap flash is off, so on touch screens a pressed link, button, tab or menu
+  row shows `--press` as an inset shadow: it lies between the control's own background and its text,
+  so it reads on a plain row and on a green button alike and changes neither colour.
+- **Link colours.** The global rule for links is `a { color: inherit }` only. Never `a:hover` or
+  `a:focus` there: those outrank a component's single class, so a hover would wipe the component's
+  colour (it once turned the citation tag's white text dark on its grey tag).
+- **Menus.** Menu rows are 44px tall (MUI's own are 36px from 600px).
 - **Safe areas.** The viewport is `viewport-fit=cover`, so everything fixed or full-bleed pads
   `env(safe-area-inset-*)`.
 
@@ -162,7 +170,7 @@ A saved size is set on `<html>`; while the reader has not chosen one, the sizes 
 | Width | Layout |
 |---|---|
 | < 1024px | Plain white reading pages, 16px gutters (a 760px column on tablets), a 54px header that slides away while reading down. Navigation in a drawer |
-| ≥ 1024px | The grey page; one centred frame: the navigation card, 16px, the 940px reading card, with the reading column of 720px centred in it. The 66px header slides away too, and its logo and tools line up with the frame |
+| ≥ 1024px | The grey page; one centred frame: the navigation card, 16px, the 940px reading card, 32px inside it on every side as the Quran sites' card. The 66px header slides away too, and its logo and tools line up with the frame. The navigation then grows into the header's place; the frame is always as tall as it can get, so a short page never changes height (or moves its footer) as the header comes and goes |
 
 - **The frame** is `--frame` (`components/layouts/Layout.module.scss`): the navigation card is
   `clamp(280px, 22vw, 300px)`, so small laptops keep room for the text. Everything that lines up with
@@ -172,33 +180,55 @@ A saved size is set on `<html>`; while the reader has not chosen one, the sizes 
   quran.vn's 70px rail, and rail, card and header stand exactly where quran.vn has them (the
   card at x=293 on a 1440px screen). The change is immediate: no animated widths, which would
   reflow the Arabic.
-- **Home.** Its own frame of 1168px; on the web a band in the site's colours behind the two cards
-  (hadith of the day, search), then the library in three columns. On phones, white blocks on grey,
-  search first. A language with nothing of its own in the books leads with the categories.
-- **Text pages** (about, settings, contact): one white card with the same reading column.
+- **Home.** Its own frame of 1168px. On the web, as the Quran sites' home: a band in the site's
+  colours, 70px of it above three equal cards that reach 80px past its edge (the hadith of the
+  day, the collections, the categories: a title, three lines, a link). Then "Continue reading" and
+  the library as cards (`EntryCard`), three columns. Phones and tablets have no band: the hadith of
+  the day as a card, then the same. No search field (the header's icon), no figures, no list of
+  languages. A language with nothing of its own in the books leads with the categories.
+- **Text pages** (about, settings, contact): one white card, 32px inside.
 - **No bottom navigation bar.** The header and the drawer reach everything, and the reading space
   stays the text's.
+
+## Pages, speed and languages
+
+- **Static pages, as the Quran sites'.** Every content page is built once and kept
+  (`getStaticProps` with `revalidate`: `lib/api loadStatic`, made again in the background once a
+  day; `getStaticPaths` with `fallback: "blocking"`: built on the first visit, the collections with
+  the site). Links prefetch them (lists of many links only on hover), so a page opens at once and
+  search engines get the whole page. No progress bar under the header. Only the search page is
+  made per request. When the API cannot be reached, a page already built stays as it was.
+- **Lists keep their view and page in the path**, not the query: `/books/{b}/chapters/{n}[/translated][/page/{p}]`,
+  `/categories/{c}/hadiths[/all][/direct][/page/{p}]` (`lib/hadith listPath`). Old `?page=`,
+  `?translated=1`, `?all=1`, `?direct=1` links are sent there once (`middleware.js`).
+- **One language per site.** A country's site reads in its language (`SITE_LANGUAGE`): no language
+  menu, no language list, no language in the settings or the search; `?lang=` and an old saved
+  language change nothing. Where a hadith has no translation in it, the English one is shown,
+  labelled. The international site (ac) is in English and adds up to two more translations in the
+  browser (`contexts/ExtraTranslationsContext`: the translations chip, the `hadith_tr` cookie, a
+  link's `?tr=`).
 
 ## Components
 
 | Component | Specification |
 |---|---|
-| Header (web) | White, `--shadow-card`, 66px. Logo; search field (a grey pill), language, theme, ⋮. On text pages also Books and Categories as words |
-| Header (phones) | White, hairline, 54px. Reading pages: back, the page's title with ▾ (it opens the drawer; cut with an ellipsis, the page shows it in full), search, reading settings. Home: menu, logo, reading settings |
-| Navigation (`components/sidebar`) | One component, on the web's card and in the drawer. Two tabs (Books, Categories; a real tablist, arrow keys move), a filter, and one level of the tree at a time: books → chapters, categories → subcategories. A crumb goes back up and links to that book's or category's page. The current row is tinted, its number disc green, and kept in view |
+| Header (web) | White, `--shadow-card`, 66px. Logo; the search icon (the search page, the one search field), theme, ⋮. No language menu: each site has one language. On text pages also Books and Categories as words |
+| Header (phones) | White, hairline, 54px. Reading pages: back, the page's title with ▾ (it opens the drawer; cut with an ellipsis, the page shows it in full), search, reading settings. Home: menu, logo, search, reading settings |
+| Navigation (`components/sidebar`) | One component, on the web's card and in the drawer. Two tabs (Books, Categories; a real tablist, arrow keys move), a filter, and one level of the tree at a time: books → chapters, categories → subcategories. A collection or a category with subcategories is a link: its page comes on the right (the chapters, the subcategories) and the list goes down into it at once. A crumb goes back up and links to that book's or category's page. The current row is tinted, its number disc green, and kept in view |
 | Navigation foot (web) | Saved, settings, close to the rail |
 | Rail (web, closed) | 70px white card, rows of 50px: open, books, categories, saved, settings. Each opens the panel on what it says |
-| Drawer (phones and tablets) | From the left, `min(100vw - 44px, 380px)`, so a strip of the page always stays to tap. Close with ✕, the strip or Esc; following a link closes it. Under the rows, the site's other pages; at its foot Saved, the language, settings |
-| Reading card | `.page`: `--surface`, padded so the column is 720px; plain on phones |
+| Drawer (phones and tablets) | From the left, `min(100vw - 44px, 380px)`, so a strip of the page always stays to tap. Close with ✕, the strip or Esc; following a link closes it. Under the rows, the site's other pages; at its foot Saved and settings |
+| Reading card | `.page`: `--surface`, 32px inside on the web (the Quran sites' card); 16px at the sides on phones and tablets, plain |
 | Page opening | Breadcrumb (web only, phones have back and the title), the title in a grey bar (phones: plain), the Arabic name, the figures, centred |
-| Toolbar | What applies to the list below: a filter switch or chips, the translations chip at the end |
-| Hadith in a list | No box. Reference line: the citation's grey tag (a link), the in-book reference, the grade, ⋮. Then the title, the Arabic, the translation, "View details" at the end. A hairline to the next, 40px either side |
+| Toolbar | What applies to the list below: a filter switch or chips; the translations chip at the end on the international site only |
+| Hadith in a list | No box. Reference line: the citation's grey tag (a link), the in-book reference, the grade, ⋮. Then the title, the translation, and the Arabic under it, folded as the Quran sites' footnotes (`ArabicFold`: a 38px line, "Arabic text" in green 14px and a chevron, 28px under the text; a `<details>`, so it works without script and is read by search engines). With no translation at all, the Arabic is the text, open. "View details" at the end. A hairline to the next, 40px either side |
 | Hadith actions | ⋮ opens one menu: bookmark, pin; copy Arabic, translation, all, citation, link; share, details, report an error. A bookmark or a pin also shows beside ⋮, and can be taken back there |
-| Hadith page | As in a list, the title in the bar, the translations chip in the reference line; below the text the reference cells, explanation, benefits, word meanings, sources, categories, related |
-| Previous / next | After the text: a white card on the web, a line on phones (`.pager`) |
+| Saved page | Bookmarks, pins and last read as tabs in the navigation's style: equal widths, a hairline under the row, the current one underlined in green; below 480px the icon sits above its label so all three fit from 280px. Rows are 56px with a hover fill; a folder's delete and a pin's unpin are 44px buttons at the row's end, shown on hover or focus with a mouse and always on touch screens. Copying falls back to the selection (a hidden span, no focus moved, so it works inside the open menu) where the clipboard API is missing or refused |
+| Hadith page | As in a list, the title in the bar (the translations chip in the reference line on the international site); the Arabic under the translation, open; below the text the reference cells, explanation, benefits, word meanings, sources, categories, related |
+| Pagination (`components/core/Pager`) | One per list, as the Quran sites': under the content, a white card of its own on the web (20px 25px), a hairline on phones; the way back on the left, the way on on the right, 16px with 22px chevrons. Within a list its pages ("‹ Previous", "Next ›", "Page 2/6" between); at a chapter's ends, the chapter before or after it by name; on a hadith page the hadith before and after |
 | Chapter list, subcategories | Rows in two columns from 640px, ruled by dashes: number disc, name, count and citable numbers |
-| Book and category cards (home, /books) | Number disc, name and counts, the Arabic name at the end, on one line. White rows on phones; bordered cards on the web, as many columns of 320px as fit |
-| Hadith of the day, search card | White, on the band, a soft shadow. The search card ends with the figures, one quiet line |
+| Cards (`components/home/EntryCard`: home, collections, categories) | The "Continue reading" card's form: an icon in a tinted 40px circle (an open book for a collection, a list for a category, the reading book for "Continue reading"), the name (16px 500), one line under it (how many hadiths), an arrow. No Arabic. As many columns of 300px as fit; a hairline edge on phones, a soft shadow on the web |
+| Home band cards | White, 24px inside, the title 24px, three lines of text, a link at the foot; the band's soft shadow |
 | Reference cells | Label above value, each cell a tile on `--surface-soft`; the grades table is ruled across |
 | Topic-collection translation | Its own box: hairline, radius 8px, `--accent-wash`, its label badge, its note, its source line. Never merged with the hadith's own translation |
 | Buttons | Primary: `--accent` on `--on-accent`, 44px. Secondary: transparent, `--control-edge`. Destructive: `--error-txt` on `--surface`. A submit that loads a page keeps its label and shows a turning ring (`aria-busy`, `hooks/useSubmitBusy`) |
@@ -208,16 +238,16 @@ A saved size is set on `<html>`; while the reader has not chosen one, the sizes 
 | Filter switch | A link (`role="switch"`) drawn as a 36×20px switch with its words; toggles on Space too |
 | Menus and popovers | `--surface`, radius 8px, `--shadow-float` |
 | Dialogs | `--surface`, radius 16px, `--shadow-float`. An `h2` title names the dialog; a round close button in the corner |
-| Reading settings | Sizes, Arabic shown, text order, theme, reset, and a link to all settings. A bottom sheet on phones and a side panel on wider screens, so the text stays in view while it changes |
-| Settings page | The language, sizes, faces, theme. Reset resets at once, then offers Undo for ten seconds |
-| Footer | White, across the screen, its contents on the frame |
+| Reading settings | Sizes, Arabic shown, theme, reset, and a link to all settings. A bottom sheet on phones and a side panel on wider screens, so the text stays in view while it changes |
+| Settings page | Sizes, faces, theme. Reset resets at once, then offers Undo for ten seconds |
+| Footer | As the Quran sites': white, across the screen, one row on the frame, 24px above and below: the copyright on the left, the site's pages between thin bars, the credit on the right, 14px. Phones: the links, then the copyright and the credit, centred |
 
 ## Themes
 
 - **Two themes**, light and dark, chosen in the header, the reading settings or the settings page.
   The choice is saved in `localStorage`.
 - **No flash.** `pages/_document.js` applies the saved theme, reading typography (sizes, faces, Arabic
-  shown, text order) and the closed navigation before the first paint, so a dark page never flashes
+  shown) and the closed navigation before the first paint, so a dark page never flashes
   light and the text never reflows once the scripts load. It mirrors `applyTypography` in
   `contexts/SettingsContext.js`; change both together.
 - **Where the theme lives.** `body.dark` carries the token overrides; `html[data-theme]`
@@ -276,7 +306,7 @@ A saved size is set on `<html>`; while the reader has not chosen one, the sizes 
 |---|---|
 | Loading | Skeleton blocks in `--hairline` on `--canvas`, the shape of the content (cards, Arabic lines right-aligned); route changes show a 3px `--accent` progress bar |
 | Empty | One sentence in `--text-secondary`, with the way forward as a link or button |
-| Error | A box with a dashed `--control-edge` edge on `--surface`, the message, and a primary "Retry" button |
+| Error | A box with a dashed `--control-edge` edge on `--surface`, the message, and a primary "Retry" button. The API's own (English, technical) message shows in development only. A 404 without the API's JSON body is an outage, not a missing page: the reader gets this state and search engines a 503 |
 | Fallback or missing translation | `--notice-*` badge or box, worded as what it is |
 | Disabled | `--disabled` text, no hover; steppers drop to 40% opacity at their limits |
 | Current or selected | `--accent-tint` background, or an `--accent` underline or fill |

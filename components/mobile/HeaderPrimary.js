@@ -1,15 +1,16 @@
 import { useState } from "react";
+import Link from "next/link";
 import { useLocale } from "../../contexts/LocaleContext";
 import HeaderLogo from "../web/HeaderLogo";
-import LanguageMenu from "../core/LanguageMenu";
 import NavDrawer from "./NavDrawer";
 import ReaderSettings from "../hadith/ReaderSettings";
 import MenuIcon from "../icons/Menu";
+import SearchIcon from "../icons/Search";
 import TuneIcon from "../icons/Tune";
 import styles from "./Header.module.scss";
 
 // Home page header (phones and tablets): the navigation (the drawer also has Saved and the
-// settings), the logo, the language and the reading settings. The page opens with its search field.
+// settings), the logo, search (the search page) and the reading settings.
 export default function HeaderMobile({ navMode = "books" }) {
   const { t } = useLocale();
   const [navOpen, setNavOpen] = useState(false);
@@ -33,7 +34,9 @@ export default function HeaderMobile({ navMode = "books" }) {
           <div className={styles.center}>
             <HeaderLogo size="mobile" />
           </div>
-          <LanguageMenu variant="phone" />
+          <Link href="/search" className={styles.icon} aria-label={t("search")} title={t("search")}>
+            <SearchIcon />
+          </Link>
           <button
             type="button"
             className={styles.icon}

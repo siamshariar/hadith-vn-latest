@@ -1,7 +1,6 @@
-// The hadith page: the content language for one view (?lang=, the saved
-// preference stays; the interface follows it), grades, "Cũng có trong", the reference block and "Báo
-// lỗi", canonical and og:url, the legacy per-language URL, and the texts
-// shown against the API.
+// The hadith page: in the site's one language (an old ?lang= changes nothing), the translation
+// then the Arabic (open here), grades, "Cũng có trong", the reference block and "Báo lỗi",
+// canonical and og:url, the legacy per-language URL, and the texts shown against the API.
 'use strict';
 
 const { BASE, BREADCRUMB_NAV, api, assert, bookName, cleanText, interfaceStrings, lettered, loc, meta, norm, spec, until, waitForH1, waitForText } = require('./harness');
@@ -29,35 +28,25 @@ async function siteOf(page) {
 
 module.exports = spec(module, 'hadith page', (h) => {
   h.test(
-    '?lang= changes the language for that view, interface included, not the saved preference',
+    'the Vietnamese page: the English fallback labelled, the topic collection\'s translation said so; the Arabic under it, open',
     async (t) => {
-      const [vi, en, bn] = await Promise.all(['vi', 'en', 'bn'].map((lang) => api(`/books/bukhari/hadiths/1${loc(lang)}`)));
-      const { page, context } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
-      await waitForText(chip(page), /^Bản dịch: Tiếng Việt\b/);
-      assert.equal(await chip(page).getAttribute('data-translations'), 'vi', 'Vietnamese, no extra language');
+      const vi = await api(`/books/bukhari/hadiths/1${loc()}`);
+      const { page, context } = await h.open(t, `/books/${BUKHARI}/hadiths/1?lang=en`);
+      // one language: an old ?lang= changes nothing, and there is no translations chip
+      assert.equal((await meta(page)).lang, 'vi');
+      assert.equal(await anyChip(page).count(), 0, 'no translations chip on a country\'s site');
       assert.equal(squash(await translationBlock(page, 'en').innerText()), squash(cleanText(vi.translation.text)), 'Vietnamese page shows the English fallback');
       await waitForText(page.locator('section[class*="translationBlock"] span[class*="fallbackBadge"]'), 'Bản dịch tiếng Anh');
-
-      for (const [code, data] of [['en', en], ['bn', bn]]) {
-        await h.goto(page, `/books/${BUKHARI}/hadiths/1?lang=${code}`);
-        await until(async () => (await translationBlock(page, code).count()) === 1, `${code} translation shown`);
-        assert.equal(squash(await translationBlock(page, code).innerText()), squash(cleanText(data.translation.text)), `${code} text is the API's`);
-        assert.equal(data.translation.isFallback, false);
-        // the page's own language needs no label; the interface is that language's and nothing is saved
-        assert.equal(await page.locator('section[class*="translationBlock"] span[class*="label"]').count(), 0);
-        assert.equal(await anyChip(page).getAttribute('data-translations'), code);
-        assert.equal(await languageCookie(context), undefined, 'no language cookie written');
-        assert.equal((await meta(page)).lang, code);
-      }
-
-      // Arabic: the original, with the English translation labelled as such
-      await h.goto(page, `/books/${BUKHARI}/hadiths/1?lang=ar`);
+      // the Arabic, after the translation, open on this page
+      const order = await page.evaluate(() => {
+        const t = document.querySelector('section[class*="translationBlock"]');
+        const a = document.querySelector('section[class*="arabicBlock"]');
+        return t && a ? t.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_FOLLOWING : 0;
+      });
+      assert.ok(order, 'the translation first, then the Arabic');
+      assert.equal(await page.locator('section[class*="arabicBlock"] details').getAttribute('open'), '', 'open on the hadith page');
       assert.equal(norm(await arabicBlock(page).innerText()), norm(cleanText(vi.arabic)));
       assert.equal(await languageCookie(context), undefined);
-
-      // the next page without ?lang= is Vietnamese again
-      await h.goto(page, `/books/${BUKHARI}/hadiths/2`);
-      assert.equal(await chip(page).getAttribute('data-translations'), 'vi');
       // a hadith read through the topic collection's translation says so
       await h.goto(page, `/books/${BUKHARI}/hadiths/3`);
       await waitForText(page.locator('section[class*="translationBlock"] span[class*="linkedBadge"]').first(), 'Bản dịch tiếng Việt từ bộ hadith theo chủ đề');
@@ -157,7 +146,7 @@ module.exports = spec(module, 'hadith page', (h) => {
       const { page } = await h.open(t, `/hadiths/${hadith.id}`);
       const site = await siteOf(page);
       assert.match(site, /^https?:\/\/[^/]+$/, 'canonical is absolute');
-      for (const path of [`/hadiths/${hadith.id}`, '/books/sahih-muslim/hadiths/8', '/books/muslim/hadiths/8.01', '/books/sahih-muslim/hadiths/8a?lang=en']) {
+      for (const path of [`/hadiths/${hadith.id}`, '/books/sahih-muslim/hadiths/8', '/books/muslim/hadiths/8.01', '/books/sahih-muslim/hadiths/8a?tr=en']) {
         await h.goto(page, path);
         const info = await meta(page);
         assert.equal(info.canonical, `${site}/books/sahih-muslim/hadiths/8a`, `canonical of ${path}`);
@@ -169,9 +158,10 @@ module.exports = spec(module, 'hadith page', (h) => {
 
   h.test('legacy URLs (/translations/{lang}, /books?book=) redirect permanently', async (t) => {
     for (const [path, location] of [
-      [`/books/${BUKHARI}/hadiths/1/translations/en`, `/books/${BUKHARI}/hadiths/1?lang=en`],
-      [`/books/${BUKHARI}/hadiths/1/translations/BN`, `/books/${BUKHARI}/hadiths/1?lang=bn`],
-      ['/books/sahih-muslim/hadiths/8a/translations/vi', '/books/sahih-muslim/hadiths/8a?lang=vi'],
+      // each site reads in one language: the hadith page
+      [`/books/${BUKHARI}/hadiths/1/translations/en`, `/books/${BUKHARI}/hadiths/1`],
+      [`/books/${BUKHARI}/hadiths/1/translations/BN`, `/books/${BUKHARI}/hadiths/1`],
+      ['/books/sahih-muslim/hadiths/8a/translations/vi', '/books/sahih-muslim/hadiths/8a'],
       [`/books/${BUKHARI}/hadiths/1/translations/not-a-language`, `/books/${BUKHARI}/hadiths/1`],
     ]) {
       const res = await fetch(BASE + path, { redirect: 'manual' });
@@ -183,10 +173,10 @@ module.exports = spec(module, 'hadith page', (h) => {
     assert.ok([301, 308].includes(old.status), `/books?book= permanent redirect (got ${old.status})`);
     assert.equal(new URL(old.headers.get('location'), BASE).pathname, `/books/${BUKHARI}`);
 
-    const en = await api(`/books/bukhari/hadiths/1${loc('en')}`);
+    // in the browser too: the hadith page in the site's language
     const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1/translations/en`);
-    await h.waitForPath(page, (url) => url.searchParams.get('lang') === 'en', 'followed the redirect');
-    assert.equal(squash(await translationBlock(page, 'en').innerText()), squash(cleanText(en.translation.text)));
+    await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/hadiths/1` && !url.search, 'followed the redirect');
+    await waitForH1(page, 'Sahih al-Bukhari 1');
   });
 
   h.test(

@@ -1,8 +1,10 @@
 import { Fragment, useContext, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { PinContext } from "../../contexts/PinContext";
 import { useLocale } from "../../contexts/LocaleContext";
+import { useWithExtras } from "../../contexts/ExtraTranslationsContext";
+import { getHadith } from "../../lib/api";
+import { INTERNATIONAL } from "../../lib/language";
 import {
   bookHadithPath,
   categoryPath,
@@ -16,13 +18,13 @@ import {
   storedHadithRef,
 } from "../../lib/hadith";
 import { inBookText, referenceText } from "../../lib/citation";
-import { extraTranslations, keptQuery } from "../../lib/translations";
+import { extraTranslations } from "../../lib/translations";
 import HadithOptions from "../content/HadithOptions";
 import { GradeBadge } from "./Grades";
 import HadithReference from "./HadithReference";
-import { ArabicText, HadithTranslations, shownTranslation } from "./HadithText";
+import { ArabicFold, ArabicText, HadithTranslations, shownTranslation } from "./HadithText";
 import TranslationPicker from "./TranslationPicker";
-import pageStyles from "../content/Page.module.scss";
+import Pager from "../core/Pager";
 import styles from "./HadithDetail.module.scss";
 
 // A related hadith (API `related`: same wording in another collection) by its citation.
@@ -34,7 +36,7 @@ const relatedPath = (item) =>
 
 // "Cũng có trong: Sahih Muslim 1907a", near the top as dorar.net does. The
 // API only relates hadiths whose Arabic wording matches exactly.
-function AlsoIn({ related, keepLang }) {
+function AlsoIn({ related }) {
   const { t } = useLocale();
   if (!related || !related.length) return null;
   return (
@@ -43,7 +45,7 @@ function AlsoIn({ related, keepLang }) {
       {related.map((item, index) => (
         <Fragment key={item.id}>
           {index > 0 && ", "}
-          <Link href={`${relatedPath(item)}${keepLang}`}>{relatedLabel(item)}</Link>
+          <Link href={relatedPath(item)}>{relatedLabel(item)}</Link>
         </Fragment>
       ))}
     </p>
@@ -131,41 +133,26 @@ function Details({ details }) {
 // pager. Renders nothing without it.
 export function HadithNavigation({ hadith }) {
   const { t } = useLocale();
-  const router = useRouter();
   const { navigation, book } = hadith;
-  const keepLang = keptQuery(router.query);
   if (!navigation || (!navigation.previous && !navigation.next)) return null;
-  const label = (item) => (item.referenceNumber ? `${shortBookName(book)} ${lettered(item.referenceNumber)}` : null);
-
+  const label = (item, words) =>
+    item.referenceNumber ? `${shortBookName(book)} ${lettered(item.referenceNumber)}` : words;
   return (
-    <nav className={pageStyles.pager} aria-label={`${t("previousHadith")} / ${t("nextHadith")}`}>
-      {navigation.previous && (
-        <Link href={`${citablePath(navigation.previous, book)}${keepLang}`} className={styles.navLink} rel="prev">
-          <span aria-hidden="true">‹</span>
-          <span className={styles.navWords}>
-            <span>{t("previousHadith")}</span>
-            {label(navigation.previous) && <span className={styles.navRef}>{label(navigation.previous)}</span>}
-          </span>
-        </Link>
-      )}
-      {navigation.next && (
-        <Link href={`${citablePath(navigation.next, book)}${keepLang}`} className={styles.navLink} rel="next">
-          <span className={styles.navWords}>
-            <span>{t("nextHadith")}</span>
-            {label(navigation.next) && <span className={styles.navRef}>{label(navigation.next)}</span>}
-          </span>
-          <span aria-hidden="true">›</span>
-        </Link>
-      )}
-    </nav>
+    <Pager
+      label={`${t("previousHadith")} / ${t("nextHadith")}`}
+      before={navigation.previous ? { href: citablePath(navigation.previous, book), label: label(navigation.previous, t("previousHadith")) } : null}
+      after={navigation.next ? { href: citablePath(navigation.next, book), label: label(navigation.next, t("nextHadith")) } : null}
+    />
   );
 }
 
-// `translations`: the extra languages the page shows (lib/translations).
-export default function HadithDetail({ hadith, translations }) {
-  const { t } = useLocale();
-  const router = useRouter();
+// One hadith on its own page, as a verse's page on the Quran sites: the title and the reference
+// line, the translation, then the Arabic (open here, folded in lists), then all that belongs to
+// it. On the international site the reader's extra translations are added in the browser.
+export default function HadithDetail({ hadith: given }) {
+  const { t, lang } = useLocale();
   const { addLastRead } = useContext(PinContext);
+  const [hadith] = useWithExtras(`hadith:${given.id}`, [given], (codes) => getHadith(given.id, lang, { translations: codes }));
   const { book } = hadith;
 
   useEffect(() => {
@@ -174,9 +161,6 @@ export default function HadithDetail({ hadith, translations }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hadith.id]);
 
-  // Links to other hadiths keep a one-off ?lang= and ?tr=.
-  const keepLang = keptQuery(router.query);
-  const extras = translations || (hadith.extraLanguages || []).map((language) => language.code);
   const reference = referenceText(hadith, book, t);
   const inBook = isCategoryBook(book) ? null : inBookText(hadith.inBookReference, t);
   const { linked, own } = shownTranslation(hadith);
@@ -195,27 +179,35 @@ export default function HadithDetail({ hadith, translations }) {
           {hadith.title && <span className={styles.citation}>{reference}</span>}
           {inBook && <span>{inBook}</span>}
           <GradeBadge grades={namedGrades(hadith, book)} gradeText={hadith.gradeText} />
-          <span className={styles.picker}>
-            <TranslationPicker translations={extras} book={book.slug} />
-          </span>
+          {INTERNATIONAL && (
+            <span className={styles.picker}>
+              <TranslationPicker book={book.slug} />
+            </span>
+          )}
           <span className={styles.options}>
             <HadithOptions hadith={hadith} book={book} />
           </span>
         </div>
 
-        <AlsoIn related={hadith.related} keepLang={keepLang} />
+        <AlsoIn related={hadith.related} />
       </header>
 
-      {/* The reader settings choose which comes first and can hide the Arabic. */}
-      <div className={styles.texts}>
-        <section className={`${styles.arabicBlock} ${arabicOnly ? styles.arabicOnly : ""}`} aria-label={t("arabicText")}>
+      {/* The translation, then the Arabic: open on this page, folded in lists. With no
+          translation the Arabic is the text. The reader settings can hide the Arabic. */}
+      {arabicOnly ? (
+        <section className={`${styles.arabicBlock} ${styles.arabicOnly}`} aria-label={t("arabicText")}>
           <ArabicText text={hadith.arabic} />
         </section>
-
-        <section className={styles.translationBlock}>
-          <HadithTranslations hadith={hadith} book={book} showNote />
-        </section>
-      </div>
+      ) : (
+        <div className={styles.texts}>
+          <section className={styles.translationBlock}>
+            <HadithTranslations hadith={hadith} book={book} showNote />
+          </section>
+          <section className={styles.arabicBlock} aria-label={t("arabicText")}>
+            <ArabicFold text={hadith.arabic} open />
+          </section>
+        </div>
+      )}
 
       <HadithReference hadith={hadith} book={book} />
 
@@ -246,7 +238,7 @@ export default function HadithDetail({ hadith, translations }) {
           <ul className={styles.chips}>
             {hadith.related.map((item) => (
               <li key={item.id}>
-                <Link href={`${relatedPath(item)}${keepLang}`} className={styles.chip}>
+                <Link href={relatedPath(item)} className={styles.chip}>
                   {relatedLabel(item)}
                 </Link>
               </li>

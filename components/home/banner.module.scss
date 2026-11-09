@@ -1,147 +1,116 @@
-// The top of the home page (docs/hadith-design-system.md, "Home"): the Quran sites' band, in this
-// site's colours (--brand-ribbon: config/countries.json), with the two cards overlapping its
-// lower edge. Phones and tablets: no band, the cards are white blocks on the grey page.
+// The top of the home page (docs/hadith-design-system.md, "Home"), as the Quran sites'
+// (quran-apps components/layout2/home/banner.module.scss): on the web, the band in this site's
+// colours (--brand-band, --brand-ribbon: config/countries.json), 70px of it above three equal
+// white cards that reach 80px past its lower edge, 24px inside, the title 24px, the text 16px,
+// and a link at the foot. Phones and tablets: no band; the hadith of the day as a card.
 .banner {
-  padding: var(--space-3) 0 0;
+  padding: var(--space-4) var(--space-4) 0;
 }
 
 .cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--space-4);
 }
 
-.find {
-  order: -1;
+.card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  align-items: flex-start;
   min-width: 0;
-  padding: var(--space-4) 15px;
+  padding: 20px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
-// Hadith of the day
-.daily {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
-  padding: var(--space-4) 15px;
-  background-color: var(--surface);
+// the ways into the library: the sections under the band say the same on phones
+.way {
+  display: none;
 }
 
-.top {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-1) var(--space-4);
-}
-
-.sectionHeading {
+.cardTitle {
+  margin-bottom: var(--space-2);
   color: var(--ink);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .citation {
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
+  margin-bottom: var(--space-2);
   color: var(--text-secondary);
   font-size: var(--text-sm);
-
-  &:hover,
-  &:focus-visible {
-    color: var(--link);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
 }
 
-// the hadith's title: content, set as the lead in the reading face
-.title {
-  color: var(--ink);
-  font-family: var(--font-trans);
+// a few lines, then the link
+.cardText {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-bottom: var(--space-4);
+  color: var(--text);
   font-size: var(--text-base);
-  font-weight: 500;
-  line-height: var(--leading-normal);
-}
-
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-
-  // smaller than in reading: the card shows the start of the text
-  [lang="ar"] {
-    font-size: 26px;
-  }
-}
-
-.footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2) var(--space-3);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .more {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   min-height: var(--tap);
-  margin-inline-start: auto;
-  color: var(--text-secondary);
-  white-space: nowrap;
+  margin-top: auto;
+  color: var(--link);
+  font-size: var(--text-base);
 
-  &:hover,
-  &:focus-visible {
-    color: var(--link);
-    text-decoration: underline;
-    text-underline-offset: 3px;
+  @media (hover: hover) {
+    &:hover {
+      color: var(--link-hover);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
   }
 }
 
 @media only screen and (min-width: 1024px) {
-  // The fixed header lies above the band; the cards overlap its lower edge by 60px.
   .banner {
-    padding: calc(var(--header-height) + 32px) var(--space-5) 0;
+    padding: 70px var(--space-5) 0;
     background: var(--brand-band, var(--brand-ribbon));
   }
 
   .cards {
     position: relative;
-    top: 60px;
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    top: 80px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-6);
-    max-width: 1120px;
-    margin: 0 auto 60px;
+    max-width: calc(var(--frame) - 2 * var(--space-5));
+    margin: 0 auto 80px;
   }
 
-  .daily,
-  .find {
-    padding: var(--space-5);
-    border-radius: var(--radius-lg);
+  .card {
+    padding: 24px;
+    border: 0;
     box-shadow: 0 7px 13px rgba(71, 88, 114, 0.3);
   }
 
-  .find {
-    order: 0;
+  .way {
+    display: flex;
   }
 
-  .sectionHeading {
-    font-size: var(--text-xl);
+  .cardTitle {
+    margin-bottom: 20px;
+    font-size: 24px;
   }
 
-  .title {
-    font-size: var(--text-md);
+  .citation {
+    margin-top: -12px;
   }
 
-  .text [lang="ar"] {
-    font-size: 28px;
+  @media (pointer: fine) {
+    .more {
+      min-height: 24px;
+    }
   }
 }

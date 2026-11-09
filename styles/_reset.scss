@@ -71,7 +71,6 @@
   overscroll-behavior: contain;
 }
 
-// Less motion: sheets, menus and dialogs appear in place instead of sliding in.
 // Less motion: panels, menus and the sidebar's sections appear without sliding,
 // growing or rotating (MUI sets its durations inline, hence !important).
 @media (prefers-reduced-motion: reduce) {
@@ -94,17 +93,6 @@
   .MuiGrid-spacing-xs-2 > .MuiGrid-item {
     padding: 5px !important;
   }
-}
-
-// nprogress
-#nprogress .bar {
-  background: var(--link);
-}
-#nprogress .peg {
-  box-shadow: 0 0 10px var(--link), 0 0 5px var(--link);
-}
-#nprogress .spinner {
-  display: none;
 }
 
 // bottom navigation
@@ -133,9 +121,9 @@
   background: none !important;
 }
 
-// mui menu item
+// mui menu item: a 44px row, a finger's width on a touch screen (MUI's own is 36px from 600px)
 .MuiMenuItem-root {
-  min-height: auto !important;
+  min-height: var(--tap) !important;
   font-family: inherit !important;
 }
 

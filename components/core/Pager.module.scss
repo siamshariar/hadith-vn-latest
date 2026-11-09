@@ -1,0 +1,100 @@
+// The Quran sites' pagination (quran-apps components/surah/pagination.module.scss): on phones a
+// hairline and the two links at the edges; from 1024px a white card of its own under the
+// content card, 20px 25px inside.
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
+  color: var(--text-secondary);
+}
+
+.side {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.end {
+  justify-content: flex-end;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: var(--tap);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  transition: color var(--duration) var(--ease);
+
+  &:focus-visible {
+    color: var(--link);
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      color: var(--link);
+    }
+  }
+}
+
+.icon {
+  display: flex;
+  flex: 0 0 auto;
+
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+}
+
+// a chapter's name can be long: two lines at most
+.text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.end .text {
+  text-align: end;
+}
+
+.count {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media only screen and (min-width: 1024px) {
+  .pager {
+    margin-top: 30px;
+    padding: 20px 25px;
+    border-top: 0;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-card);
+  }
+}
+
+// with a mouse the card keeps the Quran's 64px; a finger keeps 44px links
+@media only screen and (min-width: 1024px) and (pointer: fine) {
+  .link {
+    min-height: 24px;
+  }
+}
+
+@media print {
+  .pager {
+    display: none !important;
+  }
+}

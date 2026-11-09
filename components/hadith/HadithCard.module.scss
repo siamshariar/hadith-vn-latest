@@ -128,9 +128,19 @@
   font-weight: 500;
   line-height: 1.5;
 
-  // a block, so even a one-line title is a 24px+ tap target
+  // a block, so even a one-line title is a 24px+ tap target; on touch screens it reaches 44px
+  // into the empty space under it (the title's 24px margin), without moving anything
   a {
+    position: relative;
     display: block;
+  }
+
+  @media (pointer: coarse) {
+    a::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 -17px;
+    }
   }
 
   a:hover,
@@ -142,22 +152,12 @@
   }
 }
 
-.texts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-}
-
 .arabicCol,
 .translationCol {
   min-width: 0;
 }
 
-// Reader settings (set on <html> by SettingsContext).
-:global(html[data-text-order="translation"]) .translationCol {
-  order: -1;
-}
-
+// Reader settings (set on <html> by SettingsContext): the Arabic can be hidden.
 :global(html[data-arabic="hidden"]) {
   .arabicCol:not(.arabicOnly) {
     display: none;
@@ -195,8 +195,8 @@
   margin-inline-start: var(--space-1);
 }
 
-.skeletonArabic {
-  direction: rtl;
+.skeletonFold {
+  margin-top: 28px;
 }
 
 @media print {

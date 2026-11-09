@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/router";
 import Drawer from "@mui/material/Drawer";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import Skeleton from "react-loading-skeleton";
 import { useLocale } from "../../contexts/LocaleContext";
+import { useExtraTranslations } from "../../contexts/ExtraTranslationsContext";
 import useApi from "../../hooks/useApi";
 import { getEditions, getLanguages } from "../../lib/api";
 import { translatorName } from "../../lib/citation";
-import { DEFAULT_LANGUAGE, compareLanguages, writeLanguageCookie } from "../../lib/language";
-import {
-  MAX_EXTRA_TRANSLATIONS,
-  TRANSLATIONS_PARAM,
-  parseTranslations,
-  writeTranslationsCookie,
-} from "../../lib/translations";
+import { DEFAULT_LANGUAGE, compareLanguages } from "../../lib/language";
+import { MAX_EXTRA_TRANSLATIONS, parseTranslations } from "../../lib/translations";
 import ErrorState from "../core/error";
 import ChevronDownIcon from "../icons/ChevronDown";
 import ChevronUpIcon from "../icons/ChevronUp";
@@ -61,18 +56,17 @@ function interfaceNames(ui, languages) {
   return names;
 }
 
-// The translations chip ("Bản dịch: Tiếng Việt +1 ▾") and the panel it opens:
-// the primary language plus up to two more, in the reader's order; a right
-// drawer from 1024px, a full-height sheet below. Saving writes the
-// hadith_lang and hadith_tr cookies and reloads the page's data, so the
-// server renders the new translations; a one-off ?tr= is dropped.
-// - translations: the extra languages the page shows;
+// The translations chip ("Translation: English +1 ▾") and the panel it opens, on the
+// international site only: the site's language (always first, the page is built in it) plus up
+// to two more, in the reader's order; a right drawer from 1024px, a full-height sheet below.
+// Closing it saves the choice (contexts/ExtraTranslationsContext: the hadith_tr cookie) and the
+// page loads the added translations in the browser.
 // - book: the collection whose editions each row describes (null: mixed);
 // - variant "bar": the compact chip of the reader bar.
-export default function TranslationPicker({ translations, book = null, variant = "inline" }) {
-  const router = useRouter();
-  const { t, ui, lang, languageName, setLanguage, formatNumber } = useLocale();
-  const extras = useMemo(() => parseTranslations(translations, lang), [translations, lang]);
+export default function TranslationPicker({ book = null, variant = "inline" }) {
+  const { t, ui, lang, languageName, formatNumber } = useLocale();
+  const { codes, setCodes } = useExtraTranslations();
+  const extras = useMemo(() => parseTranslations(codes, lang), [codes, lang]);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState([lang, ...extras]);
   const [query, setQuery] = useState("");
@@ -117,23 +111,8 @@ export default function TranslationPicker({ translations, book = null, variant =
   // Every way of closing keeps the choice (there is nothing to undo).
   const close = () => {
     setOpen(false);
-    const [primary, ...rest] = draft;
-    const nextExtras = parseTranslations(rest, primary);
-    const changed = primary !== lang || nextExtras.join(",") !== extras.join(",");
-    if (!changed) return;
-    writeTranslationsCookie(nextExtras);
-    const shared = router.query[TRANSLATIONS_PARAM] !== undefined;
-    if (primary !== lang && !shared) {
-      // Saves hadith_lang and reloads the page without a one-off ?lang=.
-      setLanguage(primary);
-      return;
-    }
-    const { [TRANSLATIONS_PARAM]: _shared, ...query } = router.query;
-    if (primary !== lang) {
-      writeLanguageCookie(primary);
-      delete query.lang;
-    }
-    router.replace({ pathname: router.pathname, query }, undefined, { scroll: false });
+    const nextExtras = parseTranslations(draft.slice(1), lang);
+    if (nextExtras.join(",") !== extras.join(",")) setCodes(nextExtras);
   };
 
   const languages = useMemo(
@@ -174,13 +153,15 @@ export default function TranslationPicker({ translations, book = null, variant =
     setDraft([...draft, code]);
   };
   const remove = (code) => {
-    if (draft.length < 2) return;
+    // the site's language stays: the page is built in it
+    if (draft.length < 2 || code === lang) return;
     refocus.current = code;
     setDraft(draft.filter((item) => item !== code));
   };
   const move = (index, offset) => {
     const target = index + offset;
-    if (target < 0 || target >= draft.length) return;
+    // the site's language stays first
+    if (index === 0 || target < 1 || target >= draft.length) return;
     const next = [...draft];
     [next[index], next[target]] = [next[target], next[index]];
     // At the top or the bottom the button just pressed turns disabled and
@@ -225,7 +206,7 @@ export default function TranslationPicker({ translations, book = null, variant =
             type="checkbox"
             className={styles.check}
             checked={selected}
-            disabled={selected ? draft.length < 2 : full}
+            disabled={selected ? draft.length < 2 || code === lang : full}
             onChange={() => (selected ? remove(code) : add(code))}
           />
           <span className={styles.names}>
@@ -239,15 +220,15 @@ export default function TranslationPicker({ translations, book = null, variant =
             <span className={styles.edition}>{editionLine(code)}</span>
           </span>
         </label>
-        {selected && draft.length > 1 && (
+        {selected && selectedIndex > 0 && draft.length > 2 && (
           <span className={styles.order}>
             <button
               type="button"
               className={styles.orderButton}
               onClick={() => move(selectedIndex, -1)}
-              disabled={selectedIndex === 0}
-              aria-label={selectedIndex === 1 ? t("makeMain", { language: nameOf(code) }) : t("moveUp", { language: nameOf(code) })}
-              title={selectedIndex === 1 ? t("makeMain", { language: nameOf(code) }) : t("moveUp", { language: nameOf(code) })}
+              disabled={selectedIndex <= 1}
+              aria-label={t("moveUp", { language: nameOf(code) })}
+              title={t("moveUp", { language: nameOf(code) })}
             >
               <ChevronUpIcon />
             </button>

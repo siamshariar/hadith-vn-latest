@@ -3,7 +3,6 @@
 import { fonts, themes } from "../../lib/settings";
 import { useEffect, useRef, useState, useContext } from "react";
 import { SettingsContext } from "../../contexts/SettingsContext";
-import { DEFAULT_LANGUAGE, browserLanguages, compareLanguages, matchLanguage, readLanguageCookie } from "../../lib/language";
 import Accordion from "@mui/material/Accordion";
 import AccordionSummary from "@mui/material/AccordionSummary";
 import AccordionDetails from "@mui/material/AccordionDetails";
@@ -12,11 +11,7 @@ import RadioGroup from "@mui/material/RadioGroup";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
-import Skeleton from "react-loading-skeleton";
-import ErrorState from "../core/error";
 import { useLocale } from "../../contexts/LocaleContext";
-import useApi from "../../hooks/useApi";
-import { getLanguages } from "../../lib/api";
 import UpIcon from "../icons/ChevronUp";
 import DownIcon from "../icons/ChevronDown";
 import PlusIcon from "../icons/Plus";
@@ -26,8 +21,6 @@ import styles from "./index.module.scss";
 export default function SettingsContent() {
   return (
     <div className={styles.wrapper}>
-      <Language />
-      <hr className={styles.divider} />
       {/* <View />
       <hr className={styles.divider} /> */}
       {/* <VerseMode />
@@ -47,67 +40,6 @@ export default function SettingsContent() {
     </div>
   );
 }
-
-// The language, as the header's language menu sets it (components/core/LanguageMenu):
-// every language of /hadith/languages, saved in a cookie so server-rendered pages use it as
-// {localizationCode}, for the translation, the book names and, when there is a
-// catalog for it, the interface (lib/language.js interfaceFor). The translations panel of
-// the hadith pages saves the same cookie, so the value is read from it. An international
-// site that knows no preference yet shows the browser's language, the one its pages pick
-// (lib/language.js).
-const Language = () => {
-  const { t, preferredLang, setLanguage } = useLocale();
-  const { data, error, loading, retry } = useApi("languages", () => getLanguages());
-  const [saved, setSaved] = useState(null);
-  useEffect(() => {
-    setSaved(readLanguageCookie());
-  }, []);
-
-  const languages = (Array.isArray(data) ? [...data] : []).sort(compareLanguages);
-  const current =
-    saved ||
-    preferredLang ||
-    matchLanguage(
-      browserLanguages(),
-      languages.map((language) => language.code)
-    ) ||
-    DEFAULT_LANGUAGE;
-
-  return (
-    <div className={`${styles.block} ${styles.language}`}>
-      <div className={styles.title}>{t("language")}</div>
-      <div className={styles.list}>
-        {loading && !languages.length ? (
-          <Skeleton height={40} />
-        ) : error ? (
-          <ErrorState error={error} onRetry={retry} compact />
-        ) : (
-          <select
-            className={styles.language_select}
-            value={current}
-            onChange={(event) => {
-              setSaved(event.target.value);
-              setLanguage(event.target.value);
-            }}
-            aria-label={t("language")}
-          >
-            {languages.map((language) => {
-              const count = language.totalTranslated || 0;
-              return (
-                <option key={language.code} value={language.code}>
-                  {language.nativeName}
-                  {language.nativeName !== language.name ? ` (${language.name})` : ""}
-                  {` - ${language.code === "ar" ? t("languageOriginal", { count }) : t("translatedCount", { count })}`}
-                </option>
-              );
-            })}
-          </select>
-        )}
-        <p className={styles.language_note}>{t("contentLanguageNote")}</p>
-      </div>
-    </div>
-  );
-};
 
 const FontSize = () => {
   const { t } = useLocale();

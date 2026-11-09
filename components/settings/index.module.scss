@@ -112,7 +112,7 @@
 }
 
 .btn_reset {
-  min-width: unset !important;
+  min-width: var(--tap) !important;
   min-height: var(--tap) !important;
   padding: 0 !important;
   border: none !important;
@@ -180,6 +180,15 @@
   justify-content: flex-start;
   min-height: var(--tap) !important;
   padding: 0 !important;
+}
+
+// MUI fills a focused summary with 12% black, which takes the grey label under 4.5:1: the site's
+// focus ring instead, on the hover tint.
+.accordion_summary:global(.Mui-focusVisible) {
+  border-radius: var(--radius-sm);
+  background-color: var(--hover) !important;
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .accordion_summary > div {
@@ -325,34 +334,6 @@
     padding-left: 0;
     padding-right: 0;
   }
-}
-
-.language_select {
-  width: 100%;
-  min-height: var(--tap);
-  // Safari lets the long option text add to the page width (sideways
-  // scrolling on narrow phones); keep it inside the box
-  contain: paint;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--control-edge);
-  border-radius: var(--radius-md);
-  background-color: var(--surface);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--text-base); // 16px: iOS zooms into smaller fields
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
-  }
-}
-
-.language_note {
-  margin-top: var(--space-2);
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 @media only screen and (min-width: 1024px) {

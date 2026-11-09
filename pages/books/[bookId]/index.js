@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { server, shareImage } from "../../../lib/config";
-import { getBook, getBooks, getEditions, loadPage } from "../../../lib/api";
+import { SITE_LANGUAGE, getBook, getBooks, getEditions, loadStatic, staticPaths } from "../../../lib/api";
 import { translatorName } from "../../../lib/citation";
 import { bookPath, isCategoryBook } from "../../../lib/hadith";
 import { useLocale } from "../../../contexts/LocaleContext";
@@ -9,7 +9,6 @@ import Breadcrumbs from "../../../components/core/breadcrumbs";
 import ErrorState, { EmptyState } from "../../../components/core/error";
 import Layout from "../../../components/layouts/LayoutSecondary";
 import { sidebarBooksData } from "../../../components/sidebar/data";
-import { GoToHadith } from "../../../components/home/search";
 import BookIntro from "../../../components/home/BookIntro";
 import ChapterList from "../../../components/home/ChapterList";
 import styles from "../../../components/content/Page.module.scss";
@@ -61,10 +60,6 @@ export default function Book({ book, counts, editions, error }) {
           </p>
         )}
 
-        <div className={styles.goRow}>
-          <GoToHadith book={book.slug} compact />
-        </div>
-
         <section aria-labelledby="book-chapters">
           <h2 id="book-chapters" className={styles.sectionTitle}>
             {t("chapterCount", { count: chapters.length })}
@@ -89,10 +84,15 @@ Book.getLayout = function getLayout(page) {
   );
 };
 
-export async function getServerSideProps(context) {
-  return loadPage(context, async (lang) => {
+// The collections are few: built with the site (the rest of the pages on their first visit).
+export async function getStaticPaths() {
+  return staticPaths(async () => (await getBooks(SITE_LANGUAGE)).map((book) => ({ params: { bookId: book.slug } })));
+}
+
+export async function getStaticProps({ params }) {
+  return loadStatic(async (lang) => {
     const [book, books, editions] = await Promise.all([
-      getBook(context.params.bookId, lang),
+      getBook(params.bookId, lang),
       // The book endpoint has no per-language counts; the (cached) list does.
       getBooks(lang).catch(() => []),
       // Cached; the page works without them.

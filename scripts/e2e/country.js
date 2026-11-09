@@ -118,9 +118,7 @@ module.exports = spec(module, 'country (bd)', (h) => {
     { smoke: true }
   );
 
-  h.test('bd: ?lang=en and a saved English preference: English content and interface', async (t) => {
-    const tr = await interfaceStrings('en', { site: SITE_NAME, language: 'bn' });
-    const en = await api(`/books/bukhari/hadiths/1${loc('en')}`);
+  h.test('bd: one language: ?lang=en and an old saved English preference change nothing', async (t) => {
     const ways = [
       ['?lang=en', '/books/sahih-al-bukhari/hadiths/1?lang=en', {}],
       ['the hadith_lang cookie', '/books/sahih-al-bukhari/hadiths/1', { cookies: [{ name: 'hadith_lang', value: 'en' }] }],
@@ -129,14 +127,9 @@ module.exports = spec(module, 'country (bd)', (h) => {
       await t.test(how, async (st) => {
         const { page } = await openBd(h, st, pathname, options);
         await waitForH1(page, /1$/);
-        assert.equal((await pageProps(page)).lang, 'en', `${how}: content in English`);
-        const shown = await textsIn(page, 'en');
-        assert.ok(shown.some((text) => squash(text) === squash(cleanText(en.translation.text))), `${how}: the English translation is on the page`);
-        const info = await meta(page);
-        assert.equal(info.lang, 'en', `${how}: the interface follows the content`);
-        assert.ok(norm(info.title).endsWith(`| ${tr('siteHeading')} | ${SITE_NAME}`), `${how}: title ${info.title}`);
-        assert.equal((await breadcrumbs(page))[0].label, tr('home'));
-        assert.equal((await social(page)).ogLocale, 'en_US', `${how}: og:locale follows the interface`);
+        assert.equal((await pageProps(page)).lang, 'bn', `${how}: content in Bengali still`);
+        assert.equal((await meta(page)).lang, 'bn', `${how}: the Bengali interface`);
+        assert.equal((await social(page)).ogLocale, 'bn_BD', `${how}: og:locale`);
       });
     }
   });

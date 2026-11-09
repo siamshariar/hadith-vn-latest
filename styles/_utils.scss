@@ -38,9 +38,10 @@ li {
   list-style-type: none;
 }
 
-a,
-a:focus,
-a:hover {
+// Links take their colour from where they are, unless a component gives them one. Only
+// the element itself, never :hover or :focus: a rule like `a:hover` outranks a component's
+// single class and would wipe its colour on hover (the citation's white on grey turned dark).
+a {
   outline: none;
   text-decoration: none;
   color: inherit;

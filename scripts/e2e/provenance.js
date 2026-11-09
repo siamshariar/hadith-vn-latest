@@ -111,14 +111,14 @@ module.exports = spec(module, 'no source names', (h) => {
         assert.ok(topic, 'the API has the topic collection');
         const paths = [
           ...first.map((item) => item.path),
-          // the topic collection's translations under Bukhari 3: the primary one (vn) or an extra one
-          '/books/sahih-al-bukhari/hadiths/3?tr=vi,bn',
+          // the topic collection's translation under Bukhari 3 (vn)
+          '/books/sahih-al-bukhari/hadiths/3',
           '/books/sahih-al-bukhari/hadiths/1',
           '/',
           '/books',
           '/books/sahih-al-bukhari',
           '/books/hadeethenc',
-          '/books/sahih-al-bukhari/chapters/1?translated=1',
+          '/books/sahih-al-bukhari/chapters/1/translated',
           '/categories',
           '/categories/the-creed',
           '/categories/the-creed/hadiths',
@@ -140,8 +140,10 @@ module.exports = spec(module, 'no source names', (h) => {
           if (pathname === topic.path) {
             if (all !== 1) report.push(`${pathname}: ${all} source lines on a hadith of the topic collection (want 1)`);
           } else if (pathname.startsWith('/books/sahih-al-bukhari/hadiths/3')) {
+            // a source line under the topic collection's translation where the page shows one (vn), else none
+            const shown = await page.locator('section[class*="translationBlock"] [class*="linked"]').count();
             const linked = await linesIn(page, 'section[class*="translationBlock"] [class*="linked"] [data-source-line]');
-            if (!all || linked !== all) report.push(`${pathname}: ${linked} of ${all} source lines under a linked translation`);
+            if (shown ? !all || linked !== all : all) report.push(`${pathname}: ${linked} of ${all} source lines under ${shown} linked translations`);
           } else if (pathname === '/books/sahih-al-bukhari/hadiths/1' && !bukhari1.linkedTranslation) {
             if (all) report.push(`${pathname}: ${all} source lines without HadeethEnc's content`);
           } else if (pathname === '/categories/the-creed/hadiths') {

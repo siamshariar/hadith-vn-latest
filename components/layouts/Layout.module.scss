@@ -100,6 +100,14 @@
     height: auto;
   }
 
+  // The navigation grows by the header's height when the header slides away. On a page shorter
+  // than the navigation that made the whole page 66px longer, and the footer jumped under the
+  // reader, each time the header came or went. The frame is always as tall as the navigation
+  // can get (the header's place, 32px, the screen less 48px), so nothing moves.
+  :global(html:not([data-nav="closed"])) .withNav {
+    min-height: calc(100vh + var(--header-height) - 16px);
+  }
+
   .content {
     flex: 1 1 0;
     max-width: var(--reading-card);
@@ -118,7 +126,7 @@
 
     .container {
       min-height: calc(100vh - 240px);
-      padding: var(--space-6) max(var(--space-6), calc((100% - var(--reading-measure)) / 2));
+      padding: 32px;
       border-radius: var(--radius-lg);
       background: var(--surface);
       box-shadow: var(--shadow-card);

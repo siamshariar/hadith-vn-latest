@@ -4,7 +4,7 @@ import localFont from "next/font/local";
 // import LayoutContextProvider from "../contexts/LayoutContext";
 import SettingsContextProvider from "../contexts/SettingsContext";
 import LocaleProvider from "../contexts/LocaleContext";
-import RouteProgress from "../components/core/RouteProgress";
+import { ExtraTranslationsProvider } from "../contexts/ExtraTranslationsContext";
 import * as gtag from "../lib/gtag";
 import "react-loading-skeleton/dist/skeleton.css";
 import "../styles/global.scss";
@@ -115,7 +115,6 @@ const App = ({ Component, pageProps }) => {
     <LocaleProvider
       pageLang={pageProps.lang}
       pageUi={pageProps.uiLang}
-      pagePreferred={pageProps.preferredLang}
       uiCatalog={pageProps.uiCatalog}
       languageInfo={pageProps.languageInfo}
     >
@@ -128,8 +127,7 @@ const App = ({ Component, pageProps }) => {
         }
       `}</style>
       <SettingsContextProvider>
-        <RouteProgress />
-        {getLayout(<Component {...pageProps} />)}
+        <ExtraTranslationsProvider>{getLayout(<Component {...pageProps} />)}</ExtraTranslationsProvider>
       </SettingsContextProvider>
     </LocaleProvider>
   );

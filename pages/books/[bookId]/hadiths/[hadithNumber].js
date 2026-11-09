@@ -1,4 +1,4 @@
-import { getBookHadith } from "../../../../lib/api";
+import { getBookHadith, staticPaths } from "../../../../lib/api";
 import HadithPage, { hadithLayout, loadHadithPage } from "../../../../components/hadith/HadithPage";
 
 // A hadith by the number people cite (`referenceNumber`), e.g.
@@ -9,9 +9,12 @@ export default function BookHadith(props) {
 
 BookHadith.getLayout = hadithLayout;
 
-export async function getServerSideProps(context) {
-  const { bookId, hadithNumber } = context.params;
-  return loadHadithPage(context, (lang, { translations }) =>
-    getBookHadith(bookId, hadithNumber, lang, { translations })
-  );
+// Built on the first visit, then kept (lib/api loadStatic).
+export async function getStaticPaths() {
+  return staticPaths();
+}
+
+export async function getStaticProps({ params }) {
+  const { bookId, hadithNumber } = params;
+  return loadHadithPage((lang) => getBookHadith(bookId, hadithNumber, lang));
 }

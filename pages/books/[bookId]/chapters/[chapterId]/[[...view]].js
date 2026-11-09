@@ -1,19 +1,19 @@
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { server, config, shareImage } from "../../../../lib/config";
-import { getBook, getChapterHadiths, loadPage, parsePage } from "../../../../lib/api";
-import { UNASSIGNED_CHAPTER, bookPath, chapterPath } from "../../../../lib/hadith";
-import { useLocale } from "../../../../contexts/LocaleContext";
-import useRouteLoading from "../../../../hooks/useRouteLoading";
-import Meta from "../../../../components/core/meta";
-import Breadcrumbs from "../../../../components/core/breadcrumbs";
-import ErrorState, { EmptyState } from "../../../../components/core/error";
-import Pagination, { pageHref } from "../../../../components/core/pagination";
-import Layout from "../../../../components/layouts/LayoutSecondary";
-import { sidebarBooksData } from "../../../../components/sidebar/data";
-import HadithCard, { HadithList } from "../../../../components/hadith/HadithCard";
-import TranslationPicker from "../../../../components/hadith/TranslationPicker";
-import styles from "../../../../components/content/Page.module.scss";
+import { server, config, shareImage } from "../../../../../lib/config";
+import { getBook, getChapterHadiths, loadStatic, staticPaths } from "../../../../../lib/api";
+import { INTERNATIONAL } from "../../../../../lib/language";
+import { UNASSIGNED_CHAPTER, bookPath, chapterPath, listPath, parseListView } from "../../../../../lib/hadith";
+import { useLocale } from "../../../../../contexts/LocaleContext";
+import useRouteLoading from "../../../../../hooks/useRouteLoading";
+import Meta from "../../../../../components/core/meta";
+import Breadcrumbs from "../../../../../components/core/breadcrumbs";
+import ErrorState, { EmptyState } from "../../../../../components/core/error";
+import Pager from "../../../../../components/core/Pager";
+import Layout from "../../../../../components/layouts/LayoutSecondary";
+import { sidebarBooksData } from "../../../../../components/sidebar/data";
+import HadithCard, { HadithList } from "../../../../../components/hadith/HadithCard";
+import TranslationPicker from "../../../../../components/hadith/TranslationPicker";
+import styles from "../../../../../components/content/Page.module.scss";
 
 // The filter is a link (it works without JavaScript) shown as a switch; a switch
 // toggles on Space as well as Enter.
@@ -29,9 +29,8 @@ const chapterLabel = (chapter, t) =>
 const numberedName = (chapter, t, formatNumber) =>
   chapter.chapterNo === UNASSIGNED_CHAPTER ? t("unassignedChapter") : `${formatNumber(chapter.chapterNo)}. ${chapter.name}`;
 
-export default function Chapter({ data, neighbours, onlyReadable, readableCount, translations, error }) {
+export default function Chapter({ data, neighbours, onlyReadable, readableCount, error }) {
   const { t, lang, formatNumber, languageName } = useLocale();
-  const router = useRouter();
   const loading = useRouteLoading();
 
   if (error || !data) {
@@ -47,12 +46,9 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
   const title = unassigned ? t("unassignedChapter") : chapter.name;
   const basePath = chapterPath(book.slug, chapter.chapterNo);
   const pastLastPage = hadiths.length === 0 && pagination.total > 0;
-  // Query kept by pagination and links: the ?lang= and ?tr= overrides and the filter.
-  const query = {
-    lang: router.query.lang || undefined,
-    tr: router.query.tr,
-    translated: onlyReadable ? 1 : undefined,
-  };
+  // The filter stays on from page to page and chapter to chapter.
+  const pageOf = (page) => listPath(basePath, { translated: onlyReadable, page });
+  const chapterHref = (chapterNo) => listPath(chapterPath(book.slug, chapterNo), { translated: onlyReadable });
   // The API lists a chapter in the source's order, so without the filter a
   // card's position on the page gives its in-book reference.
   const inBookAt = (index) =>
@@ -69,7 +65,7 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
       <Meta
         title={`${title} - ${book.name}`}
         description={`${book.name}, ${chapterLabel(chapter, t)}: ${title}.`}
-        url={`${server}${pageHref(basePath, {}, pagination.page)}`}
+        url={`${server}${listPath(basePath, { page: pagination.page })}`}
         image={shareImage}
         type="website"
       />
@@ -107,7 +103,7 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
         <div className={styles.toolbar}>
           {showToggle && (
             <Link
-              href={pageHref(basePath, { ...query, translated: onlyReadable ? undefined : 1 }, 1)}
+              href={listPath(basePath, { translated: !onlyReadable })}
               className={styles.switch}
               role="switch"
               aria-checked={onlyReadable ? "true" : "false"}
@@ -122,14 +118,17 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
               })}
             </Link>
           )}
-          <span className={styles.toolbarEnd}>
-            <TranslationPicker translations={translations} book={book.slug} />
-          </span>
+          {/* Other languages only on the international site; a country's site reads in its own */}
+          {INTERNATIONAL && (
+            <span className={styles.toolbarEnd}>
+              <TranslationPicker book={book.slug} />
+            </span>
+          )}
         </div>
 
         {pastLastPage ? (
           <EmptyState>
-            {t("pageEmpty")} <Link href={pageHref(basePath, query, 1)}>{t("goToFirstPage")}</Link>
+            {t("pageEmpty")} <Link href={pageOf(1)}>{t("goToFirstPage")}</Link>
           </EmptyState>
         ) : hadiths.length === 0 ? (
           <EmptyState>{t("noHadiths")}</EmptyState>
@@ -137,6 +136,16 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
           <HadithList
             hadiths={hadiths}
             loading={loading}
+            extras={{
+              key: `${pageOf(pagination.page)}`,
+              fetch: (codes) =>
+                getChapterHadiths(book.slug, chapter.chapterNo, lang, {
+                  page: pagination.page,
+                  perPage: pagination.perPage,
+                  translated: onlyReadable,
+                  translations: codes,
+                }).then((result) => result.hadiths),
+            }}
             renderCard={(hadith, index) => (
               <HadithCard
                 key={hadith.id}
@@ -148,26 +157,23 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
             )}
           />
         )}
-
-        <Pagination pagination={pagination} hrefFor={(page) => pageHref(basePath, query, page)} />
       </div>
 
-      {neighbours && (neighbours.previous || neighbours.next) && (
-        <nav className={styles.pager} aria-label={t("chapter")}>
-          {neighbours.previous && (
-            <Link href={pageHref(chapterPath(book.slug, neighbours.previous.chapterNo), query, 1)} rel="prev">
-              <span aria-hidden="true">‹</span>
-              <span>{numberedName(neighbours.previous, t, formatNumber)}</span>
-            </Link>
-          )}
-          {neighbours.next && (
-            <Link href={pageHref(chapterPath(book.slug, neighbours.next.chapterNo), query, 1)} rel="next">
-              <span>{numberedName(neighbours.next, t, formatNumber)}</span>
-              <span aria-hidden="true">›</span>
-            </Link>
-          )}
-        </nav>
-      )}
+      <Pager
+        pagination={pagination}
+        hrefFor={pageOf}
+        label={t("chapter")}
+        before={
+          neighbours && neighbours.previous
+            ? { href: chapterHref(neighbours.previous.chapterNo), label: numberedName(neighbours.previous, t, formatNumber) }
+            : null
+        }
+        after={
+          neighbours && neighbours.next
+            ? { href: chapterHref(neighbours.next.chapterNo), label: numberedName(neighbours.next, t, formatNumber) }
+            : null
+        }
+      />
     </>
   );
 }
@@ -186,20 +192,31 @@ Chapter.getLayout = function getLayout(page) {
   );
 };
 
-export async function getServerSideProps(context) {
-  const { bookId, chapterId } = context.params;
-  if (!/^-?\d+$/.test(String(chapterId))) return { notFound: true };
+// /books/{book}/chapters/{n}[/translated][/page/{p}]: built on the first visit, then kept
+// (lib/api loadStatic).
+export async function getStaticPaths() {
+  return staticPaths();
+}
 
-  return loadPage(context, async (lang, { translations }) => {
-    // ?translated=1: only hadiths readable in the language (own or linked
-    // translation). Off by default; Arabic is the original text.
-    const onlyReadable = lang !== "ar" && context.query.translated === "1";
+export async function getStaticProps({ params }) {
+  const { bookId, chapterId } = params;
+  if (!/^-?\d+$/.test(String(chapterId))) return { notFound: true };
+  const view = parseListView(params.view, ["translated"]);
+  if (!view) return { notFound: true };
+  if (!view.canonical) {
+    return { redirect: { destination: listPath(chapterPath(bookId, chapterId), view), permanent: true } };
+  }
+
+  return loadStatic(async (lang) => {
+    // translated: only hadiths readable in the language (own or linked translation). Off by
+    // default; Arabic is the original text.
+    const onlyReadable = lang !== "ar" && view.translated;
+    if (view.translated && !onlyReadable) return { notFound: true };
     const [data, book, readableTotal] = await Promise.all([
       getChapterHadiths(bookId, chapterId, lang, {
-        page: parsePage(context.query.page),
+        page: view.page,
         perPage: config.perPage,
         translated: onlyReadable,
-        translations,
       }),
       // Cached; for the previous/next chapter links and the navigation.
       getBook(bookId, lang).catch(() => null),
@@ -210,6 +227,8 @@ export async function getServerSideProps(context) {
             .then((result) => result.pagination.total)
             .catch(() => null),
     ]);
+    // a page past the end is not a page
+    if (data.hadiths.length === 0 && view.page > 1) return { notFound: true };
 
     let neighbours = null;
     const chapters = (book && book.chapters) || [];

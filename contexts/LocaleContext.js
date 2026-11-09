@@ -1,23 +1,17 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/router";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_LANGUAGE,
   INTERNATIONAL,
   SITE_INTERFACE,
-  browserLanguages,
   interfaceDirection,
   interfaceFor,
   interfaceLocale,
   interfaceOgLocale,
   isRtlLanguage,
-  matchLanguage,
   normalizeLanguage,
-  readLanguageCookie,
-  writeLanguageCookie,
 } from "../lib/language";
 import {
   INTERNATIONAL_KEYS,
-  catalogCodes,
   formatNumber,
   languageName,
   loadCatalog,
@@ -29,12 +23,9 @@ import { site } from "../lib/sites";
 
 export const LocaleContext = createContext(null);
 
-// The interface follows the content language (lib/language.js interfaceFor). A server-rendered
-// page comes with both (`pageLang`, `pageUi`: lib/api loadPage) and with the catalog of its
-// interface (`uiCatalog`; English is in the bundle), so it renders in them at once. The static
-// pages (404, 500) are built in the site's interface: once mounted they take the reader's
-// language (that of the page before, else the saved one; an international site also tries the
-// browser's languages) and load its catalog.
+// The interface follows the content language (lib/language.js interfaceFor). Every page comes
+// with both (`pageLang`, `pageUi`: lib/api loadStatic) and with the catalog of its interface
+// (`uiCatalog`; English is in the bundle), so it renders in them at once.
 
 // A language's name from the API's language object ({ code, name, nativeName }): its
 // English name in the English interface, its own name in the others.
@@ -74,37 +65,21 @@ function directionOf(code, info) {
   return "auto";
 }
 
-// `pageLang` is the content language a server-rendered page was fetched in (from `?lang=`,
-// the preference cookie, on an international site the browser's languages, or the country's
-// default), `pageUi` its interface with `uiCatalog`, `pagePreferred` the content language
-// without a one-off ?lang=, and `languageInfo` the API's description of the content language
-// ({ code, name, nativeName, direction }). Static pages only have `pageUi` and `uiCatalog`.
-export default function LocaleProvider({ pageLang, pageUi, pagePreferred, uiCatalog, languageInfo, children }) {
+// Each site reads in one language (lib/api SITE_LANGUAGE) and every page is built in it:
+// `pageLang` is that language, `pageUi` the interface with `uiCatalog`, and `languageInfo` the
+// API's description of the language ({ code, name, nativeName, direction }). The pages built
+// without data (404, 500) only have `pageUi` and `uiCatalog`: they are in the site's language too.
+const noop = () => {};
+
+export default function LocaleProvider({ pageLang, pageUi, uiCatalog, languageInfo, children }) {
   // Before anything renders with it.
   registerCatalog(uiCatalog);
-  const router = useRouter();
-  const staticPage = !pageLang;
-  // The saved preference (hadith_lang), read once mounted.
-  const [saved, setSaved] = useState(null);
-  // The language of the last server-rendered page: a static page opened after it stays in it.
-  const [lastLang, setLastLang] = useState(null);
-  // International site, static page opened first: the browser's languages among the catalogs.
-  const [browserLang, setBrowserLang] = useState(null);
   const [, setCatalogsLoaded] = useState(0);
 
-  useEffect(() => {
-    setSaved(readLanguageCookie());
-    if (INTERNATIONAL) setBrowserLang(matchLanguage(browserLanguages(), catalogCodes));
-  }, []);
-
-  useEffect(() => {
-    if (pageLang) setLastLang(pageLang);
-  }, [pageLang]);
-
-  const lang = normalizeLanguage(pageLang || lastLang || saved || browserLang || DEFAULT_LANGUAGE);
-  const wantedUi = !staticPage && pageUi ? pageUi : interfaceFor(lang);
-  // Until the wanted catalog has loaded (a static page), the one the page came with.
-  const ui = loadedCatalog(wantedUi) ? wantedUi : loadedCatalog(pageUi) ? pageUi : "en";
+  const lang = normalizeLanguage(pageLang || DEFAULT_LANGUAGE);
+  const wantedUi = pageUi || interfaceFor(lang);
+  // Until the catalog has loaded, English (in the bundle).
+  const ui = loadedCatalog(wantedUi) ? wantedUi : "en";
 
   useEffect(() => {
     if (loadedCatalog(wantedUi)) return undefined;
@@ -117,7 +92,7 @@ export default function LocaleProvider({ pageLang, pageUi, pagePreferred, uiCata
     };
   }, [wantedUi]);
 
-  // <html lang> and dir (pages/_document.js) when the interface changes in the browser.
+  // <html lang> and dir (pages/_document.js), should the interface come in late.
   useEffect(() => {
     const root = document.documentElement;
     const dir = interfaceDirection(ui);
@@ -125,34 +100,9 @@ export default function LocaleProvider({ pageLang, pageUi, pagePreferred, uiCata
     if (root.dir !== dir) root.dir = dir;
   }, [ui]);
 
-  // The saved preference, not a one-off ?lang= override. On an international site it can
-  // also come from the browser's languages, and is null while not known yet (a static page).
-  const preferred = pagePreferred || saved || (INTERNATIONAL ? null : DEFAULT_LANGUAGE);
-  const preferredLang = preferred ? normalizeLanguage(preferred) : null;
-
-  const setLanguage = useCallback(
-    (code) => {
-      const next = normalizeLanguage(code);
-      writeLanguageCookie(next);
-      setSaved(next);
-      if (staticPage) {
-        // Nothing to fetch: the page switches here (its catalog loads above).
-        setLastLang(next);
-        return;
-      }
-      // Re-run getServerSideProps in the new language; drop a `?lang=` override.
-      const { lang: _ignored, ...query } = router.query;
-      router.replace({ pathname: router.pathname, query }, undefined, { scroll: false });
-    },
-    [router, staticPage]
-  );
-
-  // Saves the preference only, for a link that opens a page in that language itself.
-  const rememberLanguage = useCallback((code) => {
-    const next = normalizeLanguage(code);
-    writeLanguageCookie(next);
-    setSaved(next);
-  }, []);
+  const preferredLang = lang;
+  const setLanguage = noop;
+  const rememberLanguage = noop;
 
   const value = useMemo(() => {
     const info = languageInfo && languageInfo.code === lang ? languageInfo : null;

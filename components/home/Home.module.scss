@@ -1,5 +1,5 @@
-// Home: the band with its two cards, then the library in sections on the grey page, on the
-// home page's own frame (--frame: layouts/Layout.module.scss).
+// Home: the band with its three cards, then the library in sections of cards on the grey page,
+// on the home page's own frame (--frame: layouts/Layout.module.scss).
 .sections {
   display: flex;
   flex-direction: column;
@@ -10,15 +10,6 @@
 
 .section {
   min-width: 0;
-}
-
-// in the search card, from 1024px
-.findTitle {
-  display: none;
-  color: var(--ink);
-  font-size: var(--text-xl);
-  font-weight: 400;
-  line-height: 1.4;
 }
 
 .sectionHead {
@@ -66,34 +57,11 @@
     padding-top: var(--space-7);
     padding-bottom: var(--space-7);
   }
-  .findTitle {
-    display: block;
-  }
   .sectionHead {
     margin-bottom: var(--space-3);
     padding: 0;
   }
   .sectionTitle {
     font-size: var(--text-xl);
-  }
-}
-
-// "Data & method", the last line before the footer.
-.sources {
-  padding: 0 6px;
-
-  a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-height: var(--tap);
-    color: var(--link);
-
-    &:hover,
-    &:focus-visible {
-      color: var(--link-hover);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
   }
 }

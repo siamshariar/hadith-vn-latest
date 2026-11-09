@@ -20,6 +20,28 @@ export function ArabicText({ text, clamped = false }) {
   );
 }
 
+// The Arabic under the translation, folded as the footnotes are on the Quran sites (quran-apps
+// components/surah/verse-card): a quiet line with the label and a chevron, the text when opened.
+// A <details>, so it works before the page's script, the browser finds words in it, and search
+// engines read it. `open`: opened from the start (a hadith's own page).
+export function ArabicFold({ text, open = false }) {
+  const { t } = useLocale();
+  if (!text) return null;
+  return (
+    <details className={styles.fold} open={open || undefined}>
+      <summary className={styles.foldSummary}>
+        <span className={styles.foldLabel}>{t("arabicText")}</span>
+        <span className={styles.foldIcon} aria-hidden="true">
+          <ChevronDownIcon />
+        </span>
+      </summary>
+      <div className={styles.foldBody}>
+        <ArabicText text={text} />
+      </div>
+    </details>
+  );
+}
+
 // English translations open with the narrator ("Narrated 'Umar bin
 // Al-Khattab:"); like sunnah.com, that line is set apart in bold. Only the
 // layout changes: the words are the source's.

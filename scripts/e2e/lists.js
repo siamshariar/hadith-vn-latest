@@ -24,38 +24,24 @@ function chapterRange(chapter) {
 
 module.exports = spec(module, 'lists', (h) => {
   h.test(
-    'home: the figures are the API totals',
+    'home: the band\'s cards, the library as cards (name and count, no Arabic), no search or figures',
     async (t) => {
       const home = await api(`/home${loc()}`);
       const { page } = await h.open(t, '/');
-      const figures = await page.locator('dl div').evaluateAll((items) =>
-        items
-          .filter((item) => item.querySelector('dt'))
-          .map((item) => [...item.children].map((el) => el.textContent.replace(/\s+/g, ' ').trim()))
-      );
-      const { totals } = home;
-      assert.deepEqual(figures, [
-        [
-          'Đọc được bằng tiếng Việt',
-          viNumber(totals.translated + totals.linkedTranslated),
-          `${viNumber(totals.translated)} bản dịch + ${viNumber(totals.linkedTranslated)} từ bộ hadith theo chủ đề`,
-        ],
-        ['Hadith', viNumber(totals.hadith)],
-        ['Bộ sưu tập', viNumber(totals.book)],
-        ['Danh mục', viNumber(totals.category)],
-        ['Ngôn ngữ', viNumber(totals.language)],
-      ]);
-
-      // the collections with their counts
+      // the band: the hadith of the day and the two ways in, the categories first for Vietnamese
+      const band = page.locator('section[aria-labelledby="site-heading"]');
+      const titles = (await band.locator('h2').filter({ visible: true }).allTextContents()).map(norm);
+      assert.deepEqual(titles, h.desktop ? ['Hadith hôm nay', 'Danh mục', 'Bộ sưu tập hadith'] : ['Hadith hôm nay']);
+      assert.equal(await page.locator('#daily-hadith ~ a').first().getAttribute('href'), `/hadiths/${home.dailyHadith.id}`);
+      // the collections: each a card with its name and how many hadiths
       for (const book of home.books) {
         const card = page.locator(`section[aria-labelledby="home-books"] a[href="/books/${book.slug}"]`);
-        const counts = [`${viNumber(book.totalHadith)} hadith`];
-        if (book.totalChapter > 1) counts.push(`${viNumber(book.totalChapter)} chương`);
-        assert.ok(norm(await card.textContent()).includes(counts.join(' · ')), `${book.slug}: ${counts.join(' · ')}`);
+        assert.equal(await card.count(), 1, book.slug);
+        assert.ok(norm(await card.textContent()).includes(`${viNumber(book.totalHadith)} hadith`), `${book.slug}: its count`);
+        assert.ok(!/chương/.test(norm(await card.textContent())), `${book.slug}: the name and the count only`);
       }
-      // the daily hadith links to its page
-      const daily = home.dailyHadith;
-      assert.equal(await page.locator('#daily-hadith ~ a').first().getAttribute('href'), `/hadiths/${daily.id}`);
+      assert.equal(await page.locator('section[aria-labelledby="home-categories"] [lang="ar"]').count(), 0, 'no Arabic on the category cards');
+      assert.equal(await page.locator('main dl, main input').count(), 0, 'no figures, no search field');
     },
     { smoke: true }
   );
@@ -116,7 +102,7 @@ module.exports = spec(module, 'lists', (h) => {
       assert.deepEqual(await cardIds(page), ids(all));
 
       await toggle.click();
-      await h.waitForPath(page, (url) => url.searchParams.get('translated') === '1', 'filter on');
+      await h.waitForPath(page, (url) => url.pathname === '/books/sahih-al-bukhari/chapters/1/translated', 'filter on');
       await until(async () => (await page.getByRole('switch').getAttribute('aria-checked')) === 'true', 'switch checked');
       await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(readable)), 'only the readable hadiths');
       // each shows the topic collection's translation, labelled as such and with its
@@ -127,7 +113,7 @@ module.exports = spec(module, 'lists', (h) => {
       assert.equal(await page.getByRole('note').filter({ hasText: 'Những hadith có nhãn' }).count(), 1);
 
       await page.getByRole('switch').click();
-      await h.waitForPath(page, (url) => url.searchParams.get('translated') === null, 'filter off');
+      await h.waitForPath(page, (url) => url.pathname === '/books/sahih-al-bukhari/chapters/1', 'filter off');
       await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(all)), 'all hadiths again');
     },
     { smoke: true }
@@ -135,7 +121,8 @@ module.exports = spec(module, 'lists', (h) => {
 
   h.test('chapter edge cases: the unassigned group, a page past the end', async (t) => {
     const [book, unassigned] = await Promise.all([api(`/books/bukhari${loc()}`), api(`/books/bukhari/chapters/-1${loc()}?perPage=20`)]);
-    const { page } = await h.open(t, '/books/sahih-al-bukhari/chapters/-1');
+    // a page past the end answers 404: the browser logs it
+    const { page } = await h.open(t, '/books/sahih-al-bukhari/chapters/-1', { allow: [/status of 404/] });
     await waitForH1(page, 'Chưa xếp chương');
     await waitForText(page.getByText('Nguồn dữ liệu không xếp các hadith này vào chương nào.'), 'Nguồn dữ liệu không xếp các hadith này vào chương nào.');
     assert.deepEqual(await cardIds(page), ids(unassigned));
@@ -145,12 +132,9 @@ module.exports = spec(module, 'lists', (h) => {
     assert.equal(norm(crumbs[crumbs.length - 1]), 'Chưa xếp chương');
     assert.ok(book.chapters.some((c) => c.chapterNo === -1));
 
-    // a page number past the end says so and links to the first page
-    await h.goto(page, '/books/sahih-al-bukhari/chapters/1?page=9');
-    await waitForText(page.getByText('Trang này không có hadith.'), /^Trang này không có hadith\./);
-    await page.getByRole('link', { name: 'Về trang đầu' }).click();
-    await h.waitForPath(page, (url) => url.pathname === '/books/sahih-al-bukhari/chapters/1' && !url.search, 'first page');
-    await until(async () => (await cardIds(page)).length > 0, 'hadiths on the first page');
+    // a page past the end is not a page
+    const past = await page.goto(`${new URL(page.url()).origin}/books/sahih-al-bukhari/chapters/1/page/9`);
+    assert.equal(past.status(), 404);
   });
 
   h.test('category hadiths: language chips, pagination and direct-only', async (t) => {
@@ -175,42 +159,41 @@ module.exports = spec(module, 'lists', (h) => {
     assert.equal(await only.getAttribute('aria-current'), 'true');
     assert.deepEqual(await cardIds(page), ids(translated), 'translated hadiths first');
 
-    const pager = page.getByRole('navigation', { name: 'Trang' });
+    const pager = page.getByRole('navigation', { name: 'Trang', exact: true });
     await pager.getByRole('link', { name: /Sau/ }).click();
-    await h.waitForPath(page, (url) => url.searchParams.get('page') === '2', 'page 2');
+    await h.waitForPath(page, (url) => url.pathname === `/categories/${slug}/hadiths/page/2`, 'page 2');
     await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(translated2)), 'page 2 hadiths');
-    await waitForText(pager.locator('p'), `21–40 trong ${viNumber(translated.pagination.total)}`);
+    await waitForText(pager.locator('span[class*="count"]'), `Trang 2/${viNumber(translated.pagination.lastPage)}`);
 
     await allChip.click();
-    await h.waitForPath(page, (url) => url.searchParams.get('all') === '1' && !url.searchParams.get('page'), 'all hadiths');
+    await h.waitForPath(page, (url) => url.pathname === `/categories/${slug}/hadiths/all`, 'all hadiths');
     await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(everything)), 'every hadith, page 1');
     assert.equal(await allChip.getAttribute('aria-current'), 'true');
 
     await page.getByRole('group', { name: 'Danh mục con' }).getByRole('link', { name: 'Chỉ hadith thuộc trực tiếp danh mục này' }).click();
-    await h.waitForPath(page, (url) => url.searchParams.get('direct') === '1', 'direct only');
+    await h.waitForPath(page, (url) => url.pathname === `/categories/${slug}/hadiths/all/direct`, 'direct only, the language choice kept');
     await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(direct)), 'direct hadiths');
-    assert.equal(new URL(page.url()).searchParams.get('all'), '1', 'the language choice is kept');
   });
 
-  h.test('"Danh mục con": one tile per subcategory, figures, links', async (t) => {
+  h.test('"Danh mục con": one card per subcategory (name and count, no Arabic), links', async (t) => {
     const category = await api(`/categories/the-creed${loc()}`);
     const { page } = await h.open(t, `/categories/${category.slug}`);
     const section = page.locator('section[aria-labelledby="category-children"]');
     await waitForText(section.locator('h2'), 'Danh mục con');
-    const tiles = await section.locator('li a').evaluateAll((links) =>
-      links.map((a) => ({ href: decodeURIComponent(a.getAttribute('href')), text: [...a.querySelectorAll('span > *')].map((el) => el.textContent.trim()) }))
+    const cards = await section.locator('li a').evaluateAll((links) =>
+      links.map((a) => ({
+        href: decodeURIComponent(a.getAttribute('href')),
+        text: [...a.querySelectorAll('span[class*="title"], span[class*="note"]')].map((el) => el.textContent.trim()),
+      }))
     );
     assert.deepEqual(
-      tiles,
-      category.children.map((child) => {
-        const meta = [`${viNumber(child.totalHadith)} hadith`, `${viNumber(child.totalTranslated)} có bản dịch tiếng Việt`];
-        if (child.totalChildren > 0) meta.push(`${viNumber(child.totalChildren)} danh mục con`);
-        return {
-          href: child.totalChildren > 0 ? `/categories/${child.slug}` : `/categories/${child.slug}/hadiths`,
-          text: [child.title, ...(child.titleArabic ? [child.titleArabic] : []), meta.join(' · ')],
-        };
-      })
+      cards,
+      category.children.map((child) => ({
+        href: child.totalChildren > 0 ? `/categories/${child.slug}` : `/categories/${child.slug}/hadiths`,
+        text: [child.title, `${viNumber(child.totalHadith)} hadith`],
+      }))
     );
+    assert.equal(await page.locator('main header [lang="ar"]').count(), 0, 'no Arabic name in the header');
     // the preview lists translated hadiths first and links to both lists
     const preview = await api(`/categories/${category.slug}/hadiths${loc()}?perPage=5&translated=1`);
     assert.deepEqual(await cardIds(page), ids(preview), 'preview: the first translated hadiths');
@@ -219,7 +202,7 @@ module.exports = spec(module, 'lists', (h) => {
     );
     assert.deepEqual(more, [
       [`/categories/${category.slug}/hadiths`, `Xem ${viNumber(category.totalTranslated)} hadith có bản dịch tiếng Việt`],
-      [`/categories/${category.slug}/hadiths?all=1`, `Tất cả ${viNumber(category.totalHadith)} hadith`],
+      [`/categories/${category.slug}/hadiths/all`, `Tất cả ${viNumber(category.totalHadith)} hadith`],
     ]);
     // a parent opens its own subcategories; a leaf (here one with an Arabic slug) its hadiths
     const parent = category.children.find((c) => c.totalChildren > 0);
@@ -236,25 +219,29 @@ module.exports = spec(module, 'lists', (h) => {
     }
   });
 
-  h.test('category tree page: top-level categories with their children and counts', async (t) => {
-    const [home, every] = await Promise.all([api(`/home${loc()}`), api(`/categories${loc()}`)]);
+  h.test('category tree page: each top-level category over its subcategories\' cards', async (t) => {
+    const every = await api(`/categories${loc()}`);
     // the lists leave out the categories with nothing to read in Vietnamese
     const all = readableCategories(every, 'vi');
     const { page } = await h.open(t, '/categories');
     await waitForH1(page, 'Danh mục');
     assert.deepEqual(await metaLine(page), [`${viNumber(all.length)} danh mục`]);
     const top = all.filter((c) => c.parentId == null);
-    const heads = await page.locator('main ol > li > div > a').evaluateAll((links) => links.map((a) => a.getAttribute('href')));
+    const heads = await page.locator('main section h2 a').evaluateAll((links) => links.map((a) => decodeURIComponent(a.getAttribute('href'))));
     assert.deepEqual(heads, top.map((c) => `/categories/${c.slug}`), 'top-level categories in order');
-    for (const parent of home.categories.filter((c) => all.some((a) => a.id === c.id))) {
-      const list = page.getByRole('list', { name: `Danh mục con: ${parent.title}` });
-      // the count as shown ("6/76"); the visually hidden sentence after it is for screen readers
-      const children = await list.locator('a').evaluateAll((links) => links.map((a) => [decodeURIComponent(a.getAttribute('href')), a.querySelector('span[aria-hidden="true"]').textContent.trim()]));
+    for (const parent of top) {
+      const children = all.filter((c) => c.parentId === parent.id);
+      if (!children.length) continue;
+      const section = page.locator('main section').filter({ has: page.locator(`h2 a[href="/categories/${encodeURIComponent(parent.slug)}"]`) });
+      const cards = await section.locator('ul li a').evaluateAll((links) =>
+        links.map((a) => [decodeURIComponent(a.getAttribute('href')), a.querySelector('span[class*="note"]').textContent.trim()])
+      );
       assert.deepEqual(
-        children,
-        all.filter((c) => c.parentId === parent.id).map((c) => [`/categories/${c.slug}`, `${viNumber(c.totalTranslated)}/${viNumber(c.totalHadith)}`]),
+        cards,
+        children.map((c) => [c.totalChildren > 0 ? `/categories/${c.slug}` : `/categories/${c.slug}/hadiths`, `${viNumber(c.totalHadith)} hadith`]),
         `children of ${parent.slug}`
       );
     }
+    assert.equal(await page.locator('main [lang="ar"]').count(), 0, 'no Arabic names');
   });
 });

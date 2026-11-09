@@ -62,8 +62,6 @@ export default function ReaderSettings({ open, onClose }) {
     changeFontSizeTranslation,
     showArabic,
     changeShowArabic,
-    textOrder,
-    changeTextOrder,
     resetReader,
     theme,
     changeTheme,
@@ -116,27 +114,6 @@ export default function ReaderSettings({ open, onClose }) {
             onChange={(event) => changeShowArabic(event.target.checked)}
           />
         </label>
-
-        <fieldset className={styles.fieldset} disabled={!showArabic}>
-          <legend className={styles.label}>{t("textOrder")}</legend>
-          <div className={styles.segmented}>
-            {[
-              ["arabic", t("arabicFirst")],
-              ["translation", t("translationFirst")],
-            ].map(([value, label]) => (
-              <label key={value} className={styles.segment}>
-                <input
-                  type="radio"
-                  name="reader-text-order"
-                  value={value}
-                  checked={textOrder === value}
-                  onChange={() => changeTextOrder(value)}
-                />
-                <span>{label}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
 
         <fieldset className={styles.fieldset}>
           <legend className={styles.label}>{t("theme")}</legend>

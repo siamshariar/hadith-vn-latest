@@ -1,5 +1,5 @@
 import { server, shareImage } from "../../lib/config";
-import { loadPage } from "../../lib/api";
+import { loadStatic } from "../../lib/api";
 import {
   UNASSIGNED_CHAPTER,
   bookPath,
@@ -106,11 +106,10 @@ export function hadithLayout(page) {
   );
 }
 
-// `fetchHadith(lang, { translations })` loads the hadith in the content
-// language with the reader's extra translations.
-export function loadHadithPage(context, fetchHadith) {
-  return loadPage(context, async (lang, { translations }) => {
-    const hadith = await fetchHadith(lang, { translations });
+// getStaticProps of both: `fetchHadith(lang)` loads the hadith in the site's language.
+export function loadHadithPage(fetchHadith) {
+  return loadStatic(async (lang) => {
+    const hadith = await fetchHadith(lang);
     const topic = isCategoryBook(hadith.book);
     const first = hadith.categories && hadith.categories[0];
     return {

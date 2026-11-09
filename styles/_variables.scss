@@ -16,6 +16,7 @@
   --surface-card: #eeeeee; // number discs and quiet fills
   --surface-strong: #e4e4e6; // pressed
   --hover: rgba(70, 101, 72, 0.05); // hover fill on canvas and surface
+  --press: rgba(17, 24, 39, 0.045); // a pressed link or button on a touch screen (_core.scss); muted text keeps 4.5:1
   --hairline: #e8e8ea; // dividers and card edges (decorative)
   --hairline-soft: #eff1f2; // dividers inside a card
   --control-edge: #8a9096; // edges that identify a control (3.2:1)
@@ -97,10 +98,10 @@
   --ease: cubic-bezier(0.2, 0, 0, 1);
   --duration: 160ms;
 
-  // ---- reading typography. The sizes depend on the screen until the reader sets one
-  // (SettingsContext then sets them on <html>): Arabic 30px on phones, 36px from 640px, as
-  // quran.vn; the translation 18px, 20px on the web for its 720px line of about 77 characters.
-  --fs-arabic: 30px;
+  // ---- reading typography: the Quran sites' defaults (quran-apps lib/settings, styles/_core):
+  // Arabic 36px, the translation 18px, on every screen, until the reader sets a size
+  // (SettingsContext then sets them on <html>).
+  --fs-arabic: 36px;
   --fs-trans: 18px;
   --font-arabic: var(--font-pdms-family), var(--font-amiri-family), "Traditional Arabic", serif;
   --font-trans: var(--font-ui-family), "Segoe UI", sans-serif;
@@ -110,7 +111,6 @@
   // rail, card and header stand exactly where quran.vn has them.
   --nav-width: clamp(280px, 22vw, 300px);
   --reading-card: 940px;
-  --reading-measure: 720px;
   --header-height: 54px;
 
   // The site's colours (config/countries.json), set on <html> by pages/_document.js: the band
@@ -119,15 +119,8 @@
   --brand-ink: #466548; // the wordmark
 }
 
-@media only screen and (min-width: 640px) {
-  :root {
-    --fs-arabic: 36px;
-  }
-}
-
 @media only screen and (min-width: 1024px) {
   :root {
-    --fs-trans: 20px;
     --header-height: 66px;
   }
 }
@@ -142,6 +135,7 @@ html[data-theme="dark"] {
   --surface-card: #313a55;
   --surface-strong: #3a4462;
   --hover: rgba(255, 255, 255, 0.05);
+  --press: rgba(255, 255, 255, 0.06);
   --hairline: #313a55;
   --hairline-soft: #2c3550;
   --control-edge: #77819a; // 3.6:1 on --surface

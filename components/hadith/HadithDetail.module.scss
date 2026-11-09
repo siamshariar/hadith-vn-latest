@@ -7,10 +7,10 @@
   gap: var(--space-5);
 }
 
+// the translation, then the Arabic 28px under it (its fold's own margin), as on a verse's page
 .texts {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
 }
 
 .arabicBlock,
@@ -21,34 +21,12 @@
 
 // Reader settings (set on <html> by SettingsContext). Without any
 // translation the Arabic stays, even when the reader hides it.
-:global(html[data-text-order="translation"]) .translationBlock {
-  order: -1;
-}
-
 :global(html[data-arabic="hidden"]) .arabicBlock:not(.arabicOnly) {
   display: none;
 }
 
 .arabicOnly {
   display: block;
-}
-
-// previous / next hadith, in the page's pager (components/content/Page.module.scss)
-.navLink {
-  max-width: 48%;
-}
-
-.navWords {
-  display: flex !important;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.navRef {
-  color: var(--link);
-  font-size: var(--text-sm);
-  font-weight: 500;
 }
 
 // the title, the reference line and what applies to the text
