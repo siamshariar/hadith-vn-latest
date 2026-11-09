@@ -97,11 +97,11 @@ appears anywhere else, and never near reading text.
 
 | Role | Stack | Notes |
 |---|---|---|
-| Interface and translations (`--font-ui`, `--font-trans`) | Roboto, Amiri for ﷺ, PDMS Islamic at 135% for other Arabic, Noto Sans Bengali, then the platform's faces | The Quran sites' face. Roboto is subset to Latin, Latin Extended and Vietnamese. The Bengali face loads only on pages with Bengali text |
-| Arabic (`--font-arabic`) | PDMS Islamic, Amiri, Traditional Arabic | The Quran sites' face, a large part of their light feel. The reader can choose Amiri, Al Qalam or Othmani |
+| Interface and translations (`--font-ui`, `--font-trans`) | Roboto, Amiri for ﷺ, PDMS Islamic at 135% for other Arabic, Noto Sans Bengali, then the platform's faces | The Quran sites' face, the very release quran.vn gets from Google Fonts (Roboto 3.015, v51): text sets to the same widths. Subset to Latin, Latin Extended and Vietnamese. The Bengali face loads only on pages with Bengali text |
+| Arabic (`--font-arabic`) | PDMS Islamic, Amiri, Traditional Arabic | The Quran sites' face (the same file as quran.vn's), a large part of their light feel. The reader can choose Amiri, Al Qalam or Othmani |
 
 - **Self-hosted.** Every family comes from `styles/fonts` through next/font. `pages/_app.js` records
-  how each was cut. Roboto is Apache 2.0, Amiri and Noto Sans Bengali SIL OFL. **PDMS Islamic states
+  how each was cut. Roboto 3, Amiri and Noto Sans Bengali are SIL OFL 1.1 (`styles/fonts/roboto/OFL.txt`). **PDMS Islamic states
   no licence:** the file says (C) 2001 Pakistan Data Management Services. The Quran sites have long
   used it; the owner should confirm the right to, or the stack falls back to Amiri by changing one
   token and one default (`--font-arabic`, `lib/settings.js`).

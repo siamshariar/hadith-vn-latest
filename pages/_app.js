@@ -11,8 +11,10 @@ import "../styles/global.scss";
 
 // Self-hosted (styles/fonts): no network at build time and no layout shift (next/font adjusts
 // the fallback metrics). Subset with fontTools pyftsubset --layout-features='*' --flavor=woff2.
-// Roboto (Apache 2.0) is the Quran sites' interface and translation face: Latin, Latin Extended
-// and Vietnamese. PDMS Islamic is their Arabic face, all of its glyphs, here as woff2 to save
+// Roboto is the Quran sites' interface and translation face, and the same release: 3.015 (SIL
+// OFL 1.1, styles/fonts/roboto/OFL.txt), as Google Fonts serves it to quran.vn (v51), so text
+// sets to the same widths. Latin, Latin Extended and Vietnamese, from the Google Fonts css2 API
+// with `text=` set to those characters. PDMS Islamic is their Arabic face, all of its glyphs, here as woff2 to save
 // 60%; Amiri (SIL OFL 1.1), a Naskh with complete harakat, covers what PDMS lacks and stays a
 // choice in the settings. Noto Sans Bengali (SIL OFL 1.1, weights 400-700) loads only for
 // Bengali text (unicode-range), so other sites never download it.
