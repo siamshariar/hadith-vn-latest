@@ -117,11 +117,11 @@ appears anywhere else, and never near reading text.
 
 | Role | Size | Line-height | Use |
 |---|---|---|---|
-| Page title | 22px in the grey bar (web) / 18px 500 (phones) | 33px / 1.4 | `h1` of every reading page |
+| Page title | 22px in the grey bar (web) / 18px (phones), regular | 33px / 1.4 | `h1` of every reading page |
 | Arabic | `--fs-arabic`: 36px on every screen (the Quran sites' default) | 1.6 | The reader can change it |
 | Translation | `--fs-trans`: 18px on every screen (the Quran sites' default) | 1.6; 1.8 for scripts with stacked signs (`styles/_core`) | The reader can change it |
 | `--text-md` | 18px | 1.5 | A hadith's title; section titles on phones |
-| `--text-base` | 16px | 1.6 | Interface text |
+| `--text-base` | 16px | 1.5 (the Quran sites' 16/24) | Interface text |
 | `--text-sm` | 14px | 1.5 | Labels, metadata, the citation's tag |
 | `--text-xs` | 12px | 1.4 | Counts, the source line |
 
@@ -133,8 +133,9 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 - **Letter-spacing is 0 for every role.** Tracking breaks Arabic joining and Bengali
   conjuncts, and any interface string may be in any of 16 languages.
 - **No `text-transform`.** Case rules differ by language, and uppercase does nothing for Bengali.
-- **Hierarchy by size and weight.** Weights 400 and 500 only. Never bold a whole paragraph of reading
-  text. The narrator line of English translations is the one exception (sunnah.com's convention).
+- **Weight as the Quran sites: regular (400) for text.** Titles, names, links, badges, the narrator
+  line, the current row and tab: all 400; hierarchy comes from size and colour. Medium (500) only for
+  buttons, the titles of dialogs and panels, the settings' section titles and table headers. No bold.
 - **Figures.** Numbers in figures and tables use `tabular-nums`. All numbers are in Latin digits, as
   the hadith numbers they sit next to (`lib/i18n formatNumber`).
 - **Measure.** As on the Quran sites: the text fills the reading card inside its 32px (876px at
@@ -241,18 +242,18 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 | Hadith page | As in a list, the title in the bar (the translations chip in the reference line on the international site); the Arabic under the translation, open; below the text the reference cells, explanation, benefits, word meanings, sources, categories, related |
 | Pagination (`components/core/Pager`) | One per list, as the Quran sites': under the content, a white card of its own on the web (20px 25px), a hairline on phones; the way back on the left, the way on on the right, 16px with 22px chevrons. Within a list its pages ("‹ Previous", "Next ›", "Page 2/6" between); at a chapter's ends, the chapter before or after it by name; on a hadith page the hadith before and after |
 | Chapter list, subcategories | Rows in two columns from 640px, ruled by dashes: number disc, name, count and citable numbers |
-| Cards (`components/home/EntryCard`: home, collections, categories) | The "Continue reading" card's form: an icon in a tinted 40px circle (an open book for a collection, a list for a category, the reading book for "Continue reading"), the name (16px 500), one line under it (how many hadiths), an arrow. No Arabic. As many columns of 300px as fit; a hairline edge on phones, a soft shadow on the web |
+| Cards (`components/home/EntryCard`: home, collections, categories) | The "Continue reading" card's form: an icon in a tinted 40px circle (an open book for a collection, a list for a category, the reading book for "Continue reading"), the name (18px on the web, 16px on phones, regular), one line under it (how many hadiths), an arrow. No Arabic. As many columns of 300px as fit; a hairline edge on phones, a soft shadow on the web |
 | Home band cards | White, 24px inside, the title 24px, three lines of text, a link at the foot; the band's soft shadow |
 | Reference cells | Label above value, each cell a tile on `--surface-soft`; the grades table is ruled across |
 | Topic-collection translation | Its own box: hairline, radius 8px, `--accent-wash`, its label badge, its note, its source line. Never merged with the hadith's own translation |
 | Buttons | Primary: `--accent` on `--on-accent`, 44px. Secondary: `--surface-soft`, no edge (`--surface-card` under the pointer). Destructive: `--error-txt` on `--surface`. A submit that loads a page keeps its label and shows a turning ring (`aria-busy`, `hooks/useSubmitBusy`) |
 | Icon buttons | 44px circles, always with an `aria-label` in the interface language; the SVGs in `components/icons` are `aria-hidden` |
 | Fields | Filter and search: grey pills, no edge. Text fields and selects: `--surface-soft`, no edge, radius 8px; a refused value is ringed in the error colour. 44px or more, 16px text on touch screens (iOS zooms into anything smaller). Focus: a 2px ring |
-| Filter chips | Radius 6px on `--surface-soft`. In force: `--accent-tint`, `--accent`, weight 500 |
+| Filter chips | Radius 6px on `--surface-soft`. In force: `--accent-tint`, `--accent` |
 | Filter switch | A link (`role="switch"`) drawn as a 36×20px switch with its words; toggles on Space too |
 | Menus and popovers | `--surface`, radius 8px, `--shadow-float` |
 | Dialogs | One component, `components/core/Dialog`: the title (18px, an `h2` that names it) and a 44px round close button; a line under it says what it is about (the hadith, the folder); the content scrolls, the head and the buttons stay. Buttons at the foot, right-aligned: the safe one first (Cancel, grey), the one that acts last (`primary`: the accent; `danger`: the error colour). Web: centred, radius 12px, `--shadow-float`, 420px for a question, 520px for a list or the settings. Phones (under 600px): a sheet from the bottom, radius 16px at the top, the buttons sharing its width. Choices inside are grey rows or tiles with a radio button: the chosen one tinted in the accent, with a check |
-| Saved lists | Folders, pins, last read: rows of 64px, the icon in a tinted circle, the name (15px, 500) and a line under it; delete or unpin at the end (on hover or focus with a mouse). Nothing yet: a quiet icon and a line, centred. In the header's dialogs, with "View all" to the saved page |
+| Saved lists | Folders, pins, last read: rows of 64px, the icon in a tinted circle, the name (15px) and a line under it; delete or unpin at the end (on hover or focus with a mouse). Nothing yet: a quiet icon and a line, centred. In the header's dialogs, with "View all" to the saved page |
 | Share | Where the browser has no share sheet: the citation, the link with Copy, then the services, each with its name |
 | Reading settings | Sizes, Arabic shown, theme, reset, and a link to all settings: the settings' controls (`components/settings/controls`) under the dialog's head. A bottom sheet on phones and a side panel on wider screens, so the text stays in view while it changes |
 | Settings (dialog and page) | Three sections: text size (steppers − 36 +), faces (tiles, each drawn in its own face, two to a row), appearance (light or dark side by side, the Arabic shown). Everything applies at once. Reset resets at once, then offers Undo for ten seconds |
@@ -289,7 +290,8 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 - **Language and direction.** Arabic blocks carry `lang="ar" dir="rtl"`. Each translation
   carries its language's code and direction. Names inside sentences are wrapped in `<bdi>`.
 - **Colour is never the only signal.** Inline links are underlined; the current row and the tab in
-  force are also heavier, the tab underlined; a selected segment is raised on the surface.
+  force have a tint or an underline; a selected segment is raised on the surface; a chosen option
+  has a check.
 - **Skip link.** The first Tab stop on every page jumps to `main#viewport`, in the interface
   language.
 - **Dialogs** carry `role="dialog"`, `aria-modal` and a name, move focus in, keep it there,

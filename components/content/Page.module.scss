@@ -21,7 +21,7 @@
 .title {
   color: var(--ink);
   font-size: var(--text-md);
-  font-weight: 500;
+  font-weight: 400;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -119,7 +119,7 @@
 
   a {
     color: var(--link);
-    font-weight: 500;
+    font-weight: 400;
     text-decoration: underline;
     text-underline-offset: 2px;
   }
@@ -151,7 +151,7 @@
 .sectionTitle {
   color: var(--ink);
   font-size: var(--text-md);
-  font-weight: 500;
+  font-weight: 400;
   line-height: var(--leading-tight);
 }
 
@@ -162,7 +162,7 @@
   min-height: var(--tap);
   color: var(--link);
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 400;
 
   &:hover,
   &:focus-visible {
@@ -299,7 +299,7 @@
 .chipActive {
   background: var(--accent-tint);
   color: var(--accent);
-  font-weight: 500;
+  font-weight: 400;
 
   .chipCount {
     color: var(--accent);
@@ -562,7 +562,7 @@
   grid-area: name;
   color: var(--ink);
   font-size: var(--text-base);
-  font-weight: 500;
+  font-weight: 400;
   line-height: var(--leading-snug);
 }
 
@@ -634,7 +634,7 @@
   h3 {
     color: var(--ink);
     font-size: var(--text-md);
-    font-weight: 500;
+    font-weight: 400;
   }
 
   a {
@@ -774,7 +774,7 @@
 
 .chapterRange {
   color: var(--text);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .dataTable a {

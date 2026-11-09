@@ -40,8 +40,10 @@
       text-decoration: underline;
     }
 
-    // 44px where the screen is touched
+    // 44px each way where the screen is touched (a short word such as "Home" is narrower)
     @media (pointer: coarse) {
+      justify-content: center;
+      min-width: var(--tap);
       min-height: var(--tap);
     }
   }
@@ -55,7 +57,7 @@
 
   span[aria-current] {
     color: var(--text);
-    font-weight: 500;
+    font-weight: 400;
   }
 }
 

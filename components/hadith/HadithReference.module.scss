@@ -31,7 +31,7 @@
     min-width: 0;
     color: var(--text);
     font-size: 15px;
-    font-weight: 500;
+    font-weight: 400;
     overflow-wrap: anywhere;
   }
 
@@ -45,7 +45,7 @@
 .term {
   color: var(--muted);
   font-size: var(--text-xs);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .gradeText .term {
@@ -61,7 +61,7 @@
 
 .gradeText strong {
   color: var(--grade-txt);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 // grader and grade, ruled across
@@ -92,7 +92,7 @@
 
   td:last-child {
     color: var(--grade-txt);
-    font-weight: 500;
+    font-weight: 400;
   }
 }
 
