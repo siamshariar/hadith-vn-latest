@@ -159,12 +159,14 @@ module.exports = spec(module, 'settings', (h) => {
 
   h.test('Settings: font size, Arabic font, theme, reset', async (t) => {
     const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
-    // the web: a dialog from the ⋮ menu, over the page. Phones: the settings page, from the reading settings.
+    // the web: the site's dialog from the ⋮ menu, over the page. Phones: the settings page, from the reading settings.
     const openSettings = async () => {
       if (h.desktop) {
         await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
         await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-        return page.locator('[role="presentation"]').filter({ has: page.getByText('Chọn phông chữ tiếng Ả Rập', { exact: true }) }).last();
+        const dialog = page.getByRole('dialog', { name: 'Cài đặt', exact: true });
+        await dialog.waitFor();
+        return dialog;
       }
       await page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true }).click();
       await page.getByRole('dialog', { name: 'Cài đặt hiển thị' }).getByRole('link', { name: /Cài đặt/ }).click();
@@ -173,32 +175,31 @@ module.exports = spec(module, 'settings', (h) => {
     };
     const before = await fontSize(arabicText(page));
     let settings = await openSettings();
-    await settings.getByText('Chọn phông chữ tiếng Ả Rập').waitFor({ state: 'visible' });
+    // the faces in view, each a radio button, the default one chosen
+    await settings.getByRole('radio', { name: 'PDMS Islamic Font' }).waitFor({ state: 'visible' });
+    assert.equal(await settings.getByRole('radio', { name: 'PDMS Islamic Font' }).isChecked(), true);
     if (h.desktop) assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
     assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).count(), 0, 'no language to choose');
 
     await settings.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
-    await until(async () => (await stored(page, 'settings')).fontSize.arabic === before + 1, 'Arabic size saved, one up from the default');
+    await until(async () => (await stored(page, 'settings')).fontSize.arabic === before + 2, 'Arabic size saved, a step up from the default');
     if (h.desktop) await until(async () => (await fontSize(arabicText(page))) > before, 'Arabic bigger at once');
 
-    await settings.getByText('Chọn phông chữ tiếng Ả Rập').click();
     await settings.getByRole('radio', { name: 'Amiri (Naskh)' }).check();
     // the translation's font too (its setter was once missing from the settings context)
-    await settings.getByText('Chọn phông chữ bản dịch').click();
     await settings.getByRole('radio', { name: 'Times New Roman' }).check();
     await until(async () => (await stored(page, 'settings')).fontFamily.translation === 'TimesNewRoman', 'translation font saved');
     assert.equal((await stored(page, 'settings')).fontFamily.arabic, 'Amiri');
 
-    await settings.getByText('Chọn giao diện').click();
-    await settings.getByRole('button', { name: 'Tối', exact: true }).click();
+    await settings.getByRole('radio', { name: 'Tối', exact: true }).check();
     await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark theme');
-    assert.equal(await settings.getByRole('button', { name: 'Tối', exact: true }).getAttribute('aria-pressed'), 'true');
+    assert.equal(await settings.getByRole('radio', { name: 'Tối', exact: true }).isChecked(), true);
 
     await h.goto(page, `/books/${BUKHARI}/hadiths/1`);
     await until(async () => (await page.evaluate(() => document.body.className)) === 'dark', 'dark after a reload');
     await until(async () => /amiri/i.test(await arabicText(page).evaluate((el) => getComputedStyle(el).fontFamily)), 'Arabic font applied');
     await until(async () => /TimesNewRoman/.test(await translationText(page).first().evaluate((el) => getComputedStyle(el).fontFamily)), 'translation font applied');
-    assert.equal(await fontSize(arabicText(page)), before + 1, 'the saved size');
+    assert.equal(await fontSize(arabicText(page)), before + 2, 'the saved size');
 
     // reset everything: the screen's sizes and the default faces
     settings = await openSettings();

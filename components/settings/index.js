@@ -1,345 +1,121 @@
 "use client";
 
-import { fonts, themes } from "../../lib/settings";
+import { fonts, fontStacks } from "../../lib/settings";
 import { useEffect, useRef, useState, useContext } from "react";
 import { SettingsContext } from "../../contexts/SettingsContext";
-import Accordion from "@mui/material/Accordion";
-import AccordionSummary from "@mui/material/AccordionSummary";
-import AccordionDetails from "@mui/material/AccordionDetails";
-import Radio from "@mui/material/Radio";
-import RadioGroup from "@mui/material/RadioGroup";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import IconButton from "@mui/material/IconButton";
-import Button from "@mui/material/Button";
 import { useLocale } from "../../contexts/LocaleContext";
-import UpIcon from "../icons/ChevronUp";
-import DownIcon from "../icons/ChevronDown";
-import PlusIcon from "../icons/Plus";
-import MinusIcon from "../icons/Minus";
+import Brightness7Icon from "../icons/Brightness7";
+import Brightness4Icon from "../icons/Brightness4";
+import { ARABIC_SIZE, TRANSLATION_SIZE, FontChoices, Segmented, SizeStepper, SwitchRow } from "./controls";
 import styles from "./index.module.scss";
 
-export default function SettingsContent() {
-  return (
-    <div className={styles.wrapper}>
-      {/* <View />
-      <hr className={styles.divider} /> */}
-      {/* <VerseMode />
-      <hr className={styles.divider} /> */}
-      <FontSize />
-      <hr className={styles.divider} />
-      <FontFamily />
-      <hr className={styles.divider} />
-      <Theme />
-      <hr className={styles.divider} />
-      {/*<AutoScroll />*/}
-      {/*<hr className={styles.divider} />*/}
-      {/*<Notification />*/}
-      {/*<hr className={styles.divider} />*/}
-      <Note />
-      <Reset />
-    </div>
-  );
-}
+// The settings (the header's settings dialog and the /settings page): three sections, each
+// with its title (text size, faces, appearance), then the note on where they are kept and
+// Reset. Everything applies at once and is saved in this browser (SettingsContext).
+// The face samples are the word "hadith" in Arabic, and each translation face's own name.
+// `headingLevel`: the sections' headings, 3 under the dialog's title, 2 under the page's.
+const ARABIC_SAMPLE = "الحديث";
 
-const FontSize = () => {
+export default function SettingsContent({ headingLevel = 3 }) {
   const { t } = useLocale();
+  const Heading = `h${headingLevel}`;
   const {
     fontSizeArabic,
     changeFontSizeArabic,
     fontSizeTranslation,
     changeFontSizeTranslation,
-  } = useContext(SettingsContext);
-
-  const handleFontSizeArabic = (size) => {
-    changeFontSizeArabic(size);
-  };
-
-  const handleFontSizeTranslation = (size) => {
-    changeFontSizeTranslation(size);
-  };
-
-  return (
-    <div className={`${styles.block} ${styles.font_size}`}>
-      <div className={styles.title}>{t("fontSize")}</div>
-      <div className={styles.list}>
-        <div className={styles.item}>
-          <div className={styles.label}>{t("arabicLabel")}</div>
-          <div className={styles.sizer}>
-            <IconButton
-              className={styles.sizer_btn}
-              onClick={() => handleFontSizeArabic(fontSizeArabic - 1)}
-              aria-label={t("decreaseArabicSize")}
-              title={t("decreaseArabicSize")}
-            >
-              <MinusIcon />
-            </IconButton>
-
-            <span className={styles.sizer_text}>{fontSizeArabic}</span>
-
-            <IconButton
-              className={styles.sizer_btn}
-              onClick={() => handleFontSizeArabic(fontSizeArabic + 1)}
-              aria-label={t("increaseArabicSize")}
-              title={t("increaseArabicSize")}
-            >
-              <PlusIcon />
-            </IconButton>
-          </div>
-        </div>
-        <div className={styles.item}>
-          <div className={styles.label}>{t("translationLabel")}</div>
-          <div className={styles.sizer}>
-            <IconButton
-              className={styles.sizer_btn}
-              onClick={() => handleFontSizeTranslation(fontSizeTranslation - 1)}
-              aria-label={t("decreaseTranslationSize")}
-              title={t("decreaseTranslationSize")}
-            >
-              <MinusIcon />
-            </IconButton>
-
-            <span className={styles.sizer_text}>{fontSizeTranslation}</span>
-
-            <IconButton
-              className={styles.sizer_btn}
-              onClick={() => handleFontSizeTranslation(fontSizeTranslation + 1)}
-              aria-label={t("increaseTranslationSize")}
-              title={t("increaseTranslationSize")}
-            >
-              <PlusIcon />
-            </IconButton>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const FontFamily = () => {
-  const { t } = useLocale();
-  const fontsArabic = fonts.arabic;
-  const fontsTranslation = fonts.translation;
-
-  const {
     fontFamilyArabic,
     changeFontFamilyArabic,
     fontFamilyTranslation,
     changeFontFamilyTranslation,
+    showArabic,
+    changeShowArabic,
+    theme,
+    changeTheme,
   } = useContext(SettingsContext);
 
-  const [expanded, setExpanded] = useState(false);
-  const controlAccordion = (panel) => (event, isExpanded) => {
-    setExpanded(isExpanded ? panel : false);
-  };
-
-  const handleFontFamilyArabic = (event) => {
-    changeFontFamilyArabic(event.target.value);
-  };
-
-  const handleFontFamilyTranslation = (event) => {
-    changeFontFamilyTranslation(event.target.value);
-  };
-
   return (
-    <div className={`${styles.block} ${styles.font_family}`}>
-      <div className={styles.title}>{t("fontFamily")}</div>
-      <div className={styles.list}>
-        <div className={styles.item}>
-          <Accordion
-            className={styles.accordion}
-            expanded={expanded === "font_arabic"}
-            onChange={controlAccordion("font_arabic")}
-          >
-            <AccordionSummary className={styles.accordion_summary}>
-              <IconButton
-                component="span"
-                tabIndex={-1}
-                aria-hidden="true"
-                className={styles.btn}
-              >
-                <span
-                  className={
-                    expanded !== "font_arabic" ? styles.none : styles.icon
-                  }
-                >
-                  <UpIcon />
-                </span>
-                <span
-                  className={
-                    expanded === "font_arabic" ? styles.none : styles.icon
-                  }
-                >
-                  <DownIcon />
-                </span>
-              </IconButton>
-              <div className={styles.label}>{t("chooseArabicFont")}</div>
-            </AccordionSummary>
+    <div className={styles.wrapper}>
+      <section className={styles.section} aria-labelledby="settings-size">
+        <Heading id="settings-size" className={styles.title}>
+          {t("fontSize")}
+        </Heading>
+        <SizeStepper
+          id="settings-size-arabic"
+          label={t("arabicLabel")}
+          value={fontSizeArabic}
+          limits={ARABIC_SIZE}
+          onChange={changeFontSizeArabic}
+          decreaseLabel={t("decreaseArabicSize")}
+          increaseLabel={t("increaseArabicSize")}
+        />
+        <SizeStepper
+          id="settings-size-translation"
+          label={t("translationLabel")}
+          value={fontSizeTranslation}
+          limits={TRANSLATION_SIZE}
+          onChange={changeFontSizeTranslation}
+          decreaseLabel={t("decreaseTranslationSize")}
+          increaseLabel={t("increaseTranslationSize")}
+        />
+      </section>
 
-            <AccordionDetails className={styles.accordion_details}>
-              <RadioGroup
-                name="fontArabic"
-                value={fontFamilyArabic}
-                onChange={handleFontFamilyArabic}
-              >
-                {fontsArabic &&
-                  fontsArabic.map((font) => (
-                    <FormControlLabel
-                      key={font.familyName}
-                      className="settings_radio"
-                      value={font.familyName}
-                      control={<Radio />}
-                      label={font.displayName}
-                    />
-                  ))}
-              </RadioGroup>
-            </AccordionDetails>
-          </Accordion>
+      <section className={styles.section} aria-labelledby="settings-font">
+        <Heading id="settings-font" className={styles.title}>
+          {t("fontFamily")}
+        </Heading>
+        <div className={styles.stack}>
+          <FontChoices
+            name="settings-font-arabic"
+            legend={t("arabicLabel")}
+            fonts={fonts.arabic}
+            stacks={fontStacks}
+            value={fontFamilyArabic}
+            onChange={changeFontFamilyArabic}
+            sample={ARABIC_SAMPLE}
+            rtl
+          />
+          <FontChoices
+            name="settings-font-translation"
+            legend={t("translationLabel")}
+            fonts={fonts.translation}
+            stacks={fontStacks}
+            value={fontFamilyTranslation}
+            onChange={changeFontFamilyTranslation}
+          />
         </div>
-        <div className={styles.item}>
-          <Accordion
-            className={styles.accordion}
-            expanded={expanded === "font_trans"}
-            onChange={controlAccordion("font_trans")}
-          >
-            <AccordionSummary className={styles.accordion_summary}>
-              <IconButton
-                component="span"
-                tabIndex={-1}
-                aria-hidden="true"
-                className={styles.btn}
-              >
-                <span
-                  className={
-                    expanded !== "font_trans" ? styles.none : styles.icon
-                  }
-                >
-                  <UpIcon />
-                </span>
-                <span
-                  className={
-                    expanded === "font_trans" ? styles.none : styles.icon
-                  }
-                >
-                  <DownIcon />
-                </span>
-              </IconButton>
-              <div className={styles.label}>{t("chooseTranslationFont")}</div>
-            </AccordionSummary>
+      </section>
 
-            <AccordionDetails className={styles.accordion_details}>
-              <RadioGroup
-                name="fontTranslation"
-                value={fontFamilyTranslation}
-                onChange={handleFontFamilyTranslation}
-              >
-                {fontsTranslation &&
-                  fontsTranslation.map((font) => (
-                    <FormControlLabel
-                      key={font.familyName}
-                      className="settings_radio"
-                      value={font.familyName}
-                      control={<Radio />}
-                      label={font.displayName}
-                    />
-                  ))}
-              </RadioGroup>
-            </AccordionDetails>
-          </Accordion>
+      <section className={styles.section} aria-labelledby="settings-theme">
+        <Heading id="settings-theme" className={styles.title}>
+          {t("theme")}
+        </Heading>
+        <div className={styles.stack}>
+          <Segmented
+            name="settings-theme"
+            legend={t("theme")}
+            hideLegend
+            value={theme}
+            onChange={changeTheme}
+            options={[
+              { value: "light", label: t("themeLight"), icon: <Brightness7Icon /> },
+              { value: "dark", label: t("themeDark"), icon: <Brightness4Icon /> },
+            ]}
+          />
         </div>
+        <SwitchRow label={t("showArabic")} checked={showArabic} onChange={changeShowArabic} />
+      </section>
+
+      <div className={styles.foot}>
+        <p className={styles.note}>
+          <span>{t("labelColon", { label: t("settingsNoteLabel") })} </span>
+          {t("settingsNote")}
+        </p>
+        <Reset />
       </div>
     </div>
   );
-};
-
-const Theme = () => {
-  const { t } = useLocale();
-  const [expanded, setExpanded] = useState(false);
-  const controlAccordion = (panel) => (event, isExpanded) => {
-    setExpanded(isExpanded ? panel : false);
-  };
-
-  const { theme, changeTheme } = useContext(SettingsContext);
-  const handleThemeChange = (newTheme) => {
-    changeTheme(newTheme);
-  };
-
-  return (
-    <div className={`${styles.block} ${styles.theme}`}>
-      <div className={styles.title}>{t("theme")}</div>
-      <div className={styles.list}>
-        <div className={styles.item}>
-          <Accordion
-            className={styles.accordion}
-            expanded={expanded === "theme"}
-            onChange={controlAccordion("theme")}
-          >
-            <AccordionSummary className={styles.accordion_summary}>
-              <IconButton
-                component="span"
-                tabIndex={-1}
-                aria-hidden="true"
-                className={styles.btn}
-              >
-                <span
-                  className={expanded !== "theme" ? styles.none : styles.icon}
-                >
-                  <UpIcon />
-                </span>
-                <span
-                  className={expanded === "theme" ? styles.none : styles.icon}
-                >
-                  <DownIcon />
-                </span>
-              </IconButton>
-              <div className={styles.label}>{t("chooseTheme")}</div>
-            </AccordionSummary>
-
-            <AccordionDetails className={styles.accordion_details}>
-              <div className={styles.themes}>
-                {themes &&
-                  themes.map((item) => {
-                    const name = item.name === "dark" ? t("themeDark") : t("themeLight");
-                    return (
-                      <button
-                        type="button"
-                        key={item.name}
-                        onClick={() => handleThemeChange(item.name)}
-                        className={
-                          theme === item.name
-                            ? `${styles.theme_item} ${styles.active}`
-                            : styles.theme_item
-                        }
-                        style={{
-                          background: item.color,
-                        }}
-                        aria-label={name}
-                        aria-pressed={theme === item.name ? "true" : "false"}
-                        title={name}
-                      >
-                        Aa
-                      </button>
-                    );
-                  })}
-              </div>
-            </AccordionDetails>
-          </Accordion>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const Note = () => {
-  const { t } = useLocale();
-  return (
-    <div className={`${styles.block} ${styles.note}`}>
-      <p className={styles.note_text}>
-        <span>{t("labelColon", { label: t("settingsNoteLabel") })} </span>
-        {t("settingsNote")}
-      </p>
-    </div>
-  );
-};
+}
 
 // Reset, then ten seconds to take it back. Reset stays put and does nothing while the
 // offer lasts (a double click can't undo itself); the status line says what happened,
@@ -373,9 +149,9 @@ const Reset = () => {
 
   return (
     <div className={styles.reset}>
-      <Button ref={resetButton} className={styles.btn_reset} onClick={reset} disableRipple>
+      <button ref={resetButton} type="button" className={styles.btn_reset} onClick={reset}>
         {t("resetSettings")}
-      </Button>
+      </button>
       <span className={styles.reset_status} role="status">
         {previous && (
           <>

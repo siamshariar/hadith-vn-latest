@@ -20,7 +20,8 @@ const formatDate = (date, locale) => {
   return value.toLocaleString(locale, options);
 };
 
-// Pinned hadiths (kind="pin") or the last-read history (kind="lastRead").
+// Pinned hadiths (kind="pin") or the last-read history (kind="lastRead"), in the header's
+// dialogs (`controller` closes it when a hadith opens) and on the saved page.
 // Entries are references (id, book, number); they open the current pages.
 // Books are named in the reader's language (lib/names).
 export default function StoredList({ kind, controller }) {
@@ -57,15 +58,17 @@ export default function StoredList({ kind, controller }) {
     <div className={styles.content}>
       {archivedCount > 0 && <p className={styles.archived}>{t("legacyArchived", { count: archivedCount })}</p>}
 
-      <div className={styles.lists} ref={list}>
-        {items.map((item, index) => {
-          const href = storedRefHref(item, { preferContext: isPin });
-          const label = storedRefLabel(item, names, t("topicCollection"));
-          const source = storedRefSource(item, names, t("topicCollection"));
-          return (
-            <div key={item.id} className={`${styles.item} ${isPin ? styles.withAction : ""}`}>
-              <a href={href} className={styles.link} onClick={(event) => open(event, href)}>
-                <span className={styles.left}>
+      {items.length > 0 ? (
+        <ul className={styles.lists} ref={list}>
+          {items.map((item, index) => {
+            const href = storedRefHref(item, { preferContext: isPin });
+            const label = storedRefLabel(item, names, t("topicCollection"));
+            const source = storedRefSource(item, names, t("topicCollection"));
+            const when = !isPin && item.date ? formatDate(item.date, locale) : "";
+            const meta = [source && source !== label ? source : "", when].filter(Boolean);
+            return (
+              <li key={item.id} className={`${styles.item} ${isPin ? styles.withAction : ""}`}>
+                <a href={href} className={styles.link} onClick={(event) => open(event, href)}>
                   <span className={styles.icon}>
                     <Icon />
                   </span>
@@ -73,28 +76,40 @@ export default function StoredList({ kind, controller }) {
                     <span className={styles.hadith_title} dir="auto">
                       {label}
                     </span>
-                    {source && source !== label && <span className={styles.source_info}>{source}</span>}
-                    {!isPin && item.date && <span className={styles.time}>{formatDate(item.date, locale)}</span>}
+                    {meta.length > 0 && (
+                      <span className={styles.meta}>
+                        {meta.map((part, i) => (
+                          <span key={i} className={i === 0 && source && source !== label ? styles.source_info : styles.time}>
+                            {part}
+                          </span>
+                        ))}
+                      </span>
+                    )}
                   </span>
-                </span>
-              </a>
-              {isPin && (
-                <button
-                  type="button"
-                  className={styles.delete_icon}
-                  onClick={() => unpin(item, index)}
-                  aria-label={`${t("unpin")}: ${label}`}
-                  title={t("unpin")}
-                >
-                  <CloseIcon />
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {items.length === 0 && <p className={styles.no_record}>{isPin ? t("noPins") : t("noLastRead")}</p>}
+                </a>
+                {isPin && (
+                  <button
+                    type="button"
+                    className={styles.delete_icon}
+                    onClick={() => unpin(item, index)}
+                    aria-label={`${t("unpin")}: ${label}`}
+                    title={t("unpin")}
+                  >
+                    <CloseIcon />
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className={styles.no_record}>
+          <span className={styles.emptyIcon}>
+            <Icon />
+          </span>
+          <p>{isPin ? t("noPins") : t("noLastRead")}</p>
+        </div>
+      )}
     </div>
   );
 }

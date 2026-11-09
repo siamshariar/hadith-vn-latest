@@ -1,17 +1,11 @@
 import { useLocale } from "../../contexts/LocaleContext";
-import css from "./style.module.scss";
-import styles from "./about.module.scss";
+import TextPage from "./TextPage";
 
 export default function PrivacyPolicyContent() {
   const { t } = useLocale();
   return (
-    <div className={css.wrapper}>
-      <div className={css.page_item}>
-        <div className={styles.quran_content}>
-          <h1 className={styles.title}>{t("privacyPolicy")}</h1>
-          <p>{t("privacyText")}</p>
-        </div>
-      </div>
-    </div>
+    <TextPage title={t("privacyPolicy")}>
+      <p>{t("privacyText")}</p>
+    </TextPage>
   );
 }

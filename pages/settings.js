@@ -4,8 +4,8 @@ import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
 import SettingsContent from "../components/settings";
-import css from "../components/pages/style.module.scss";
-import styles from "../components/pages/about.module.scss";
+import TextPage from "../components/pages/TextPage";
+import { sidebarCategoriesData } from "../components/sidebar/data";
 
 // The phone header and menu link here (on the page they open the same
 // settings in a dialog), so the link also works in a new tab.
@@ -22,14 +22,9 @@ export default function SettingsPage() {
         noindex
       />
 
-      <div className={css.wrapper}>
-        <div className={css.page_item}>
-          <div className={styles.quran_content}>
-            <h1 className={styles.title}>{t("settingsTitle")}</h1>
-          </div>
-          <SettingsContent />
-        </div>
-      </div>
+      <TextPage title={t("settingsTitle")} narrow>
+        <SettingsContent headingLevel={2} />
+      </TextPage>
     </>
   );
 }
@@ -41,5 +36,5 @@ SettingsPage.getLayout = function getLayout(page) {
 // Built once in the site's language (lib/api loadStatic); the phone header shows the
 // page title (an interface string).
 export async function getStaticProps() {
-  return loadStatic(async () => ({ props: { contentTitleKey: "settingsTitle" } }));
+  return loadStatic(async (lang) => ({ props: { contentTitleKey: "settingsTitle", sidebarData: await sidebarCategoriesData(lang) } }));
 }

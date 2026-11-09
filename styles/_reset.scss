@@ -1,52 +1,3 @@
-// material ui custom radio
-.verse_mode_radio {
-  margin-left: -4px !important;
-  padding: 8px 0;
-  margin-right: 17px !important;
-}
-.settings_radio svg.MuiSvgIcon-root {
-  width: 20px;
-  height: 20px;
-  fill: var(--control-edge); // a control's edge: 3:1 at least
-}
-
-.settings_radio .Mui-checked svg.MuiSvgIcon-root {
-  fill: var(--link);
-}
-
-.settings_radio .MuiFormControlLabel-label {
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.settings_radio .MuiRadio-root {
-  width: 30px;
-  height: 30px;
-}
-.verse_mode_radio .MuiRadio-root {
-  display: none;
-}
-
-.settings_radio .MuiTouchRipple-root {
-}
-
-.settings_radio .MuiTouchRipple-child {
-  background-color: #999;
-}
-.verse_mode_radio .MuiTypography-root {
-  padding: 6px 0;
-  background-color: #f5f5f5;
-  background-color: var(--hover);
-  border-radius: 28px;
-  width: 60px;
-  text-align: center;
-}
-.verse_mode_radio.checked .MuiTypography-root {
-  background-color: var(--link);
-  color: #fff;
-  color: var(--hover);
-}
-
 // material ui tooltip: ink on the page colour, inverted per theme
 .MuiTooltip-tooltipArrow {
   background: var(--ink) !important;
@@ -59,7 +10,6 @@
 
 // material ui menus and popovers: the floating surface (the one place a shadow is used)
 .MuiPopover-paper {
-  border: 1px solid var(--hairline);
   border-radius: var(--radius-md) !important;
   background-color: var(--surface) !important;
   color: var(--text) !important;

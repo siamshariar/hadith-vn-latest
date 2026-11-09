@@ -20,7 +20,7 @@
 
   @media (hover: hover) {
     &:hover {
-      border-color: var(--accent);
+      box-shadow: var(--shadow-hover);
 
       .title {
         color: var(--link);

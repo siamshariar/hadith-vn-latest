@@ -3,6 +3,7 @@ import { loadStatic } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
+import { sidebarCategoriesData } from "../components/sidebar/data";
 import PrivacyPolicyContent from "../components/pages/privacy-policy";
 
 export default function PrivacyPolicyPage() {
@@ -29,5 +30,5 @@ PrivacyPolicyPage.getLayout = function getLayout(page) {
 // Built once in the site's language (lib/api loadStatic); the phone header shows the
 // page title (an interface string).
 export async function getStaticProps() {
-  return loadStatic(async () => ({ props: { contentTitleKey: "privacyPolicy" } }));
+  return loadStatic(async (lang) => ({ props: { contentTitleKey: "privacyPolicy", sidebarData: await sidebarCategoriesData(lang) } }));
 }

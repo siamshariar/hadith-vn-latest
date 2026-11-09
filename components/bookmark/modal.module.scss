@@ -1,151 +1,171 @@
-// The bookmark dialogs (add, delete a folder, remove a bookmark): a floating layer
-// like components/utils/ModalPrimary, with the system's controls
-// (docs/hadith-design-system.md: buttons 44px with radius 8px, inputs at 16px).
-.content {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 340px;
-  max-width: calc(100vw - 32px);
-  padding: var(--space-6);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-xl);
-  background: var(--surface);
-  box-shadow: var(--shadow-float);
-  transform: translate(-50%, -50%);
+// Saving a hadith (components/bookmark/add) inside the site's dialog (components/core/Dialog):
+// the folders as radio buttons in rows, the chosen one ringed in the accent with a check.
+
+.fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-// 44px close button in the corner
-.close {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  z-index: 1;
+.legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.option {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: var(--tap);
-  height: var(--tap);
-  border: none;
-  border-radius: 50%;
-  background-color: transparent;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
   cursor: pointer;
   transition: background-color var(--duration) var(--ease);
 
-  &:focus-visible {
-    background-color: var(--hover);
+  // the radio button itself covers the row, invisible: the pointer and the keyboard reach it
+  input {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 
-.close svg {
-  width: 22px;
-  height: 22px;
-  fill: var(--text-secondary);
-}
-
-.title {
-  margin-bottom: var(--space-4);
-  padding-inline-end: var(--tap);
-  color: var(--ink);
-  font-size: var(--text-md);
-  font-weight: 500;
-  line-height: var(--leading-snug);
-}
-
-.sub_title {
-  display: block; // a <label> for the folder select
-  margin-bottom: var(--space-2);
-  color: var(--text);
-  font-size: var(--text-sm);
-  font-weight: 500;
-}
-
-.title_desc {
-  margin-bottom: var(--space-6);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
-}
-
-// 16px text (smaller makes iOS zoom in on focus) on a solid surface (the open list
-// of a select takes these colours on some systems, unreadable over transparent).
-.input_area select,
-.input_area input {
-  width: 100%;
-  min-height: var(--tap);
-  margin-bottom: var(--space-4);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--control-edge);
-  border-radius: var(--radius-md);
-  background-color: var(--surface);
-  color: var(--text);
-  font-size: var(--text-base);
-}
-
-.input_area input {
-  display: none;
-}
-
-.input_area input.open {
-  display: block;
-}
-
-.buttons {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.btn {
-  min-width: 88px;
-  min-height: var(--tap);
-  padding: 0 var(--space-4);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--duration) var(--ease);
-}
-
-.btn_add {
-  background-color: var(--accent);
-  color: var(--on-accent);
-}
-
-// destructive: the error colour, never the green that means "go ahead"
-.btn_remove {
-  background-color: var(--error-txt);
-  color: var(--surface);
+.checked {
+  background: var(--accent-tint);
 }
 
 @media (hover: hover) {
-  .close:hover {
-    background-color: var(--hover);
-  }
-
-  .btn_add:hover {
-    background-color: var(--accent-hover);
-  }
-
-  .btn_remove:hover {
-    background-color: var(--error-hover);
+  .option:not(.checked):hover {
+    background: var(--surface-card);
   }
 }
 
-.message {
-  overflow: hidden;
+.icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--accent-tint);
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--accent);
+  }
+}
+
+// the plus is drawn with a stroke
+.iconNew svg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5px;
+}
+
+.text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+// an empty ring; the chosen one filled with a check
+.mark {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--control-edge);
+  border-radius: 50%;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: var(--on-accent);
+  }
+}
+
+.checked .mark {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+// 16px text (smaller makes iOS zoom in on focus)
+.input {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: var(--space-3);
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-md);
+  background-color: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-base);
+
+  &::placeholder {
+    color: var(--muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 0;
+  }
+
+  // a name it refused: ringed in the error colour, with the message under it
+  &[aria-invalid="true"] {
+    outline: 2px solid var(--error-txt);
+    outline-offset: 0;
+  }
+}
+
+.error {
+  margin: 0;
   color: var(--error-txt);
   font-size: var(--text-sm);
-  line-height: 0;
-  transition: line-height var(--duration) var(--ease);
-}
+  line-height: 1.4;
 
-.message.open {
-  margin-bottom: var(--space-3);
-  line-height: var(--leading-snug);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .message {
-    transition: none;
+  &:not(:empty) {
+    margin-top: var(--space-2);
   }
 }

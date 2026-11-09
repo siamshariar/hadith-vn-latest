@@ -286,7 +286,7 @@ module.exports = spec(module, 'navigation', (h) => {
   }, { smoke: true });
 
   h.test(
-    'desktop header: logo, the search icon, About in the ⋯ menu, the sections on text pages',
+    'desktop header: logo, the search icon, About in the ⋯ menu; text pages in the reading frame',
     async (t) => {
       const { page } = await h.open(t, '/');
       await page.locator('[data-site-header]').getByRole('link', { name: 'Tìm kiếm', exact: true }).filter({ visible: true }).click();
@@ -296,10 +296,10 @@ module.exports = spec(module, 'navigation', (h) => {
       await page.getByRole('menuitem', { name: 'Giới thiệu', exact: true }).click();
       await h.waitForPath(page, (url) => url.pathname === '/about', 'About from the menu');
       await waitForH1(page, 'Giới thiệu');
-      // a text page has no navigation card: the header names the two ways in
-      await page.getByRole('link', { name: 'Bộ sưu tập hadith', exact: true }).first().click();
-      await h.waitForPath(page, (url) => url.pathname === '/books', 'collections');
-      await waitForH1(page, 'Bộ sưu tập hadith');
+      // a text page as the reading pages: the navigation card beside it, the title bar, the trail
+      await page.locator('aside').getByRole('link').first().waitFor({ state: 'visible' });
+      assert.equal(await page.locator('main nav[aria-label] [aria-current="page"]').innerText(), 'Giới thiệu');
+      assert.equal(await page.locator('[data-site-header] nav').count(), 0, 'no section words in the header');
       await page.getByRole('link', { name: 'Hadith.vn', exact: true }).first().click();
       await h.waitForPath(page, (url) => url.pathname === '/', 'logo');
       await waitForH1(page, 'Hadith tiếng Việt');

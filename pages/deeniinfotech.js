@@ -3,6 +3,7 @@ import { loadStatic } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
+import { sidebarCategoriesData } from "../components/sidebar/data";
 import DeeniinfotechContent from "../components/pages/deeniinfotech";
 
 export default function DeeniInfoTech() {
@@ -29,5 +30,5 @@ DeeniInfoTech.getLayout = function getLayout(page) {
 // Built once in the site's language (lib/api loadStatic); the phone header shows the
 // page title.
 export async function getStaticProps() {
-  return loadStatic(async () => ({ props: { contentTitle: "Deeni Info Tech" } }));
+  return loadStatic(async (lang) => ({ props: { contentTitle: "Deeni Info Tech", sidebarData: await sidebarCategoriesData(lang) } }));
 }

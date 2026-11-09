@@ -1,5 +1,6 @@
-// Pinned hadiths and the last-read history (components/pin/StoredList): one row per hadith, a
-// hairline between rows, the book and the date in the secondary colour. Pins have an unpin button.
+// Pinned hadiths and the last-read history (components/pin/StoredList): the rows of the bookmark
+// folders (components/bookmark/list.module.scss): the icon in a tinted circle, the hadith, then
+// its book and the date in the secondary colour. Pins have an unpin button at the end.
 .content {
   width: 100%;
 }
@@ -7,33 +8,27 @@
 .lists {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .item {
   position: relative;
   min-width: 0;
-
-  & + .item {
-    border-top: 1px solid var(--hairline-soft);
-  }
 }
 
 .link {
   display: flex;
   align-items: center;
-  min-height: 56px;
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
   color: var(--text);
-  cursor: pointer;
   transition: background-color var(--duration) var(--ease);
-
-  @media (hover: hover) {
-    &:hover {
-      background: var(--hover);
-    }
-  }
 
   &:focus-visible {
     outline-offset: -2px;
@@ -42,25 +37,34 @@
 
 // room for the unpin button
 .withAction .link {
-  padding-inline-end: 52px;
+  padding-inline-end: 56px;
 }
 
-.left {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  min-width: 0;
+@media (hover: hover) {
+  .link:hover {
+    background: var(--hover);
+
+    .hadith_title {
+      color: var(--link);
+    }
+  }
 }
 
 .icon {
   display: flex;
   flex: 0 0 auto;
-  padding-top: 2px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--accent);
 
   svg {
     width: 20px;
     height: 20px;
-    fill: var(--text-secondary);
+    fill: var(--accent);
   }
 }
 
@@ -71,25 +75,45 @@
   min-width: 0;
 }
 
+// a long topic title: two lines at most
 .hadith_title {
-  color: var(--text);
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink);
   font-size: 15px;
+  font-weight: 500;
   line-height: 1.4;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  transition: color var(--duration) var(--ease);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+
+  span + span::before {
+    content: "·";
+    margin-inline-end: var(--space-2);
+    color: var(--muted);
+  }
 }
 
 .source_info,
 .time {
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 
 // a 44px button at the end of the row, its circle tinted on hover
 .delete_icon {
   position: absolute;
   top: 50%;
-  inset-inline-end: 4px;
+  inset-inline-end: 6px;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -103,18 +127,23 @@
   color: var(--text-secondary);
   cursor: pointer;
   transform: translateY(-50%);
-  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease), opacity var(--duration) var(--ease);
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     fill: currentColor;
+  }
+
+  &:focus-visible {
+    background: var(--hover);
+    color: var(--ink);
   }
 
   @media (hover: hover) {
     &:hover {
       background: var(--hover);
-      color: var(--text);
+      color: var(--ink);
     }
   }
 }
@@ -131,15 +160,44 @@
   }
 }
 
+// nothing yet: a quiet icon and a line, in the middle
 .no_record {
-  padding: var(--space-4) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
   color: var(--text-secondary);
+  text-align: center;
+
+  p {
+    max-width: 32em;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+}
+
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--muted);
+
+  svg {
+    width: 26px;
+    height: 26px;
+    fill: var(--muted);
+  }
 }
 
 .archived {
   margin: 0 0 12px;
   padding: 10px 12px;
-  border: 1px solid var(--notice-bdr);
   border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);

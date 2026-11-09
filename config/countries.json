@@ -11,6 +11,8 @@
     "`language` and `ui` are only the defaults, and English is shown beside other languages.",
     "`accent`: the colour stops of the band behind the home page's cards and of a wordmark's bar;",
     "without one, the brand green (styles/_variables.scss). `shareImage`: og:image.",
+    "`navStyle`: \"edge\" puts the navigation on the screen's left edge from 1024px (a 300px panel",
+    "under the header, closing to a 70px rail); without it, a card on the page's centred frame.",
     "Check against a running API: npm run check:sites"
   ],
   "vn": { "name": "Vietnam", "localization": "vn", "language": "vi", "ui": "vi", "ogLocale": "vi_VN", "siteName": "Hadith.vn", "logo": "/img/logo.png", "logoDark": "/img/logo_dark.png", "accent": ["#DB241E", "#E05A1F", "#E6921A", "#ECB918", "#F1E416"], "contactEmail": "quran.vn@gmail.com" },
@@ -29,5 +31,5 @@
   "pk": { "name": "Pakistan", "localization": "ur", "language": "ur", "ui": "ur", "ogLocale": "ur_PK" },
   "ru": { "name": "Russian Federation", "localization": "ru", "language": "ru", "ui": "ru", "ogLocale": "ru_RU" },
   "iq": { "name": "Iraq", "localization": "ku", "language": "ku", "ui": "ku", "ogLocale": "ku_TR" },
-  "ac": { "name": "International", "international": true, "language": "en", "ui": "en", "ogLocale": "en_US", "siteName": "Hadith.ac", "logo": "/img/logo_ac.png", "logoDark": "/img/logo_ac_dark.png", "accent": ["#0D9488", "#2563EB", "#4F46E5"], "shareImage": "/img/s_logo_ac.png" }
+  "ac": { "name": "International", "international": true, "language": "en", "ui": "en", "ogLocale": "en_US", "siteName": "Hadith.ac", "logo": "/img/logo_ac.png", "logoDark": "/img/logo_ac_dark.png", "accent": ["#0D9488", "#2563EB", "#4F46E5"], "shareImage": "/img/s_logo_ac.png", "navStyle": "edge" }
 }

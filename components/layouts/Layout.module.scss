@@ -49,11 +49,6 @@
   border-top: 1px solid var(--hairline);
 }
 
-// The plain text pages (LayoutTertiary): one card in the middle.
-.layout3 {
-  --frame: 1028px; // 980 + 24 at each side
-}
-
 // The home page: its own, wider frame of three columns.
 .home {
   --frame: 1168px;
@@ -118,23 +113,58 @@
     border-top: 0;
   }
 
-  // One white card, as a reading page's, with the same reading column inside it.
-  .layout3 {
-    .content {
+  // A site whose navigation sits on the screen's edge (site.navStyle "edge": the international
+  // site), as the reading templates' C: the panel down the left edge under the header (300px,
+  // a hairline on its right; closed, the 70px rail), the 940px card in the middle of what is
+  // left, the header's logo and tools at the screen's edges, the footer beside the panel.
+  .edge {
+    --frame: none;
+    --scroll-top-right: max(6px, calc((100vw - var(--nav-width) - 48px - var(--reading-card)) / 2 - 36px));
+
+    .body {
+      display: block;
       max-width: none;
+      margin: 0;
+      padding: calc(var(--header-height) + 32px) var(--space-5) 0 calc(var(--nav-width) + var(--space-5));
+      transition: padding-left 200ms var(--ease);
     }
 
-    .container {
-      min-height: calc(100vh - 240px);
-      padding: 32px;
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      box-shadow: var(--shadow-card);
+    .content {
+      max-width: var(--reading-card);
+      margin: 0 auto;
     }
+
+    // align-self back to normal: browsers now align fixed boxes too, and the card's flex-start
+    // sized the panel to its whole list and ignored `top`
+    .sidebar {
+      position: fixed;
+      top: var(--header-offset);
+      bottom: 0;
+      left: 0;
+      align-self: auto;
+      height: auto;
+      border-right: 1px solid var(--hairline);
+      border-radius: 0;
+      box-shadow: none;
+      transition: top 250ms var(--ease), width 200ms var(--ease);
+    }
+
+    .footer {
+      padding-left: var(--nav-width);
+    }
+  }
+
+  // No navigation in the flow to make room for: the page as tall as the screen, the footer below.
+  :global(html) .edge .withNav {
+    min-height: calc(100vh - 72px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .edge .body {
+    transition: none !important;
+  }
+
   .sidebar {
     transition: none !important;
   }

@@ -1,19 +1,23 @@
-// The bookmark folders (components/mobile/StorageBookmark on /bookmarks, components/bookmark/list in
-// the header's dialog): one row per folder, two columns from 600px.
+// The bookmark folders (components/bookmark/list): in the header's dialog one column, on the
+// saved page two from 600px. Each row: the folder in a tinted circle, its name and how many it
+// holds; the delete button at its end. Pins and the history (components/pin/list.module.scss)
+// have the same rows.
 .content {
   width: 100%;
-  padding: var(--space-1) 0;
 }
 
 .lists {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-1) var(--space-4);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px var(--space-4);
   width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 @media (min-width: 600px) {
-  .lists {
+  .lists:not(.single) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -26,69 +30,77 @@
 .link {
   display: flex;
   align-items: center;
-  min-height: 56px;
-  padding: var(--space-2) var(--space-2);
-  // room for the delete button
-  padding-inline-end: 52px;
-  border-radius: var(--radius-sm);
+  gap: var(--space-3);
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
   color: var(--text);
-  cursor: pointer;
   transition: background-color var(--duration) var(--ease);
-
-  @media (hover: hover) {
-    &:hover {
-      background: var(--hover);
-    }
-  }
 
   &:focus-visible {
     outline-offset: -2px;
   }
 }
 
-.left {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  min-width: 0;
+// room for the delete button
+.withAction .link {
+  padding-inline-end: 56px;
+}
+
+@media (hover: hover) {
+  .link:hover {
+    background: var(--hover);
+
+    .name {
+      color: var(--link);
+    }
+  }
 }
 
 .icon {
   display: flex;
   flex: 0 0 auto;
-  padding-top: 2px;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-tint);
 
   svg {
     width: 20px;
     height: 20px;
-    fill: var(--text-secondary);
+    fill: var(--accent);
   }
 }
 
 .desc {
   display: flex;
   flex-direction: column;
+  gap: 2px;
   min-width: 0;
-
-  span:nth-child(1) {
-    color: var(--text);
-    font-size: 15px;
-    line-height: 1.4;
-    overflow-wrap: anywhere;
-  }
-
-  span:nth-child(2) {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-    line-height: 1.4;
-  }
 }
 
-// a 44px button, its circle tinted on hover; at the end of the row
+.name {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  transition: color var(--duration) var(--ease);
+}
+
+.meta {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+// a 44px button at the end of the row, its circle tinted on hover; red under the pointer
 .delete_icon {
   position: absolute;
   top: 50%;
-  inset-inline-end: 4px;
+  inset-inline-end: 6px;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -102,12 +114,17 @@
   color: var(--text-secondary);
   cursor: pointer;
   transform: translateY(-50%);
-  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease), opacity var(--duration) var(--ease);
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     fill: currentColor;
+  }
+
+  &:focus-visible {
+    background: var(--hover);
+    color: var(--error-txt);
   }
 
   @media (hover: hover) {
@@ -131,7 +148,36 @@
   }
 }
 
+// nothing yet: a quiet icon and a line, in the middle
 .no_record {
-  padding: var(--space-2) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
   color: var(--text-secondary);
+  text-align: center;
+
+  p {
+    max-width: 32em;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+}
+
+.emptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+
+  svg {
+    width: 26px;
+    height: 26px;
+    fill: var(--muted);
+  }
 }

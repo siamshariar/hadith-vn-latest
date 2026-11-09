@@ -1,18 +1,17 @@
 "use client";
 
-import Modal from "@mui/material/Modal";
-import Backdrop from "@mui/material/Backdrop";
-import Fade from "@mui/material/Fade";
-import CloseIcon from "../icons/Close";
+import { useEffect, useState } from "react";
 import { useLocale } from "../../contexts/LocaleContext";
+import { copyText } from "../../lib/clipboard";
+import Dialog from "./Dialog";
+import LinkIcon from "../icons/Link";
+import CheckIcon from "../icons/Check";
 
 import {
   EmailShareButton,
   EmailIcon,
   FacebookShareButton,
   FacebookIcon,
-  FacebookMessengerShareButton,
-  FacebookMessengerIcon,
   TwitterShareButton,
   TwitterIcon,
   LinkedinShareButton,
@@ -33,141 +32,66 @@ import {
 
 import styles from "./share.module.scss";
 
-export default function Share({ open, closer, url, title }) {
+// Where a browser has no share sheet of its own (navigator.share; components/content/HadithOptions
+// uses that where there is one): the site's dialog with the hadith's citation (`label`), its link
+// to copy, then the services, each with its name under its icon. `title`: the text the services
+// put with the link.
+export default function Share({ open, closer, url, title, label }) {
   const { t } = useLocale();
+  const [copied, setCopied] = useState(null);
+
+  useEffect(() => {
+    if (copied === null) return undefined;
+    const timer = window.setTimeout(() => setCopied(null), 2500);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  const copy = () => copyText(url).then((ok) => setCopied(ok));
+  const done = closer(false);
+
+  const services = [
+    { name: t("email"), Button: EmailShareButton, Icon: EmailIcon, props: { subject: title } },
+    { name: "Facebook", Button: FacebookShareButton, Icon: FacebookIcon },
+    { name: "X (Twitter)", short: "X", Button: TwitterShareButton, Icon: TwitterIcon, props: { title } },
+    { name: "WhatsApp", Button: WhatsappShareButton, Icon: WhatsappIcon, props: { title } },
+    { name: "Telegram", Button: TelegramShareButton, Icon: TelegramIcon, props: { title } },
+    { name: "LinkedIn", Button: LinkedinShareButton, Icon: LinkedinIcon, props: { title } },
+    { name: "Viber", Button: ViberShareButton, Icon: ViberIcon, props: { title } },
+    { name: "LINE", Button: LineShareButton, Icon: LineIcon, props: { title } },
+    { name: "Reddit", Button: RedditShareButton, Icon: RedditIcon, props: { title } },
+    { name: "Tumblr", Button: TumblrShareButton, Icon: TumblrIcon, props: { title } },
+  ];
+
   return (
-    <Modal
-      open={open}
-      onClose={closer(false)}
-      className={styles.root}
-      aria-labelledby="share-title"
-      closeAfterTransition
-      BackdropComponent={Backdrop}
-      BackdropProps={{
-        timeout: 100,
-        classes: {
-          root: styles.backdrop,
-        },
-      }}
-    >
-      <Fade in={open} timeout={100} style={{ transitionDelay: "0ms" }}>
-        <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="share-title">
-          <button type="button" className={styles.close} onClick={closer(false)} aria-label={t("close")} title={t("close")}>
-            <CloseIcon />
-          </button>
+    <Dialog open={open} onClose={done} title={t("shareHadith")} description={label}>
+      <div className={styles.link}>
+        <input
+          className={styles.url}
+          type="text"
+          readOnly
+          value={url}
+          aria-label={t("copyLink")}
+          onFocus={(event) => event.target.select()}
+        />
+        <button type="button" className={`${styles.copy} ${copied ? styles.copied : ""}`} onClick={copy}>
+          {copied ? <CheckIcon /> : <LinkIcon />}
+          <span>{copied ? t("copied") : t("copyLink")}</span>
+        </button>
+      </div>
+      <p className={styles.status} role="status">
+        {copied === false ? t("copyFailed") : ""}
+      </p>
 
-          <h2 id="share-title" className={styles.title}>
-            {t("shareHadith")}
-          </h2>
-
-          <div className={styles.lists}>
-            <div className={styles.item}>
-              <EmailShareButton
-                aria-label={t("email")}
-                url={url}
-                onShareWindowClose={closer(false)}
-                subject={title}
-              >
-                <EmailIcon size={32} round={true} />
-              </EmailShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <FacebookShareButton aria-label="Facebook" url={url} onShareWindowClose={closer(false)}>
-                <FacebookIcon size={32} round={true} />
-              </FacebookShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <TwitterShareButton
-                aria-label="X (Twitter)"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <TwitterIcon size={32} round={true} />
-              </TwitterShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <LinkedinShareButton
-                aria-label="LinkedIn"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <LinkedinIcon size={32} round={true} />
-              </LinkedinShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <WhatsappShareButton
-                aria-label="WhatsApp"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <WhatsappIcon size={32} round={true} />
-              </WhatsappShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <LineShareButton
-                aria-label="LINE"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <LineIcon size={32} round={true} />
-              </LineShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <TelegramShareButton
-                aria-label="Telegram"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <TelegramIcon size={32} round={true} />
-              </TelegramShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <ViberShareButton
-                aria-label="Viber"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <ViberIcon size={32} round={true} />
-              </ViberShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <RedditShareButton
-                aria-label="Reddit"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <RedditIcon size={32} round={true} />
-              </RedditShareButton>
-            </div>
-
-            <div className={styles.item}>
-              <TumblrShareButton
-                aria-label="Tumblr"
-                url={url}
-                onShareWindowClose={closer(false)}
-                title={title}
-              >
-                <TumblrIcon size={32} round={true} />
-              </TumblrShareButton>
-            </div>
-          </div>
-        </div>
-      </Fade>
-    </Modal>
+      <ul className={styles.services}>
+        {services.map(({ name, short, Button, Icon, props = {} }) => (
+          <li key={name}>
+            <Button className={styles.service} aria-label={name} url={url} onShareWindowClose={done} resetButtonStyle {...props}>
+              <Icon size={44} round />
+              <span aria-hidden="true">{short || name}</span>
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </Dialog>
   );
 }

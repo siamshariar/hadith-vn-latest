@@ -3,6 +3,7 @@ import { loadStaticPage } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
+import page from "../components/content/Page.module.scss";
 import styles from "../components/content/NotFound.module.scss";
 
 // A server error (an exception while a page was rendered), inside the site's header and
@@ -16,28 +17,30 @@ export default function ServerErrorPage() {
   return (
     <>
       <Meta title={t("serverErrorTitle")} description={t("serverErrorMessage")} noindex />
-      <div className={styles.notFound}>
-        <p className={styles.code} aria-hidden="true">
-          500
-        </p>
-        <h1 className={styles.title}>{t("serverErrorTitle")}</h1>
-        <p className={styles.message}>{t("serverErrorMessage")}</p>
-        <ul className={styles.links}>
-          <li>
-            <Link href="/" className={styles.primary}>
-              {t("home")}
-            </Link>
-          </li>
-          <li>
-            <Link href="/books">{t("books")}</Link>
-          </li>
-          <li>
-            <Link href="/categories">{t("categories")}</Link>
-          </li>
-          <li>
-            <Link href="/search">{t("search")}</Link>
-          </li>
-        </ul>
+      <div className={page.page}>
+        <div className={styles.notFound}>
+          <p className={styles.code} aria-hidden="true">
+            500
+          </p>
+          <h1 className={styles.title}>{t("serverErrorTitle")}</h1>
+          <p className={styles.message}>{t("serverErrorMessage")}</p>
+          <ul className={styles.links}>
+            <li>
+              <Link href="/" className={styles.primary}>
+                {t("home")}
+              </Link>
+            </li>
+            <li>
+              <Link href="/books">{t("books")}</Link>
+            </li>
+            <li>
+              <Link href="/categories">{t("categories")}</Link>
+            </li>
+            <li>
+              <Link href="/search">{t("search")}</Link>
+            </li>
+          </ul>
+        </div>
       </div>
     </>
   );

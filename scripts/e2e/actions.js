@@ -146,15 +146,18 @@ module.exports = spec(module, 'hadith actions', (h) => {
         await page.getByRole('menuitem', { name: 'Chia sẻ', exact: true }).click();
       };
       await share();
-      const dialog = page.locator('[role="presentation"]').filter({ has: page.locator('#share-title') });
-      await waitForText(dialog.locator('#share-title'), 'Chia sẻ hadith');
+      const dialog = page.getByRole('dialog', { name: 'Chia sẻ hadith' });
+      await dialog.waitFor();
+      // the citation, the link to copy, then the services
+      await waitForText(dialog.locator('p').first(), 'Sahih al-Bukhari 1');
+      assert.match(await dialog.getByRole('textbox', { name: 'Copy liên kết' }).inputValue(), new RegExp(`/books/${BUKHARI}/hadiths/1$`));
       for (const name of ['Email', 'Facebook', 'X (Twitter)', 'WhatsApp', 'Telegram']) {
-        assert.equal(await dialog.getByRole('button', { name }).count(), 1, `${name} share button`);
+        assert.equal(await dialog.getByRole('button', { name, exact: true }).count(), 1, `${name} share button`);
       }
       await dialog.getByRole('button', { name: 'Đóng' }).click();
       await dialog.waitFor({ state: 'detached' });
       await share();
-      await dialog.locator('#share-title').waitFor();
+      await dialog.waitFor();
       await page.keyboard.press('Escape');
       await dialog.waitFor({ state: 'detached' });
     },
@@ -180,7 +183,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
       await page.getByRole('menuitem', { name: 'Chia sẻ', exact: true }).click();
       const shared = await until(() => page.evaluate(() => window.__shared), 'navigator.share called');
       assert.deepEqual(shared, { title: 'Sahih al-Bukhari 1 | Hadith.vn', url: canonical });
-      assert.equal(await page.locator('#share-title').count(), 0, 'no fallback dialog when the browser shares');
+      assert.equal(await page.getByRole('dialog', { name: 'Chia sẻ hadith' }).count(), 0, 'no fallback dialog when the browser shares');
     },
     { only: 'phone' }
   );
@@ -193,13 +196,15 @@ module.exports = spec(module, 'hadith actions', (h) => {
       const header = page.locator('article > header');
       await header.getByRole('button', { name: HADITH_OPTIONS }).click();
       await page.getByRole('menuitem', { name: 'Lưu dấu trang', exact: true }).click();
-      const dialog = page.locator('[role="presentation"]').filter({ has: page.locator('h2', { hasText: 'Lưu dấu trang' }) });
+      const dialog = page.getByRole('dialog', { name: 'Lưu dấu trang' });
       await dialog.waitFor();
-      const folder = dialog.getByRole('combobox', { name: 'Chọn thư mục' });
+      // which hadith, then the folders as radio buttons (the default one chosen) and a new one
+      await waitForText(dialog.locator('p').first(), 'Sahih al-Bukhari 1');
       assert.deepEqual(
-        await folder.locator('option').evaluateAll((options) => options.map((o) => [o.value, o.textContent.trim()])),
-        [['favorites', 'Yêu thích'], ['create', 'Tạo thư mục mới']]
+        await dialog.getByRole('radio').evaluateAll((inputs) => inputs.map((input) => [input.value, input.checked])),
+        [['favorites', true], ['create', false]]
       );
+      assert.equal(await dialog.getByRole('radio', { name: /^Yêu thích/ }).isChecked(), true);
       await dialog.getByRole('button', { name: 'Thêm', exact: true }).click();
       await dialog.waitFor({ state: 'detached' });
       await until(async () => (await header.getByRole('button', { name: 'Bỏ dấu trang' }).count()) === 1, 'button shows the bookmark');
@@ -221,7 +226,8 @@ module.exports = spec(module, 'hadith actions', (h) => {
       await waitForText(card.locator('a[class*="citation"]'), 'Sahih al-Bukhari 1');
 
       await card.getByRole('button', { name: 'Bỏ dấu trang' }).click();
-      const confirm = page.locator('[role="presentation"]').filter({ has: page.locator('h2', { hasText: 'Bỏ dấu trang?' }) });
+      const confirm = page.getByRole('dialog', { name: 'Bỏ dấu trang?' });
+      assert.equal(await confirm.getByRole('button', { name: 'Huỷ', exact: true }).count(), 1, 'a way out');
       await confirm.getByRole('button', { name: 'Xoá', exact: true }).click();
       await card.waitFor({ state: 'detached' });
       await waitForText(page.getByText('Thư mục này chưa có dấu trang.'), 'Thư mục này chưa có dấu trang.');
@@ -238,8 +244,8 @@ module.exports = spec(module, 'hadith actions', (h) => {
     const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/3`);
     await page.locator('article > header').getByRole('button', { name: HADITH_OPTIONS }).click();
     await page.getByRole('menuitem', { name: 'Lưu dấu trang', exact: true }).click();
-    const dialog = page.locator('[role="presentation"]').filter({ has: page.locator('h2', { hasText: 'Lưu dấu trang' }) });
-    await dialog.getByRole('combobox', { name: 'Chọn thư mục' }).selectOption('create');
+    const dialog = page.getByRole('dialog', { name: 'Lưu dấu trang' });
+    await dialog.getByRole('radio', { name: 'Tạo thư mục mới' }).check();
     const name = dialog.getByRole('textbox', { name: 'Tên thư mục' });
     await name.waitFor({ state: 'visible' });
     await dialog.getByRole('button', { name: 'Thêm', exact: true }).click();
@@ -258,7 +264,7 @@ module.exports = spec(module, 'hadith actions', (h) => {
     // on desktop the delete button shows on hover or when the folder has keyboard focus
     await panel.getByRole('link', { name: /Học tập/ }).focus();
     await panel.getByRole('button', { name: 'Xoá thư mục Học tập' }).click();
-    const confirm = page.locator('[role="presentation"]').filter({ has: page.locator('h2', { hasText: 'Xoá thư mục?' }) });
+    const confirm = page.getByRole('dialog', { name: 'Xoá thư mục?' });
     await confirm.getByRole('button', { name: 'Xoá', exact: true }).click();
     await until(async () => (await panel.getByRole('link', { name: /Học tập/ }).count()) === 0, 'folder removed');
     await page.reload();
@@ -393,17 +399,19 @@ module.exports = spec(module, 'hadith actions', (h) => {
       ]) {
         await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
         await page.getByRole('menuitem', { name: item, exact: true }).click();
-        const dialog = page.getByRole('dialog').or(page.locator('[role="presentation"]').filter({ hasText: item })).last();
+        const dialog = page.getByRole('dialog', { name: item, exact: true });
         await waitForText(dialog, expected);
+        // the way to the saved page, at the foot
+        assert.equal(await dialog.getByRole('link', { name: 'Xem tất cả', exact: true }).getAttribute('href'), '/bookmarks');
         await page.keyboard.press('Escape');
         await sleep(300);
       }
       // a pin opens its hadith and closes the dialog
       await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
       await page.getByRole('menuitem', { name: 'Đã ghim', exact: true }).click();
-      await page.locator('[role="presentation"]').getByRole('link', { name: 'Sahih al-Bukhari 1' }).click();
+      await page.getByRole('dialog', { name: 'Đã ghim' }).getByRole('link', { name: 'Sahih al-Bukhari 1' }).click();
       await h.waitForPath(page, (url) => url.pathname === `/books/${BUKHARI}/hadiths/1`, 'pin from the dialog');
-      await until(async () => (await page.locator('[role="presentation"]').filter({ hasText: 'Đã ghim' }).count()) === 0, 'dialog closed');
+      await until(async () => (await page.getByRole('dialog', { name: 'Đã ghim' }).count()) === 0, 'dialog closed');
     },
     { only: 'desktop' }
   );

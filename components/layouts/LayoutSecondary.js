@@ -11,6 +11,7 @@ import FooterWeb from "../web/Footer";
 import Sidebar from "../sidebar";
 import ScrollFrame from "./ScrollFrame";
 import SkipLink from "../core/SkipLink";
+import { site } from "../../lib/sites";
 import styles from "./Layout.module.scss";
 
 // Pages pass what the navigation should open on: the categories (default) or the books,
@@ -33,7 +34,7 @@ const Layout = ({
       <PinContextProvider>
         <BookmarkContextProvider>
           <SidenavContextProvider>
-            <div className={styles.wrapper}>
+            <div className={`${styles.wrapper} ${site.navStyle === "edge" ? styles.edge : ""}`}>
               <SkipLink />
               <div className={styles.header} data-site-header="">
                 <HeaderWeb page={null} />

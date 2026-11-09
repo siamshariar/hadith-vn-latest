@@ -37,20 +37,20 @@
     align-items: center;
     min-height: 44px;
     padding: 0 16px;
-    border: 1px solid var(--hairline);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
     color: var(--text);
+    transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
 
     &:hover,
     &:focus-visible {
-      border-color: var(--accent);
+      background: var(--surface-card);
       color: var(--link);
     }
   }
 
   .primary {
     background: var(--accent);
-    border-color: var(--accent);
     color: var(--on-accent);
 
     &:hover,

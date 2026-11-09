@@ -3,6 +3,7 @@ import { loadStatic } from "../lib/api";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Layout from "../components/layouts/LayoutTertiary";
+import { sidebarCategoriesData } from "../components/sidebar/data";
 import GratefulContent from "../components/pages/grateful";
 
 export default function GratefulPage() {
@@ -29,5 +30,5 @@ GratefulPage.getLayout = function getLayout(page) {
 // Built once in the site's language (lib/api loadStatic); the phone header shows the
 // page title (an interface string).
 export async function getStaticProps() {
-  return loadStatic(async () => ({ props: { contentTitleKey: "grateful" } }));
+  return loadStatic(async (lang) => ({ props: { contentTitleKey: "grateful", sidebarData: await sidebarCategoriesData(lang) } }));
 }

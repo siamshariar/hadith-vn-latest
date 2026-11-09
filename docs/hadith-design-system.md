@@ -47,7 +47,7 @@ sites' (`quran-apps/styles/_variables.scss`); where theirs fails AA, a comment i
 | `--press` | ink at 8% | white at 10% | Pressed on a touch screen, laid over the control's own fill |
 | `--hairline` | `#e8e8ea` | `#313a55` | Dividers and card edges |
 | `--hairline-soft` | `#eff1f2` | `#2c3550` | Dividers inside a card |
-| `--control-edge` | `#8a9096` (3.2:1) | `#77819a` (3.6:1) | Edges that identify a control: selects, outlined buttons, radios |
+| `--control-edge` | `#8a9096` (3.2:1) | `#77819a` (3.6:1) | The ring of a radio button, a switch that is off |
 
 ### Text
 
@@ -150,8 +150,13 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
   circle tinted `--hover` on hover. Two exceptions: a stepper's − and + (one control), and a submit
   button inside a field.
 - **Elevation.** The cards at rest have `--shadow-card`, almost nothing. Only floating layers get
-  `--shadow-float`: menus, popovers, dialogs, sheets and the drawer. The cards of the home page's
-  grid lift on hover, on the web.
+  `--shadow-float`: menus, popovers, dialogs, sheets and the drawer. A card under the pointer
+  takes `--shadow-hover` (the Quran sites' card shadow, `0 5px 30px` at 20%); its edge never changes
+  colour on hover.
+- **Few edges.** Controls are filled, not outlined: fields, selects, steppers, quiet buttons and
+  choices sit on `--surface-soft` (`--surface-card` under the pointer); notices and badges have their
+  colour and no edge. Edges are left for dividers (hairlines), the cards on phones and the rings of
+  radio buttons; focus is always the 2px ring.
 - **Touch.** On touch screens every control is at least 44×44px (`--tap`); inline links are at least
   24px tall. A citation's tag is small, with a 44px tap area.
 - **Hover** styles sit inside `@media (hover: hover)`, so a tap leaves no stuck colour.
@@ -175,6 +180,12 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 - **The frame** is `--frame` (`components/layouts/Layout.module.scss`): the navigation card is
   `clamp(280px, 22vw, 300px)`, so small laptops keep room for the text. Everything that lines up with
   the frame uses it: header, footer, back-to-top.
+- **The international site (ac): the navigation on the edge** (`navStyle: "edge"` in
+  `config/countries.json`; the reading templates' C). From 1024px the navigation is a panel down the
+  screen's left edge under the header, white with a hairline on its right, the same width (70px
+  closed, as the rail); the 940px card stands in the middle of what is left; the header's logo and
+  tools sit at the screen's edges; the footer starts beside the panel. The home page is the same as
+  on the other sites. The country sites (vn, bd) keep the centred frame.
 - **Closed navigation.** `html[data-nav="closed"]`, saved in `localStorage` (`hadith-nav`) and applied
   before the first paint by `pages/_document.js`, so it never flashes open. The navigation is then
   quran.vn's 70px rail, and rail, card and header stand exactly where quran.vn has them (the
@@ -186,7 +197,10 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
   the library as cards (`EntryCard`), three columns. Phones and tablets have no band: the hadith of
   the day as a card, then the same. No search field (the header's icon), no figures, no list of
   languages. A language with nothing of its own in the books leads with the categories.
-- **Text pages** (about, settings, contact): one white card, 32px inside.
+- **Text pages** (about, contact, support, settings, the error pages; `LayoutTertiary`): the
+  reading pages' frame, as the Quran sites' about page: the same header, the navigation card, the
+  page's card (`components/pages/TextPage`: the trail, the title in the grey bar, the text at 16px)
+  and the footer.
 - **No bottom navigation bar.** The header and the drawer reach everything, and the reading space
   stays the text's.
 
@@ -212,7 +226,7 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 
 | Component | Specification |
 |---|---|
-| Header (web) | White, `--shadow-card`, 66px. Logo; the search icon (the search page, the one search field), theme, ⋮. No language menu: each site has one language. On text pages also Books and Categories as words |
+| Header (web) | White, `--shadow-card`, 66px. Logo; the search icon (the search page, the one search field), theme, ⋮. No language menu: each site has one language. The same on every page |
 | Header (phones) | White, hairline, 54px. Reading pages: back, the page's title with ▾ (it opens the drawer; cut with an ellipsis, the page shows it in full), search, reading settings. Home: menu, logo, search, reading settings |
 | Navigation (`components/sidebar`) | One component, on the web's card and in the drawer. Two tabs (Books, Categories; a real tablist, arrow keys move), a filter, and one level of the tree at a time: books → chapters, categories → subcategories. A collection or a category with subcategories is a link: its page comes on the right (the chapters, the subcategories) and the list goes down into it at once. A crumb goes back up and links to that book's or category's page. The current row is tinted, its number disc green, and kept in view |
 | Navigation foot (web) | Saved, settings, close to the rail |
@@ -231,15 +245,17 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 | Home band cards | White, 24px inside, the title 24px, three lines of text, a link at the foot; the band's soft shadow |
 | Reference cells | Label above value, each cell a tile on `--surface-soft`; the grades table is ruled across |
 | Topic-collection translation | Its own box: hairline, radius 8px, `--accent-wash`, its label badge, its note, its source line. Never merged with the hadith's own translation |
-| Buttons | Primary: `--accent` on `--on-accent`, 44px. Secondary: transparent, `--control-edge`. Destructive: `--error-txt` on `--surface`. A submit that loads a page keeps its label and shows a turning ring (`aria-busy`, `hooks/useSubmitBusy`) |
+| Buttons | Primary: `--accent` on `--on-accent`, 44px. Secondary: `--surface-soft`, no edge (`--surface-card` under the pointer). Destructive: `--error-txt` on `--surface`. A submit that loads a page keeps its label and shows a turning ring (`aria-busy`, `hooks/useSubmitBusy`) |
 | Icon buttons | 44px circles, always with an `aria-label` in the interface language; the SVGs in `components/icons` are `aria-hidden` |
-| Fields | Filter and search: grey pills, no edge. Selects: `--surface`, `--control-edge`, radius 8px. 44px or more, 16px text on touch screens (iOS zooms into anything smaller). Focus: a 2px ring |
+| Fields | Filter and search: grey pills, no edge. Text fields and selects: `--surface-soft`, no edge, radius 8px; a refused value is ringed in the error colour. 44px or more, 16px text on touch screens (iOS zooms into anything smaller). Focus: a 2px ring |
 | Filter chips | Radius 6px on `--surface-soft`. In force: `--accent-tint`, `--accent`, weight 500 |
 | Filter switch | A link (`role="switch"`) drawn as a 36×20px switch with its words; toggles on Space too |
 | Menus and popovers | `--surface`, radius 8px, `--shadow-float` |
-| Dialogs | `--surface`, radius 16px, `--shadow-float`. An `h2` title names the dialog; a round close button in the corner |
-| Reading settings | Sizes, Arabic shown, theme, reset, and a link to all settings. A bottom sheet on phones and a side panel on wider screens, so the text stays in view while it changes |
-| Settings page | Sizes, faces, theme. Reset resets at once, then offers Undo for ten seconds |
+| Dialogs | One component, `components/core/Dialog`: the title (18px, an `h2` that names it) and a 44px round close button; a line under it says what it is about (the hadith, the folder); the content scrolls, the head and the buttons stay. Buttons at the foot, right-aligned: the safe one first (Cancel, grey), the one that acts last (`primary`: the accent; `danger`: the error colour). Web: centred, radius 12px, `--shadow-float`, 420px for a question, 520px for a list or the settings. Phones (under 600px): a sheet from the bottom, radius 16px at the top, the buttons sharing its width. Choices inside are grey rows or tiles with a radio button: the chosen one tinted in the accent, with a check |
+| Saved lists | Folders, pins, last read: rows of 64px, the icon in a tinted circle, the name (15px, 500) and a line under it; delete or unpin at the end (on hover or focus with a mouse). Nothing yet: a quiet icon and a line, centred. In the header's dialogs, with "View all" to the saved page |
+| Share | Where the browser has no share sheet: the citation, the link with Copy, then the services, each with its name |
+| Reading settings | Sizes, Arabic shown, theme, reset, and a link to all settings: the settings' controls (`components/settings/controls`) under the dialog's head. A bottom sheet on phones and a side panel on wider screens, so the text stays in view while it changes |
+| Settings (dialog and page) | Three sections: text size (steppers − 36 +), faces (tiles, each drawn in its own face, two to a row), appearance (light or dark side by side, the Arabic shown). Everything applies at once. Reset resets at once, then offers Undo for ten seconds |
 | Footer | As the Quran sites': white, across the screen, one row on the frame, 24px above and below: the copyright on the left, the site's pages between thin bars, the credit on the right, 14px. Phones: the links, then the copyright and the credit, centred |
 
 ## Themes
@@ -273,7 +289,7 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 - **Language and direction.** Arabic blocks carry `lang="ar" dir="rtl"`. Each translation
   carries its language's code and direction. Names inside sentences are wrapped in `<bdi>`.
 - **Colour is never the only signal.** Inline links are underlined; the current row and the tab in
-  force are also heavier, the tab underlined; a selected segment is outlined.
+  force are also heavier, the tab underlined; a selected segment is raised on the surface.
 - **Skip link.** The first Tab stop on every page jumps to `main#viewport`, in the interface
   language.
 - **Dialogs** carry `role="dialog"`, `aria-modal` and a name, move focus in, keep it there,
@@ -306,7 +322,7 @@ A saved size is set on `<html>`; while the reader has not chosen one, the defaul
 |---|---|
 | Loading | Skeleton blocks in `--hairline` on `--canvas`, the shape of the content (cards, Arabic lines right-aligned); route changes show a 3px `--accent` progress bar |
 | Empty | One sentence in `--text-secondary`, with the way forward as a link or button |
-| Error | A box with a dashed `--control-edge` edge on `--surface`, the message, and a primary "Retry" button. The API's own (English, technical) message shows in development only. A 404 without the API's JSON body is an outage, not a missing page: the reader gets this state and search engines a 503 |
+| Error | A `--surface-soft` box, the message, and a primary "Retry" button. The API's own (English, technical) message shows in development only. A 404 without the API's JSON body is an outage, not a missing page: the reader gets this state and search engines a 503 |
 | Fallback or missing translation | `--notice-*` badge or box, worded as what it is |
 | Disabled | `--disabled` text, no hover; steppers drop to 40% opacity at their limits |
 | Current or selected | `--accent-tint` background, or an `--accent` underline or fill |

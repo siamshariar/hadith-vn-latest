@@ -1,100 +1,90 @@
-// Reader settings (the /settings page and the settings modals): groups split by
-// hairlines, each with its title; 44px controls throughout.
+// The settings (components/settings): sections split by hairlines, each with its title; the
+// controls are components/settings/controls. The dialog and the page give the padding.
 .wrapper {
   display: block;
-  position: relative;
-  padding-left: var(--space-4);
-  padding-right: var(--space-4);
 }
 
-.block {
-  padding-top: var(--space-3);
-  padding-bottom: var(--space-3);
-}
-
-.list {
+.section {
   display: flex;
   flex-direction: column;
-}
+  padding: var(--space-4) 0;
 
-.item {
-  display: flex;
-  align-items: center;
-}
+  & + & {
+    border-top: 1px solid var(--hairline-soft);
+  }
 
-.item:last-child {
-  margin-bottom: 0;
+  &:first-child {
+    padding-top: 0;
+  }
 }
 
 .title {
-  margin-bottom: var(--space-3);
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 500;
-  line-height: var(--leading-snug);
-}
-
-.label {
+  margin: 0 0 var(--space-1);
   color: var(--text-secondary);
   font-size: var(--text-sm);
-}
-
-.btn {
-}
-
-.note_text {
-  padding-top: var(--space-3);
-  margin-bottom: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  line-height: var(--leading-normal);
-}
-
-.note_text span {
   font-weight: 500;
-}
-
-.divider {
-  width: 100%;
-  height: 0;
-  border: none;
-  border-top: 1px solid var(--hairline);
-}
-
-.message {
-  color: var(--error-txt);
-  font-size: var(--text-xs);
-  overflow: hidden;
-  line-height: 0;
-  transition: line-height 250ms var(--ease);
-}
-
-.message.open {
   line-height: 1.4;
 }
 
-.none {
-  display: none;
-}
-
-.icon {
+.stack {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-2) 0;
 }
 
-// "Reset settings": a text link, then "Settings reset. Undo" for ten seconds
+// the note and Reset, under a hairline
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: var(--leading-normal);
+
+  span {
+    font-weight: 500;
+  }
+}
+
+// "Reset settings": a quiet button, then "Settings reset. Undo" for ten seconds
 .reset {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: var(--space-4);
-  margin-top: var(--space-1);
+  gap: var(--space-2) var(--space-4);
 }
 
 .reset_status {
   color: var(--text-secondary);
   font-size: var(--text-sm);
+}
+
+.btn_reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease), color var(--duration) var(--ease);
+
+  &:focus-visible {
+    color: var(--link);
+  }
 }
 
 .btn_undo {
@@ -111,235 +101,9 @@
   cursor: pointer;
 }
 
-.btn_reset {
-  min-width: var(--tap) !important;
-  min-height: var(--tap) !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: var(--radius-sm) !important;
-  background-color: transparent !important;
-  color: var(--link) !important;
-  font-family: inherit !important;
-  font-size: var(--text-sm) !important;
-  font-weight: 500 !important;
-  line-height: 1.4 !important;
-  letter-spacing: 0 !important; // MUI's button tracking would space Bengali letters apart
-  text-decoration: underline !important;
-  text-underline-offset: 3px;
-  text-transform: none !important;
-}
-
-.sizer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-}
-
-// 44px tap area around a 30px square stepper
-.sizer_btn {
-  width: var(--tap);
-  height: var(--tap);
-  user-select: none !important;
-  padding: 0 !important;
-  border-radius: var(--radius-md) !important;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 7px;
-    border: 1px solid var(--control-edge);
-    border-radius: var(--radius-sm);
-  }
-}
-
-.sizer_btn svg {
-  width: 14px;
-  height: 14px;
-  stroke: var(--text-secondary);
-  stroke-width: 3px;
-}
-
-.sizer_text {
-  width: 52px;
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 500;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.accordion {
-  box-shadow: none !important;
-  background: none !important;
-  width: 100%;
-}
-
-.accordion_summary {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: var(--tap) !important;
-  padding: 0 !important;
-}
-
-// MUI fills a focused summary with 12% black, which takes the grey label under 4.5:1: the site's
-// focus ring instead, on the hover tint.
-.accordion_summary:global(.Mui-focusVisible) {
-  border-radius: var(--radius-sm);
-  background-color: var(--hover) !important;
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.accordion_summary > div {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  margin: 0 !important;
-}
-
-.accordion_summary .btn {
-  width: 28px;
-  height: 28px;
-  padding: 0 !important;
-  min-height: unset !important;
-  margin-right: var(--space-2);
-  border-radius: var(--radius-sm) !important;
-  background-color: var(--hover);
-  transition: background-color var(--duration) var(--ease);
-}
-
-.accordion_summary:hover .btn {
-  background-color: var(--accent);
-}
-
-.accordion_summary .btn svg {
-  width: 14px;
-  height: 14px;
-  stroke-width: 3px;
-  stroke: var(--text-secondary);
-  transition: stroke var(--duration) var(--ease);
-}
-
-.accordion_summary:hover .btn svg {
-  stroke: var(--on-accent);
-}
-
-.accordion_details {
-  padding: 0 0 0 36px !important;
-}
-
-.themes {
-  width: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-// a swatch of each theme's page, "Aa" in its ink; the current one ringed in green
-.theme_item {
-  display: block;
-  width: 64px;
-  height: var(--tap);
-  margin: 4px;
-  padding: 0;
-  border: 1px solid var(--control-edge);
-  border-radius: var(--radius-md);
-  color: #f1f2ec; // the dark theme's ink
-  font: inherit;
-  font-weight: 500;
-  line-height: 42px;
-  text-align: center;
-  cursor: pointer;
-}
-
-.theme_item.active {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.theme_item:nth-child(1) {
-  color: #141413; // the light theme's ink
-}
-
-// block specific
-.block.notification .label,
-.block.auto_scroll .label {
-  font-size: 13px;
-  color: var(--link);
-}
-
-.block.scroll_mode .list {
-  flex-direction: row;
-  padding-left: 4px;
-}
-
-.block.scroll_mode .item {
-  margin-right: 22px;
-}
-
-.block.auto_scroll .item,
-.block.notification .item {
-  flex-direction: row;
-  justify-content: space-between;
-}
-
-.block.theme,
-.block.auto_scroll,
-.block.notification {
-  padding-top: var(--space-4);
-  padding-bottom: var(--space-4);
-}
-
-.block.font_family .item,
-.block.theme .item {
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.block.view .item {
-  padding: var(--space-2) 0;
-}
-
-.block.view .label {
-  margin-left: 14px;
-}
-
-.block.font_size,
-.block.font_family,
-.block.scroll_mode {
-  padding-top: var(--space-4);
-}
-
-.block.font_size .item {
-  flex-direction: row;
-  justify-content: space-between;
-  padding: var(--space-1) 0;
-}
-
-.block.theme .item {
-  flex-direction: column;
-}
-
-.block.theme .accordion_details {
-  padding-left: 0 !important;
-  padding-top: var(--space-3) !important;
-  margin-left: -4px;
-}
-
-@media screen and (min-width: 1024px) {
-  .wrapper {
-    padding-left: 0;
-    padding-right: 0;
-  }
-}
-
-@media only screen and (min-width: 1024px) {
-  // the card or the dialog has the padding
-  .wrapper {
-    padding-left: 0;
-    padding-right: 0;
+@media (hover: hover) {
+  .btn_reset:hover {
+    background: var(--surface-card);
+    color: var(--link);
   }
 }

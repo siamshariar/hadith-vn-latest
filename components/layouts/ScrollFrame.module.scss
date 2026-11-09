@@ -47,10 +47,11 @@
 }
 
 // The web: 16px beside the frame where the margin has room (--frame: Layout.module.scss), else
-// at the screen's edge, clear of the text inside the card's padding.
+// at the screen's edge, clear of the text inside the card's padding. A layout that is not a
+// centred frame (the navigation on the edge) gives its own (--scroll-top-right).
 @media only screen and (min-width: 1024px) {
   .top {
-    right: max(6px, calc((100vw - var(--frame)) / 2 - 36px));
+    right: var(--scroll-top-right, max(6px, calc((100vw - var(--frame)) / 2 - 36px)));
     bottom: 32px;
   }
 }

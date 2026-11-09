@@ -1,0 +1,251 @@
+// The site's dialogs (components/core/Dialog). docs/hadith-design-system.md, "Dialogs".
+
+.backdrop {
+  background-color: rgba(17, 20, 24, 0.48) !important;
+}
+
+// Centred, as tall as its content up to the screen less 32px above and below; the content
+// scrolls, the title and the buttons stay.
+.panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  width: calc(100vw - 32px);
+  max-height: calc(100vh - 64px);
+  max-height: calc(100dvh - 64px);
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+  color: var(--text);
+  transform: translate(-50%, -50%);
+  outline: none;
+}
+
+.sm {
+  max-width: 420px;
+}
+
+.md {
+  max-width: 520px;
+}
+
+.head {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 14px 12px 6px 24px;
+}
+
+.title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+// 44px, the icon in the secondary colour; a tinted circle under the pointer
+.close {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+
+  svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
+  }
+
+  &:focus-visible {
+    background: var(--hover);
+    color: var(--ink);
+  }
+}
+
+.description {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0 24px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 24px 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.description + .body {
+  padding-top: var(--space-4);
+}
+
+// rows that light up to 12px from the panel's edges keep their own padding
+.flush {
+  padding: 4px 12px 12px;
+}
+
+.actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: 24px 24px 20px;
+}
+
+// under content that scrolls: a hairline above, so the buttons read as the panel's foot
+.body + .actions {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 96px;
+  min-height: var(--tap);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease), border-color var(--duration) var(--ease), color var(--duration) var(--ease);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.secondary {
+  background: var(--surface-soft);
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+// destructive: the error colour, never the green that means "go ahead"
+.danger {
+  background: var(--error-txt);
+  color: var(--surface);
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background: var(--hover);
+    color: var(--ink);
+  }
+
+  .secondary:hover:not(:disabled) {
+    background: var(--surface-card);
+    color: var(--link);
+  }
+
+  .primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .danger:hover:not(:disabled) {
+    background: var(--error-hover);
+  }
+}
+
+.secondary:focus-visible {
+  color: var(--link);
+}
+
+// Phones: a sheet from the bottom of the screen, the buttons sharing its width.
+@media (max-width: 599px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+    padding: 0 env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    transform: none;
+    animation: sheet-in 220ms var(--ease);
+  }
+
+  .head {
+    padding: 10px 6px 4px 20px;
+  }
+
+  .description {
+    padding: 0 20px;
+  }
+
+  .body {
+    padding: 8px 20px 20px;
+  }
+
+  .flush {
+    padding: 4px 8px 12px;
+  }
+
+  .actions {
+    flex-wrap: nowrap;
+    padding: 20px 20px 16px;
+
+    > * {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+  }
+
+  .body + .actions {
+    padding-top: var(--space-3);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(32px);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

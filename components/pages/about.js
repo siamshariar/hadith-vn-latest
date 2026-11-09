@@ -1,9 +1,8 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { useLocale } from "../../contexts/LocaleContext";
+import TextPage from "./TextPage";
 import { site } from "../../lib/sites";
-import css from "./style.module.scss";
-import styles from "./about.module.scss";
 
 export const DEENI_URL = "http://deeniinfotech.com";
 // The deployment's contact address, then Deeni Info Tech's
@@ -28,26 +27,21 @@ export function EmailLinks({ emails = EMAILS }) {
 export default function AboutContent() {
   const { t } = useLocale();
   return (
-    <div className={css.wrapper}>
-      <div className={css.page_item}>
-        <div className={styles.quran_content}>
-          <h1 className={styles.title}>{t("about")}</h1>
-          <p>
-            {t("aboutApp")} {t("siteTagline")}
-          </p>
-          <p>
-            {t("aboutMethod")} <Link href="/sources">{t("dataAndMethod")}</Link>.
-          </p>
-          <p>
-            {t("poweredBy")}{" "}
-            <a href={DEENI_URL} target="_blank" rel="noopener noreferrer">
-              Deeni Info Tech
-            </a>
-            : {t("aboutDeeni")}
-          </p>
-          <EmailLinks />
-        </div>
-      </div>
-    </div>
+    <TextPage title={t("about")}>
+      <p>
+        {t("aboutApp")} {t("siteTagline")}
+      </p>
+      <p>
+        {t("aboutMethod")} <Link href="/sources">{t("dataAndMethod")}</Link>.
+      </p>
+      <p>
+        {t("poweredBy")}{" "}
+        <a href={DEENI_URL} target="_blank" rel="noopener noreferrer">
+          Deeni Info Tech
+        </a>
+        : {t("aboutDeeni")}
+      </p>
+      <EmailLinks />
+    </TextPage>
   );
 }
