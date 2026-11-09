@@ -160,7 +160,7 @@
   }
 
   .print_footer span {
-    font-size: 13px;
+    font-size: var(--text-sm);
     color: var(--muted);
   }
   .print_footer span:nth-child(1) {

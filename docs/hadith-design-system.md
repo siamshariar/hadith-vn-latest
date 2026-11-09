@@ -118,11 +118,11 @@ appears anywhere else, and never near reading text.
 | Role | Size | Line-height | Use |
 |---|---|---|---|
 | Page title | 22px in the grey bar (web) / 18px (phones), regular | 33px / 1.4 | `h1` of every reading page |
-| Arabic | `--fs-arabic`: 36px on every screen (the Quran sites' default) | 1.6 | The reader can change it |
+| Arabic | `--fs-arabic`: 36px on every screen (the Quran sites' default) | 1.5 (36/54, as the Quran sites) | The reader can change it |
 | Translation | `--fs-trans`: 18px on every screen (the Quran sites' default) | 1.6; 1.8 for scripts with stacked signs (`styles/_core`) | The reader can change it |
 | `--text-md` | 18px | 1.5 | A hadith's title; section titles on phones |
 | `--text-base` | 16px | 1.5 (the Quran sites' 16/24) | Interface text |
-| `--text-sm` | 14px | 1.5 | Labels, metadata, the citation's tag |
+| `--text-sm` | 14px | 1.5 | Labels, metadata, the citation's tag, the trail, badges: the Quran sites' small size (no 13px) |
 | `--text-xs` | 12px | 1.4 | Counts, the source line |
 
 A saved size is set on `<html>`; while the reader has not chosen one, the defaults above apply

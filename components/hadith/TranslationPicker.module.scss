@@ -58,7 +58,7 @@
   border-radius: 999px;
   background: var(--accent-tint, var(--accent-wash));
   color: var(--brand-ink, var(--link));
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 400;
 }
 
@@ -272,7 +272,7 @@
 .groupTitle {
   margin: 18px 0 6px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 400;
 }
 
@@ -370,7 +370,7 @@
 
 .edition {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 400;
   line-height: 1.4;
   overflow-wrap: anywhere;

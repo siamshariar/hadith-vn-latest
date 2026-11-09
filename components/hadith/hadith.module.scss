@@ -204,7 +204,7 @@
   border-radius: 10px;
   background: var(--grade-bg);
   color: var(--grade-txt);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -231,7 +231,7 @@
   border-radius: var(--radius-pill);
   background: var(--grade-bg);
   color: var(--grade-txt);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -319,7 +319,7 @@
 
 .linkedNote {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 
   a {
@@ -341,7 +341,7 @@
   align-items: center;
   min-height: 24px;
   color: var(--link);
-  font-size: 13px;
+  font-size: var(--text-sm);
   font-weight: 400;
 
   &:hover,

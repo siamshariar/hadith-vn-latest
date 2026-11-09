@@ -94,7 +94,7 @@
   flex-wrap: wrap;
   gap: 0 var(--space-2);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.4;
 
   span + span::before {
@@ -201,6 +201,6 @@
   border-radius: var(--radius-md);
   background: var(--notice-bg);
   color: var(--notice-txt);
-  font-size: 13px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
