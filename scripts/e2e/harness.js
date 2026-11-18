@@ -147,8 +147,9 @@ function namesOf(lang) {
 const isTopicCollection = (book) => [book.slug, book.code, book.source].includes('hadeethenc');
 
 // The categories the lists show for content in `lang`: those with something to read in it
-// and their ancestors (lib/api.js readableCategories, which Node cannot import: its paths
-// are the bundler's). Arabic, the original, keeps them all.
+// and their ancestors, a parent's `totalChildren` counting the children kept (lib/api.js
+// readableCategories, which Node cannot import: its paths are the bundler's). Arabic, the
+// original, keeps them all.
 function readableCategories(categories, lang) {
   if (lang === 'ar') return categories;
   const byId = new Map(categories.map((c) => [c.id, c]));
@@ -158,7 +159,13 @@ function readableCategories(categories, lang) {
     .forEach((c) => {
       for (let node = c; node && !kept.has(node.id); node = byId.get(node.parentId)) kept.add(node.id);
     });
-  return categories.filter((c) => kept.has(c.id));
+  const children = new Map();
+  categories.forEach((c) => {
+    if (kept.has(c.id) && c.parentId != null) children.set(c.parentId, (children.get(c.parentId) || 0) + 1);
+  });
+  return categories
+    .filter((c) => kept.has(c.id))
+    .map((c) => (c.totalChildren > 0 ? { ...c, totalChildren: children.get(c.id) || 0 } : c));
 }
 const bookName = (lang, book, tr = null) =>
   (isTopicCollection(book) && tr ? tr('topicCollection') : null) || (namesOf(lang).books || {})[book.slug] || book.name;

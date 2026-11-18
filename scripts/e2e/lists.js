@@ -175,8 +175,15 @@ module.exports = spec(module, 'lists', (h) => {
     await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(direct)), 'direct hadiths');
   });
 
-  h.test('"Danh mục con": one card per subcategory (name and count, no Arabic), links', async (t) => {
+  h.test('"Danh mục con": one card per subcategory with Vietnamese hadiths (name and count, no Arabic), links', async (t) => {
     const category = await api(`/categories/the-creed${loc()}`);
+    // the subcategories with nothing to read in Vietnamese are left out, as in every list of categories,
+    // and a card opens a subcategory's page only when that page lists readable subcategories
+    const readable = new Map(readableCategories(await api(`/categories${loc()}`), 'vi').map((c) => [c.id, c]));
+    const children = category.children
+      .filter((child) => child.totalTranslated > 0)
+      .map((child) => ({ ...child, totalChildren: readable.get(child.id).totalChildren }));
+    assert.ok(children.length < category.children.length, 'the-creed has a subcategory without Vietnamese hadiths');
     const { page } = await h.open(t, `/categories/${category.slug}`);
     const section = page.locator('section[aria-labelledby="category-children"]');
     await waitForText(section.locator('h2'), 'Danh mục con');
@@ -188,7 +195,7 @@ module.exports = spec(module, 'lists', (h) => {
     );
     assert.deepEqual(
       cards,
-      category.children.map((child) => ({
+      children.map((child) => ({
         href: child.totalChildren > 0 ? `/categories/${child.slug}` : `/categories/${child.slug}/hadiths`,
         text: [child.title, `${viNumber(child.totalHadith)} hadith`],
       }))
@@ -204,12 +211,12 @@ module.exports = spec(module, 'lists', (h) => {
       [`/categories/${category.slug}/hadiths`, `Xem ${viNumber(category.totalTranslated)} hadith có bản dịch tiếng Việt`],
       [`/categories/${category.slug}/hadiths/all`, `Tất cả ${viNumber(category.totalHadith)} hadith`],
     ]);
-    // a parent opens its own subcategories; a leaf (here one with an Arabic slug) its hadiths
-    const parent = category.children.find((c) => c.totalChildren > 0);
+    // a parent opens its own subcategories; a leaf its hadiths
+    const parent = children.find((c) => c.totalChildren > 0);
     await section.locator(`a[href="/categories/${encodeURIComponent(parent.slug)}"]`).click();
     await h.waitForPath(page, (url) => decodeURIComponent(url.pathname) === `/categories/${parent.slug}`, 'subcategory page');
     await waitForH1(page, parent.title);
-    const leaf = category.children.find((c) => c.totalChildren === 0);
+    const leaf = children.find((c) => c.totalChildren === 0);
     if (leaf) {
       await h.goto(page, `/categories/${category.slug}`);
       await section.locator(`a[href="/categories/${encodeURIComponent(leaf.slug)}/hadiths"]`).click();
@@ -217,6 +224,22 @@ module.exports = spec(module, 'lists', (h) => {
       await waitForH1(page, leaf.title);
       assert.equal(await page.locator('article[id^="hadith-"]').count(), Math.min(20, leaf.totalHadith));
     }
+  });
+
+  h.test('"Danh mục con": a subcategory whose own subcategories have nothing in Vietnamese opens its hadiths', async (t) => {
+    const every = await api(`/categories${loc()}`);
+    const readable = new Map(readableCategories(every, 'vi').map((c) => [c.id, c]));
+    // a readable subcategory with subcategories in the API, none of them readable in Vietnamese
+    const child = every.find((c) => c.parentId != null && c.totalChildren > 0 && readable.has(c.id)
+      && readable.get(c.id).totalChildren === 0);
+    assert.ok(child, 'such a subcategory exists in the data');
+    const parent = every.find((c) => c.id === child.parentId);
+    const { page } = await h.open(t, `/categories/${parent.slug}`);
+    const section = page.locator('section[aria-labelledby="category-children"]');
+    await waitForText(section.locator('h2'), 'Danh mục con');
+    const hrefs = await section.locator('li a').evaluateAll((links) => links.map((a) => decodeURIComponent(a.getAttribute('href'))));
+    assert.ok(hrefs.includes(`/categories/${child.slug}/hadiths`), `${child.slug} opens its hadiths`);
+    assert.ok(!hrefs.includes(`/categories/${child.slug}`), `${child.slug} does not open an empty list of subcategories`);
   });
 
   h.test('category tree page: each top-level category over its subcategories\' cards', async (t) => {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { server, shareImage } from "../../../lib/config";
-import { booksForHadiths, getCategory, getCategoryHadiths, loadStatic, staticPaths } from "../../../lib/api";
+import { booksForHadiths, getCategories, getCategory, getCategoryHadiths, loadStatic, readableChildren, staticPaths } from "../../../lib/api";
 import { categoryCrumbs, categoryHadithsPath, categoryPath, listPath } from "../../../lib/hadith";
 import { useLocale } from "../../../contexts/LocaleContext";
 import Meta from "../../../components/core/meta";
@@ -156,7 +156,9 @@ export async function getStaticProps({ params }) {
     }
     return {
       props: {
-        category,
+        // Subcategories with nothing to read in the language are left out, as in every list of categories
+        // (the flat list is the sidebar's, already loaded; without it the subcategories are only filtered)
+        category: { ...category, children: readableChildren(category.children, await getCategories(lang).catch(() => null), lang) },
         preview,
         previewFiltered,
         books: await booksForHadiths(preview.hadiths, lang),
