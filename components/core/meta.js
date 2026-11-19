@@ -3,7 +3,7 @@ import Head from "next/head";
 import { useLocale } from "../../contexts/LocaleContext";
 import { SettingsContext } from "../../contexts/SettingsContext";
 import { site } from "../../lib/sites";
-import { config } from "../../lib/config";
+import { config, shareImage, SHARE_IMAGE_SIZE } from "../../lib/config";
 
 // The browser's bar (and an installed app's status bar) continues the header: the
 // page colour of the reader's theme (styles/_variables --canvas).
@@ -20,13 +20,21 @@ const API_ORIGIN = (() => {
 })();
 
 // The page's <head>: title "{page} | {siteHeading} | {siteName}" (or `fullTitle` as it
-// is), description, social cards. Site name and og:locale are the deployment's
-// (config/countries.json); on an international site og:locale is the reader's interface.
+// is), description, the canonical address, social cards. Site name and og:locale are the
+// deployment's (config/countries.json); on an international site og:locale is the reader's
+// interface.
+// Social cards (Open Graph, read by Facebook, Zalo, Telegram, WhatsApp, LinkedIn; X's own tags):
+// `image` is a 1200 x 630 card, the site's (lib/config shareImage) or a hadith's
+// (pages/api/og), shown large; `imageAlt` says what it shows. `canonical` defaults to `url`
+// on a page that may be indexed.
 export default function Meta(props) {
   const { t, ogLocale } = useLocale();
   const settings = useContext(SettingsContext);
   const barColour = settings && settings.theme === "dark" ? BAR_COLOUR.dark : BAR_COLOUR.light;
   const title = props.fullTitle || props.title;
+  const image = props.image || shareImage;
+  const imageAlt = props.imageAlt || title || site.siteName;
+  const canonical = props.canonical || (!props.noindex && props.url) || null;
 
   return (
     <Head>
@@ -79,7 +87,12 @@ export default function Meta(props) {
       {/* meta information for facebook */}
       <meta property="og:title" content={title || ""} key="ogtitle" />
       <meta property="og:url" content={props.url || ""} key="ogurl" />
-      <meta property="og:image" content={props.image || ""} key="ogimage" />
+      <meta property="og:image" content={image} key="ogimage" />
+      {image.startsWith("https:") && <meta property="og:image:secure_url" content={image} key="ogimagesecure" />}
+      <meta property="og:image:type" content="image/png" key="ogimagetype" />
+      <meta property="og:image:width" content={String(SHARE_IMAGE_SIZE.width)} key="ogimagewidth" />
+      <meta property="og:image:height" content={String(SHARE_IMAGE_SIZE.height)} key="ogimageheight" />
+      <meta property="og:image:alt" content={imageAlt} key="ogimagealt" />
       <meta property="og:type" content={props.type || "website"} key="ogtype" />
       <meta
         property="og:description"
@@ -90,7 +103,7 @@ export default function Meta(props) {
       <meta property="og:site_name" content={site.siteName} key="ogsitename" />
 
       {/* meta information for twitter */}
-      <meta name="twitter:card" content="summary" key="twcard" />
+      <meta name="twitter:card" content="summary_large_image" key="twcard" />
       <meta name="twitter:url" content={props.url || ""} key="twurl" />
       <meta name="twitter:title" content={title || ""} key="twtitle" />
       <meta
@@ -98,7 +111,8 @@ export default function Meta(props) {
         content={props.description || ""}
         key="twdesc"
       />
-      <meta name="twitter:image" content={props.image || ""} key="twimage" />
+      <meta name="twitter:image" content={image} key="twimage" />
+      <meta name="twitter:image:alt" content={imageAlt} key="twimagealt" />
 
       {/* favicon */}
       {/* Main Link Tags */}
@@ -195,7 +209,7 @@ export default function Meta(props) {
       {/* pages/manifest.webmanifest.js: the deployment's name and language */}
       <link rel="manifest" href="/manifest.webmanifest" />
 
-      {props.canonical && <link rel="canonical" href={props.canonical} />}
+      {canonical && <link rel="canonical" href={canonical} />}
       {props.noindex && <meta name="robots" content="noindex" />}
 
       {/* page title */}

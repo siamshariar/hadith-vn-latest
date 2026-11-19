@@ -15,8 +15,8 @@
     "under the header, closing to a 70px rail); without it, a card on the page's centred frame.",
     "Check against a running API: npm run check:sites"
   ],
-  "vn": { "name": "Vietnam", "localization": "vn", "language": "vi", "ui": "vi", "ogLocale": "vi_VN", "siteName": "Hadith.vn", "logo": "/img/logo.png", "logoDark": "/img/logo_dark.png", "accent": ["#DB241E", "#E05A1F", "#E6921A", "#ECB918", "#F1E416"], "contactEmail": "quran.vn@gmail.com" },
-  "bd": { "name": "Bangladesh", "localization": "bn", "language": "bn", "ui": "bn", "ogLocale": "bn_BD", "accent": ["#006A4E", "#F42A41", "#006A4E"] },
+  "vn": { "name": "Vietnam", "localization": "vn", "language": "vi", "ui": "vi", "ogLocale": "vi_VN", "siteName": "Hadith.vn", "shareImage": "/img/share/vn.png", "logo": "/img/logo.png", "logoDark": "/img/logo_dark.png", "accent": ["#DB241E", "#E05A1F", "#E6921A", "#ECB918", "#F1E416"], "contactEmail": "quran.vn@gmail.com" },
+  "bd": { "name": "Bangladesh", "localization": "bn", "language": "bn", "ui": "bn", "ogLocale": "bn_BD", "shareImage": "/img/share/bd.png", "accent": ["#006A4E", "#F42A41", "#006A4E"] },
   "usa": { "name": "United States", "localization": "en", "language": "en", "ui": "en", "ogLocale": "en_US" },
   "kh": { "name": "Cambodia", "localization": "kh", "language": "km", "ui": "km", "ogLocale": "km_KH" },
   "fr": { "name": "France", "localization": "fr", "language": "fr", "ui": "fr", "ogLocale": "fr_FR" },
@@ -31,5 +31,5 @@
   "pk": { "name": "Pakistan", "localization": "ur", "language": "ur", "ui": "ur", "ogLocale": "ur_PK" },
   "ru": { "name": "Russian Federation", "localization": "ru", "language": "ru", "ui": "ru", "ogLocale": "ru_RU" },
   "iq": { "name": "Iraq", "localization": "ku", "language": "ku", "ui": "ku", "ogLocale": "ku_TR" },
-  "ac": { "name": "International", "international": true, "language": "en", "ui": "en", "ogLocale": "en_US", "siteName": "Hadith.ac", "logo": "/img/logo_ac.png", "logoDark": "/img/logo_ac_dark.png", "accent": ["#0D9488", "#2563EB", "#4F46E5"], "shareImage": "/img/s_logo_ac.png", "navStyle": "edge" }
+  "ac": { "name": "International", "international": true, "language": "en", "ui": "en", "ogLocale": "en_US", "siteName": "Hadith.ac", "logo": "/img/logo_ac.png", "logoDark": "/img/logo_ac_dark.png", "accent": ["#0D9488", "#2563EB", "#4F46E5"], "shareImage": "/img/share/ac.png", "navStyle": "edge" }
 }

@@ -1,7 +1,7 @@
-// Reading settings (the navigation's gear, the phone header's): font sizes, hiding the
-// Arabic, translation first; the Settings dialog and page (the language, which
-// the interface follows, fonts, theme); the theme toggle, and legible text in
-// the dark theme. Each takes effect at once and is still there after a reload.
+// The settings panel (every settings button: the web menu, the navigation's gear, the phone
+// header's): font sizes, faces, theme, hiding the Arabic (translation first), reset; the
+// /settings page; the theme toggle, and legible text in the dark theme. Each takes effect at
+// once and is still there after a reload.
 'use strict';
 
 const { BASE, api, assert, interfaceStrings, loc, norm, sleep, stored, spec, until, waitForH1, waitForText } = require('./harness');
@@ -13,12 +13,13 @@ const translationText = (page) => page.locator('section[class*="translationBlock
 
 async function openReaderSettings(page) {
   // the web: "Cài đặt" at the foot of the navigation; phones: the header's button
-  await page.getByRole('button', { name: /^Cài đặt( hiển thị)?$/ }).first().click();
-  const dialog = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
+  await page.getByRole('button', { name: 'Cài đặt', exact: true }).first().click();
+  const dialog = page.getByRole('dialog', { name: 'Cài đặt', exact: true });
   await dialog.waitFor();
   return dialog;
 }
-const stepValue = (dialog, label) => dialog.getByRole('group', { name: label }).locator('output').textContent().then(norm);
+// the size steppers come first; the faces' fieldsets have the same names
+const stepValue = (dialog, label) => dialog.getByRole('group', { name: label, exact: true }).first().locator('output').textContent().then(norm);
 
 // Text a reader cannot read: WCAG contrast of each visible text against
 // the colour behind it (backgrounds composited up the tree).
@@ -89,7 +90,7 @@ function lowContrast(minimum) {
 
 module.exports = spec(module, 'settings', (h) => {
   h.test(
-    'reader settings: sizes, hide Arabic; the translation first, the Arabic under it; at once and after a reload',
+    'settings panel: sizes, hide Arabic; the translation first, the Arabic under it; at once and after a reload',
     async (t) => {
       const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
       // until the reader chooses, the Quran sites' sizes, on every screen
@@ -98,13 +99,16 @@ module.exports = spec(module, 'settings', (h) => {
       const translationBefore = await fontSize(translationText(page));
       assert.deepEqual([arabicBefore, translationBefore], [arabicStart, translationStart]);
       let dialog = await openReaderSettings(page);
-      await until(async () => (await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập')) === String(arabicStart), 'the Arabic size shown');
-      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart));
+      await until(async () => (await stepValue(dialog, 'Tiếng Ả Rập')) === String(arabicStart), 'the Arabic size shown');
+      assert.equal(await stepValue(dialog, 'Bản dịch'), String(translationStart));
+      // every setting is here: no link away to a settings page
+      assert.equal(await dialog.getByRole('link').count(), 0);
+      await dialog.getByRole('radio', { name: 'PDMS Islamic Font' }).waitFor({ state: 'attached' });
 
       await dialog.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
       await dialog.getByRole('button', { name: 'Tăng cỡ chữ bản dịch' }).click();
-      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), String(arabicStart + 2));
-      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart + 1));
+      assert.equal(await stepValue(dialog, 'Tiếng Ả Rập'), String(arabicStart + 2));
+      assert.equal(await stepValue(dialog, 'Bản dịch'), String(translationStart + 1));
       assert.equal(await fontSize(arabicText(page)), arabicStart + 2);
       assert.equal(await fontSize(translationText(page)), translationStart + 1);
 
@@ -137,7 +141,7 @@ module.exports = spec(module, 'settings', (h) => {
       await until(async () => (await fold.isVisible()) === false, 'card Arabic hidden');
 
       dialog = await openReaderSettings(page);
-      assert.equal(await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập'), String(arabicStart + 2));
+      assert.equal(await stepValue(dialog, 'Tiếng Ả Rập'), String(arabicStart + 2));
       await dialog.getByRole('switch', { name: 'Hiện nguyên văn tiếng Ả Rập' }).check();
       await until(() => fold.isVisible(), 'card Arabic back, folded under the translation');
       const card = await page.locator('article[id^="hadith-"]').first().evaluate((article) => {
@@ -147,9 +151,9 @@ module.exports = spec(module, 'settings', (h) => {
       });
       assert.ok(card, 'card: translation above the Arabic');
 
-      await dialog.getByRole('button', { name: 'Đặt lại mặc định' }).click();
-      await until(async () => (await stepValue(dialog, 'Cỡ chữ tiếng Ả Rập')) === String(arabicStart), 'the default size again');
-      assert.equal(await stepValue(dialog, 'Cỡ chữ bản dịch'), String(translationStart));
+      await dialog.getByRole('button', { name: 'Đặt lại', exact: true }).click();
+      await until(async () => (await stepValue(dialog, 'Tiếng Ả Rập')) === String(arabicStart), 'the default size again');
+      assert.equal(await stepValue(dialog, 'Bản dịch'), String(translationStart));
       await page.keyboard.press('Escape');
       await dialog.waitFor({ state: 'hidden' });
       assert.equal((await stored(page, 'settings')).reader.showArabic, true);
@@ -159,31 +163,38 @@ module.exports = spec(module, 'settings', (h) => {
 
   h.test('Settings: font size, Arabic font, theme, reset', async (t) => {
     const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`);
-    // the web: the site's dialog from the ⋮ menu, over the page. Phones: the settings page, from the reading settings.
+    // the web: the panel on the right, from the ⋮ menu. Phones: the same settings in a sheet,
+    // from the header. Over the page either way.
     const openSettings = async () => {
       if (h.desktop) {
         await page.getByRole('button', { name: 'Tùy chọn khác' }).click();
         await page.getByRole('menuitem', { name: 'Cài đặt', exact: true }).click();
-        const dialog = page.getByRole('dialog', { name: 'Cài đặt', exact: true });
-        await dialog.waitFor();
-        return dialog;
+      } else {
+        await page.getByRole('button', { name: 'Cài đặt', exact: true }).click();
       }
-      await page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true }).click();
-      await page.getByRole('dialog', { name: 'Cài đặt hiển thị' }).getByRole('link', { name: /Cài đặt/ }).click();
-      await h.waitForPath(page, (url) => url.pathname === '/settings', 'to the settings page');
-      return page.locator('main');
+      const dialog = page.getByRole('dialog', { name: 'Cài đặt', exact: true });
+      await dialog.waitFor();
+      if (h.desktop) {
+        // on the right, the screen's height, once it has slid in
+        const width = page.viewportSize().width;
+        await until(async () => {
+          const box = await dialog.boundingBox();
+          return box && Math.abs(box.x + box.width - width) <= 1 && box.y <= 1 && box.height >= page.viewportSize().height - 1;
+        }, 'a panel on the right, the screen\'s height');
+      }
+      return dialog;
     };
     const before = await fontSize(arabicText(page));
     let settings = await openSettings();
     // the faces in view, each a radio button, the default one chosen
     await settings.getByRole('radio', { name: 'PDMS Islamic Font' }).waitFor({ state: 'visible' });
     assert.equal(await settings.getByRole('radio', { name: 'PDMS Islamic Font' }).isChecked(), true);
-    if (h.desktop) assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
+    assert.equal(new URL(page.url()).pathname, `/books/${BUKHARI}/hadiths/1`, 'opening settings does not leave the page');
     assert.equal(await settings.getByRole('combobox', { name: 'Ngôn ngữ' }).count(), 0, 'no language to choose');
 
     await settings.getByRole('button', { name: 'Tăng cỡ chữ tiếng Ả Rập' }).click();
     await until(async () => (await stored(page, 'settings')).fontSize.arabic === before + 2, 'Arabic size saved, a step up from the default');
-    if (h.desktop) await until(async () => (await fontSize(arabicText(page))) > before, 'Arabic bigger at once');
+    await until(async () => (await fontSize(arabicText(page))) > before, 'Arabic bigger at once');
 
     await settings.getByRole('radio', { name: 'Amiri (Naskh)' }).check();
     // the translation's font too (its setter was once missing from the settings context)
@@ -209,10 +220,8 @@ module.exports = spec(module, 'settings', (h) => {
     assert.equal(reset.fontSize.arabic, null);
     assert.equal(reset.fontFamily.arabic, 'PDMSIslam');
     assert.equal(reset.fontFamily.translation, 'Roboto');
-    if (h.desktop) {
-      await page.keyboard.press('Escape');
-      await until(async () => !(await settings.isVisible()), 'settings closed');
-    }
+    await page.keyboard.press('Escape');
+    await until(async () => !(await settings.isVisible()), 'settings closed');
   });
 
   h.test(
@@ -252,8 +261,8 @@ module.exports = spec(module, 'settings', (h) => {
           await page.getByRole('button', { name: toggle }).click();
           return;
         }
-        await page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true }).click();
-        const dialog = page.getByRole('dialog', { name: 'Cài đặt hiển thị' });
+        await page.getByRole('button', { name: 'Cài đặt', exact: true }).click();
+        const dialog = page.getByRole('dialog', { name: 'Cài đặt', exact: true });
         await dialog.locator('label', { hasText: radio }).click();
         await page.keyboard.press('Escape');
         await dialog.waitFor({ state: 'hidden' });

@@ -3,8 +3,8 @@ import PlusIcon from "../icons/Plus";
 import CheckIcon from "../icons/Check";
 import styles from "./controls.module.scss";
 
-// The controls of the settings (components/settings, the settings dialog and page) and of the
-// reading settings (components/hadith/ReaderSettings): one look for both. 44px targets.
+// The controls of the settings (components/settings, in the settings panel and on the
+// /settings page). 44px targets.
 
 // Limits of SettingsContext changeFontSize*.
 export const ARABIC_SIZE = { min: 16, max: 60, step: 2 };

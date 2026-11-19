@@ -11,7 +11,9 @@ import styles from "./NavDrawer.module.scss";
 
 // The navigation on phones and tablets: a drawer from the left, the same contents as the web's
 // side card, at most 380px wide, and always leaving 44px of the page to tap. Esc, ✕ or a tap on
-// the page closes it, and a link followed (the layout, and this drawer, stay mounted). Under
+// the page closes it, and a link followed, once its page is there: until then the link tapped
+// shows it is loading (hooks/usePendingLink) and the reader is not left looking at the page
+// they left (the layout, and this drawer, stay mounted). Under
 // the list, the site's other pages; at its foot Saved and the settings, so each is
 // within reach from any page.
 export default function NavDrawer({ open, onClose, where = {}, onSettings }) {
@@ -23,10 +25,16 @@ export default function NavDrawer({ open, onClose, where = {}, onSettings }) {
     const close = () => {
       if (latest.current.open) latest.current.onClose();
     };
-    router.events.on("routeChangeStart", close);
+    // cancelled: another link was tapped, whose page is coming
+    const failed = (error) => {
+      if (!(error && error.cancelled)) close();
+    };
+    router.events.on("routeChangeComplete", close);
+    router.events.on("routeChangeError", failed);
     router.events.on("hashChangeStart", close);
     return () => {
-      router.events.off("routeChangeStart", close);
+      router.events.off("routeChangeComplete", close);
+      router.events.off("routeChangeError", failed);
       router.events.off("hashChangeStart", close);
     };
   }, [router]);

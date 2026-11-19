@@ -16,5 +16,5 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params }) {
   const { bookId, hadithNumber } = params;
-  return loadHadithPage((lang) => getBookHadith(bookId, hadithNumber, lang));
+  return loadHadithPage((lang) => getBookHadith(bookId, hadithNumber, lang), { topic: bookId === "hadeethenc" });
 }

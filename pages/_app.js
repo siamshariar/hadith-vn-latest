@@ -6,6 +6,7 @@ import SettingsContextProvider from "../contexts/SettingsContext";
 import LocaleProvider from "../contexts/LocaleContext";
 import { ExtraTranslationsProvider } from "../contexts/ExtraTranslationsContext";
 import * as gtag from "../lib/gtag";
+import usePendingLink from "../hooks/usePendingLink";
 import "react-loading-skeleton/dist/skeleton.css";
 import "../styles/global.scss";
 
@@ -83,6 +84,7 @@ const uiStack = stack(uiFace, sawFont.style.fontFamily, arabicInlineFont.style.f
 
 const App = ({ Component, pageProps }) => {
   const router = useRouter();
+  usePendingLink();
 
   useEffect(() => {
     const handleRouteChange = (url) => {

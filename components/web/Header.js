@@ -10,7 +10,7 @@ import Popover from "@mui/material/Popover";
 import MenuList from "@mui/material/MenuList";
 import MenuItem from "@mui/material/MenuItem";
 import Dialog, { dialogButtonClass } from "../core/Dialog";
-import Settings from "../settings/index";
+import SettingsPanel from "../settings/Panel";
 import Bookmarks from "../bookmark/list";
 import Pin from "../pin/list";
 import LastRead from "../last-read/list";
@@ -29,8 +29,9 @@ import HeaderLogo from "./HeaderLogo";
 // Desktop header (1024px and up), a white bar on the page's frame: the colour logo (the
 // dark one in the dark theme); on the right the search icon (the search page, the one place
 // with a search field), the theme and the menu. Each site reads in its own language, so there
-// is no language menu. The menu's Bookmarks, Pins, Last read and Settings open in the site's
-// dialog (components/core/Dialog); About opens its page.
+// is no language menu. The menu's Bookmarks, Pins and Last read open in the site's dialog
+// (components/core/Dialog); Settings opens the settings panel on the right
+// (components/settings/Panel), as the navigation's gear does; About opens its page.
 export default function HeaderWeb({ page }) {
   const router = useRouter();
 
@@ -54,10 +55,11 @@ export default function HeaderWeb({ page }) {
 
   const open = Boolean(anchorEl);
 
-  // The menu's dialogs: "bookmarks", "pins", "lastRead" or "settings". The kind stays while the
-  // dialog fades out.
+  // The menu's dialogs: "bookmarks", "pins" or "lastRead". The kind stays while the dialog
+  // fades out.
   const [modalOpen, setModalOpen] = useState(false);
   const [modalKind, setModalKind] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const handleModalClose = (open) => (event) => {
     if (event && event.type === "keydown" && (event.key === "Tab" || event.key === "Shift")) {
@@ -72,6 +74,8 @@ export default function HeaderWeb({ page }) {
 
     if (item === "about") {
       router.push("/about");
+    } else if (item === "settings") {
+      setSettingsOpen(true);
     } else {
       setModalKind(item);
       setModalOpen(true);
@@ -82,7 +86,6 @@ export default function HeaderWeb({ page }) {
     bookmarks: { title: t("bookmarks"), content: <Bookmarks controller={handleModalClose} single /> },
     pins: { title: t("pins"), content: <Pin controller={handleModalClose} /> },
     lastRead: { title: t("lastRead"), content: <LastRead controller={handleModalClose} /> },
-    settings: { title: t("settings"), content: <Settings /> },
   };
   const modal = MODALS[modalKind];
 
@@ -93,18 +96,17 @@ export default function HeaderWeb({ page }) {
           open={modalOpen}
           onClose={handleModalClose(false)}
           title={modal.title}
-          flush={modalKind !== "settings"}
+          flush
           actions={
-            modalKind !== "settings" && (
-              <Link href="/bookmarks" className={dialogButtonClass("secondary")} onClick={handleModalClose(false)}>
-                {t("viewAll")}
-              </Link>
-            )
+            <Link href="/bookmarks" className={dialogButtonClass("secondary")} onClick={handleModalClose(false)}>
+              {t("viewAll")}
+            </Link>
           }
         >
           {modal.content}
         </Dialog>
       )}
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <div className={styles.header}>
         <div className={styles.content}>
           <div className={styles.left}>

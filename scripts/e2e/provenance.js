@@ -1,9 +1,7 @@
 // No page names a data source: the site presents the hadith data as its own. Readers never
 // see "HadeethEnc", "Fawaz", "hadith-api", an edition code (eng-bukhari, hadeethenc-vi ...)
-// or a link to a source's site or files. The one exception is HadeethEnc's source line,
-// which its terms require wherever its content is shown (data-source-line): it must read
-// exactly the catalog's sourceLine ("Nguồn: HadeethEnc.com"), on its hadiths and under its
-// translations shown with another collection's hadith.
+// or a link to a source's site or files: not even a credit line under HadeethEnc's content
+// (the owner's decision of 2026-11-19).
 //
 // Checked on the vn site (BASE), and on the bd (BASE_BD) and ac (BASE_AC) sites when they
 // are set: a hadith page of every collection, a hadith with linked translations, the home
@@ -14,8 +12,6 @@
 // API's slugs (/books/hadeethenc/...) and are not checked.
 'use strict';
 
-const path = require('node:path');
-const { pathToFileURL } = require('node:url');
 const { BASE, api, assert, loc, spec } = require('./harness');
 
 const SITES = [
@@ -26,17 +22,6 @@ const SITES = [
 
 // Names and hosts of the sources; edition codes come from the API.
 const SOURCE_NAMES = 'hadeeth\\s*enc|fawaz|hadith-api|jsdelivr|sunnah\\.com|↗';
-
-// lib/i18n.js is an ES module; Node says so once, which is not a test problem.
-process.removeAllListeners('warning');
-process.on('warning', (warning) => {
-  if (warning.code !== 'MODULE_TYPELESS_PACKAGE_JSON') console.warn(warning.stack || String(warning));
-});
-let i18n;
-const sourceLineIn = async (ui) => {
-  i18n = i18n || import(pathToFileURL(path.join(__dirname, '..', '..', 'lib', 'i18n.js')).href);
-  return (await i18n).translate(ui, 'sourceLine', { source: 'HadeethEnc.com' });
-};
 
 // The first hadith of every collection (by id: some have no citable number), and the
 // collections' API names for the report.
@@ -52,20 +37,16 @@ async function firstHadiths() {
 }
 
 // What the open page shows that names a source: [] when nothing does.
-function namedSources(page, { pattern, codes, sourceLine }) {
+function namedSources(page, { pattern, codes }) {
   return page.evaluate(
-    ({ pattern, codes, sourceLine }) => {
+    ({ pattern, codes }) => {
       const bad = new RegExp(pattern, 'i');
       const code = new RegExp(`(^|[^a-z0-9-])(${codes.join('|')})(?![a-z0-9-])`, 'i');
       const names = (text) => bad.test(text) || code.test(text);
       const problems = [];
-      const lines = [...document.querySelectorAll('[data-source-line]')];
-      lines.forEach((el) => {
-        if (el.textContent.trim() !== sourceLine) problems.push(`source line reads "${el.textContent.trim()}"`);
-      });
-      // every text of the body, shown or not, without the source lines and scripts
+      // every text of the body, shown or not, without scripts
       const body = document.body.cloneNode(true);
-      body.querySelectorAll('[data-source-line], script, style, noscript, template').forEach((el) => el.remove());
+      body.querySelectorAll('script, style, noscript, template').forEach((el) => el.remove());
       const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const text = node.textContent.replace(/\s+/g, ' ').trim();
@@ -85,27 +66,19 @@ function namedSources(page, { pattern, codes, sourceLine }) {
       });
       return problems;
     },
-    { pattern, codes, sourceLine }
+    { pattern, codes }
   );
 }
-
-const linesIn = (page, selector) => page.locator(selector).count();
 
 module.exports = spec(module, 'no source names', (h) => {
   for (const site of SITES) {
     h.test(
-      `${site.name}: no page names a source, except HadeethEnc's source line`,
+      `${site.name}: no page names a source`,
       async (t) => {
-        const [editions, first, bukhari1, creed] = await Promise.all([
-          api('/editions'),
-          firstHadiths(),
-          api(`/books/bukhari/hadiths/1${loc(site.lang)}`),
-          api(`/categories/the-creed/hadiths${loc(site.lang)}?perPage=20`),
-        ]);
+        const [editions, first] = await Promise.all([api('/editions'), firstHadiths()]);
         const options = {
           pattern: SOURCE_NAMES,
           codes: editions.map((edition) => edition.code.replace(/[^a-z0-9-]/gi, '')),
-          sourceLine: await sourceLineIn(site.ui),
         };
         const topic = first.find((item) => item.book.source === 'hadeethenc');
         assert.ok(topic, 'the API has the topic collection');
@@ -135,23 +108,6 @@ module.exports = spec(module, 'no source names', (h) => {
           await h.waitForHydration(page);
           (await namedSources(page, options)).forEach((problem) => report.push(`${pathname}: ${problem}`));
 
-          // where the source line belongs
-          const all = await linesIn(page, '[data-source-line]');
-          if (pathname === topic.path) {
-            if (all !== 1) report.push(`${pathname}: ${all} source lines on a hadith of the topic collection (want 1)`);
-          } else if (pathname.startsWith('/books/sahih-al-bukhari/hadiths/3')) {
-            // a source line under the topic collection's translation where the page shows one (vn), else none
-            const shown = await page.locator('section[class*="translationBlock"] [class*="linked"]').count();
-            const linked = await linesIn(page, 'section[class*="translationBlock"] [class*="linked"] [data-source-line]');
-            if (shown ? !all || linked !== all : all) report.push(`${pathname}: ${linked} of ${all} source lines under ${shown} linked translations`);
-          } else if (pathname === '/books/sahih-al-bukhari/hadiths/1' && !bukhari1.linkedTranslation) {
-            if (all) report.push(`${pathname}: ${all} source lines without HadeethEnc's content`);
-          } else if (pathname === '/categories/the-creed/hadiths') {
-            const cards = await page.locator('article[id^="hadith-"]').count();
-            if (cards !== creed.hadiths.length || all !== cards) report.push(`${pathname}: ${all} source lines for ${cards} cards`);
-          } else if (pathname === '/sources' && all !== 1) {
-            report.push(`${pathname}: ${all} source lines (want 1, with the topic collection)`);
-          }
         }
         assert.deepEqual([...new Set(report)], [], `${site.name}: pages naming a source`);
       },

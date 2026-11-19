@@ -10,8 +10,7 @@
 //     translation shown on Bukhari 1 and HadeethEnc 4560 (own, linked or fallback)
 //   - another language picked with the language menu (Bengali; English on bd): the
 //     interface and the content follow, and hadith_lang keeps it
-//   - no source names: no page says HadeethEnc, Fawaz, hadith-api or an edition code, except
-//     HadeethEnc's source line, which reads the interface's sourceLine
+//   - no source names: no page says HadeethEnc, Fawaz, hadith-api or an edition code
 //   - no console errors
 // The international edition (ac, "international": true) has no country to compare with:
 // it is checked for readers whose browsers ask for en-US, bn-BD, vi-VN, fr-FR and ur-PK
@@ -77,23 +76,17 @@ const api = async (p) => {
 };
 const norm = (s) => String(s || "").replace(/\s+/g, " ").trim();
 // A stretch from the middle of a text: the start may be restyled ("Narrated X:" on its own line)
-// What a page names of the data sources, HadeethEnc's source line (data-source-line) aside;
-// that line must read the interface's sourceLine. Edition codes come from /hadith/editions.
+// What a page names of the data sources. Edition codes come from /hadith/editions.
 const SOURCE_NAMES = /hadeeth\s*enc|fawaz|hadith-api|jsdelivr|↗/i;
 let editionCodes = [];
 async function sourceNames(page) {
-  const ui = (await page.getAttribute("html", "lang")) || "en";
-  const line = i18n.translate(ui, "sourceLine", { source: "HadeethEnc.com" });
   return page.evaluate(
-    ({ pattern, codes, line }) => {
+    ({ pattern, codes }) => {
       const bad = new RegExp(pattern, "i");
       const code = codes.length ? new RegExp(`(^|[^a-z0-9-])(${codes.join("|")})(?![a-z0-9-])`, "i") : null;
       const found = [];
-      document.querySelectorAll("[data-source-line]").forEach((el) => {
-        if (el.textContent.trim() !== line) found.push(`source line "${el.textContent.trim()}"`);
-      });
       const body = document.body.cloneNode(true);
-      body.querySelectorAll("[data-source-line], script, style, noscript").forEach((el) => el.remove());
+      body.querySelectorAll("script, style, noscript").forEach((el) => el.remove());
       const walker = document.createTreeWalker(body, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const text = node.textContent.replace(/\s+/g, " ").trim();
@@ -102,7 +95,7 @@ async function sourceNames(page) {
       if (bad.test(document.title)) found.push(`title: ${document.title}`);
       return found;
     },
-    { pattern: SOURCE_NAMES.source, codes: editionCodes, line }
+    { pattern: SOURCE_NAMES.source, codes: editionCodes }
   );
 }
 const namedCheck = (named) => [!named.size, named.size ? `${named.size}: ${[...named].slice(0, 3).join(" | ")}` : "none (HadeethEnc's source line aside)"];

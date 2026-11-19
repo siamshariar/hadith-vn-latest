@@ -224,7 +224,7 @@ module.exports = spec(module, 'translations', (h) => {
       assert.equal(norm(await linked.locator('p[class*="linkedNote"]').textContent()), norm(en('topicTranslationNote')));
       assert.equal(await linked.locator('[class*="creditName"]').count(), 0);
       assert.equal(await linked.locator('a[href^="http"]').count(), 0);
-      assert.deepEqual((await linked.locator('p[data-source-line]').allTextContents()).map(norm), [en('sourceLine', { source: 'HadeethEnc.com' })]);
+      assert.equal(await linked.getByText(/hadeeth\s*enc/i).count(), 0);
       // the reference block links to the topic collection's hadith
       const rows = await page.locator(`section[aria-label="${en('refLabel')}"] dl > div`).evaluateAll((items) =>
         items.map((row) => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.replace(/\s+/g, ' ').trim()])

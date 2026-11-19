@@ -201,7 +201,7 @@ export default function HadithDetail({ hadith: given }) {
       ) : (
         <div className={styles.texts}>
           <section className={styles.translationBlock}>
-            <HadithTranslations hadith={hadith} book={book} showNote />
+            <HadithTranslations hadith={hadith} showNote />
           </section>
           <section className={styles.arabicBlock} aria-label={t("arabicText")}>
             <ArabicFold text={hadith.arabic} open />

@@ -1,0 +1,162 @@
+// The site's dropdown (components/core/SelectMenu): the field as the search field (a filled
+// grey pill, 44px), the list as the site's menus (white, 12px corners, the float shadow).
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.label {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.hiddenLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0 var(--space-3) 0 var(--space-4);
+  border: 0;
+  border-radius: 22px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-base);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--duration) var(--ease);
+
+  > svg {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    margin-inline-start: auto;
+    color: var(--text-secondary);
+    transition: transform var(--duration) var(--ease);
+  }
+
+  &[aria-expanded="true"] > svg {
+    transform: rotate(180deg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  &[aria-busy="true"] {
+    cursor: progress;
+  }
+}
+
+@media (hover: hover) {
+  .trigger:hover {
+    background: var(--surface-card);
+  }
+}
+
+.icon {
+  display: flex;
+  flex: 0 0 auto;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--muted);
+  }
+}
+
+.value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paper {
+  max-height: min(420px, 60vh) !important;
+  margin-top: 6px;
+  border-radius: 12px !important;
+  background: var(--surface) !important;
+  background-image: none !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow-float) !important;
+}
+
+.list {
+  padding: 6px 0 !important;
+}
+
+// 44px rows; the choice in the accent, ticked
+.option {
+  display: flex !important;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--tap) !important;
+  padding: 8px 16px !important;
+  color: var(--text) !important;
+  font: inherit !important;
+  font-size: var(--text-base) !important;
+  white-space: normal !important;
+
+  &:global(.Mui-selected),
+  &:global(.Mui-selected.Mui-focusVisible) {
+    background: var(--accent-tint) !important;
+    color: var(--link) !important;
+  }
+
+  &:global(.Mui-focusVisible) {
+    background: var(--hover) !important;
+    outline: 2px solid var(--focus-ring);
+    outline-offset: -2px;
+  }
+}
+
+@media (hover: hover) {
+  .option:hover {
+    background: var(--hover) !important;
+  }
+
+  .option:global(.Mui-selected):hover {
+    background: var(--accent-tint) !important;
+  }
+}
+
+.optionLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.check {
+  display: flex;
+  flex: 0 0 auto;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: var(--link);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger > svg {
+    transition: none;
+  }
+}

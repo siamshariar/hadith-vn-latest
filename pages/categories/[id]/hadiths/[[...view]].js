@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { server, config, shareImage } from "../../../../lib/config";
-import { booksForHadiths, getCategoryHadiths, loadStatic, staticPaths } from "../../../../lib/api";
+import { booksForHadiths, getCategoryHadiths, loadStatic, staticPaths, warm } from "../../../../lib/api";
 import { INTERNATIONAL } from "../../../../lib/language";
 import { categoryCrumbs, categoryHadithsPath, categoryPath, listPath, parseListView } from "../../../../lib/hadith";
 import { useLocale } from "../../../../contexts/LocaleContext";
@@ -160,7 +160,7 @@ export default function CategoryHadiths({ data, books, direct, all, filtered, co
 CategoryHadiths.getLayout = function getLayout(page) {
   const { data } = page.props;
   return (
-    <Layout selectedCategoryId={data ? data.category.id : null} title={data ? () => data.category.title : undefined}>
+    <Layout selectedCategoryId={data ? data.category.id : null} title={data ? ({ t }) => ({ context: t("categories"), label: data.category.title }) : undefined}>
       {page}
     </Layout>
   );
@@ -182,6 +182,7 @@ export async function getStaticProps({ params }) {
   const { direct, all, page } = view;
 
   return loadStatic(async (lang) => {
+    warm(lang, { books: true, categories: true });
     const perPage = config.perPage;
     const count = (translated) =>
       getCategoryHadiths(id, lang, { perPage: 1, direct, translated })
@@ -211,6 +212,10 @@ export async function getStaticProps({ params }) {
       translatedCount = direct ? await count(true) : data.category.totalTranslated ?? null;
     }
 
+    const [books, sidebarData] = await Promise.all([
+      booksForHadiths(data.hadiths, lang),
+      sidebarCategoriesData(lang, data.category.id),
+    ]);
     return {
       props: {
         data,
@@ -218,8 +223,8 @@ export async function getStaticProps({ params }) {
         all,
         filtered,
         counts: { translated: translatedCount, all: allCount },
-        books: await booksForHadiths(data.hadiths, lang),
-        sidebarData: await sidebarCategoriesData(lang, data.category.id),
+        books,
+        sidebarData,
         backLink: categoryPath(data.category),
       },
     };

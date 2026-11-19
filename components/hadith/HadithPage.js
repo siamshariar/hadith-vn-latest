@@ -1,5 +1,5 @@
-import { server, shareImage } from "../../lib/config";
-import { loadStatic } from "../../lib/api";
+import { server } from "../../lib/config";
+import { loadStatic, warm } from "../../lib/api";
 import {
   UNASSIGNED_CHAPTER,
   bookPath,
@@ -68,7 +68,8 @@ export default function HadithPage({ hadith, translations, error }) {
         description={snippet || `${reference} - ${book.name}`}
         url={url}
         canonical={url}
-        image={shareImage}
+        image={`${server}/api/og/hadith/${encodeURIComponent(hadith.id)}?r=${encodeURIComponent(reference)}`}
+        imageAlt={reference}
         type="article"
       />
 
@@ -85,7 +86,13 @@ export default function HadithPage({ hadith, translations, error }) {
 // HadeethEnc hadiths are browsed by category; the other books by chapter.
 export function hadithLayout(page) {
   const { hadith } = page.props;
-  const title = hadith ? ({ t }) => referenceText(hadith, hadith.book, t) : undefined;
+  // the phone header: the collection, then "Hadith 16c"
+  const title = hadith
+    ? ({ t }) => ({
+        context: shortBookName(hadith.book),
+        label: hadith.referenceNumber ? t("hadithNumbered", { number: lettered(hadith.referenceNumber) }) : referenceText(hadith, hadith.book, t),
+      })
+    : undefined;
   if (hadith && isCategoryBook(hadith.book)) {
     const first = hadith.categories && hadith.categories[0];
     return (
@@ -107,8 +114,10 @@ export function hadithLayout(page) {
 }
 
 // getStaticProps of both: `fetchHadith(lang)` loads the hadith in the site's language.
-export function loadHadithPage(fetchHadith) {
+// `topic`: the hadith is known to be the topic collection's (its navigation is the categories).
+export function loadHadithPage(fetchHadith, { topic: knownTopic = null } = {}) {
   return loadStatic(async (lang) => {
+    warm(lang, { books: knownTopic !== true, categories: knownTopic === true });
     const hadith = await fetchHadith(lang);
     const topic = isCategoryBook(hadith.book);
     const first = hadith.categories && hadith.categories[0];

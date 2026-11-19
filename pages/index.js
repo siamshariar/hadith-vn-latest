@@ -2,9 +2,11 @@ import Link from "next/link";
 import { server, shareImage } from "../lib/config";
 import { getHome, loadStatic, readableCategoryTree } from "../lib/api";
 import { INTERNATIONAL } from "../lib/language";
+import { site } from "../lib/sites";
 import { isCategoryBook } from "../lib/hadith";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
+import JsonLd from "../components/core/JsonLd";
 import Container from "../components/core/container";
 import ErrorState from "../components/core/error";
 import Layout from "../components/layouts/LayoutPrimary";
@@ -40,7 +42,7 @@ function Section({ id, title, href, children }) {
 // collections, the categories), then where the reader left off and the library as cards
 // (components/home/EntryCard). Search is the header's icon; each site has one language.
 export default function Home({ home, navMode, error }) {
-  const { t, formatNumber } = useLocale();
+  const { t, lang, formatNumber } = useLocale();
   const languageCount = (home && home.totals && home.totals.language) || 0;
   const lead = navMode === "categories" ? "categories" : "books";
 
@@ -64,6 +66,17 @@ export default function Home({ home, navMode, error }) {
         url={server}
         image={shareImage}
         type="website"
+      />
+      {/* the site's name in search results (schema.org WebSite) */}
+      <JsonLd
+        id="website"
+        data={{
+          "@type": "WebSite",
+          name: site.siteName,
+          url: `${server}/`,
+          inLanguage: lang,
+          publisher: { "@type": "Organization", name: "Deeni Info Tech", url: "http://deeniinfotech.com/" },
+        }}
       />
 
       {error || !home ? (

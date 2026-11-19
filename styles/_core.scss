@@ -87,6 +87,35 @@ summary,
   touch-action: manipulation;
 }
 
+// A link followed whose page is still on its way (hooks/usePendingLink): after a moment (a
+// page already here shows nothing), it breathes in opacity until the page is there.
+a[data-pending] {
+  cursor: progress;
+  animation: pending-breathe 0.9s var(--ease) 0.15s infinite alternate;
+}
+
+html[data-navigating],
+html[data-navigating] * {
+  cursor: progress;
+}
+
+@keyframes pending-breathe {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a[data-pending] {
+    animation: none;
+    opacity: 0.55;
+  }
+}
+
 // A form's submit button while the page it asked for loads (hooks/useSubmitBusy):
 // the label stays and a small ring turns beside it.
 button[aria-busy="true"] {

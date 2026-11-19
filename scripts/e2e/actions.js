@@ -28,8 +28,7 @@ const BUKHARI = 'sahih-al-bukhari';
 // The copied texts, from the API data, in the format the site promises
 // (lib/citation): labels as on the page, the translator when the source names
 // one, grades with their grader names (the topic collection's own grade
-// without one), and HadeethEnc's source line when its content is copied.
-const SOURCE_LINE = 'Nguồn: HadeethEnc.com';
+// without one). No data source is named (the owner's decision of 2026-11-19).
 const HADITH_OPTIONS = 'Tùy chọn hadith';
 const label = (text, entry) => [text, translatorOf(entry.author, entry.edition)].filter(Boolean).join(' · ');
 
@@ -47,7 +46,6 @@ function expectedCitation(hadith, permalink, site, name = hadith.book.name) {
     const text = own.isFallback ? 'Bản dịch tiếng Anh' : `Bản dịch ${own.languageCode === 'vi' ? 'tiếng Việt' : own.languageCode}`;
     lines.push(label(text, own));
   }
-  if (topic || linked) lines.push(SOURCE_LINE);
   lines.push(permalink);
   return lines.join('\n');
 }
@@ -66,7 +64,6 @@ function expectedText(hadith, permalink, name = hadith.book.name) {
   if (hadith.gradeText) grades.push(hadith.gradeText);
   if (!topic) hadith.grades.forEach((g) => grades.push(`${g.graderName}: ${g.grade}`));
   if (grades.length) parts.push(`Đánh giá độ xác thực: ${grades.join('; ')}`);
-  if (topic || linked) parts.push(SOURCE_LINE);
   parts.push(permalink);
   return parts.join('\n\n');
 }

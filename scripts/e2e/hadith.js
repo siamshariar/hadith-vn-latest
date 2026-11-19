@@ -208,15 +208,15 @@ module.exports = spec(module, 'hadith page', (h) => {
       assert.equal(norm(crumbs[crumbs.length - 1]), 'Hadith 8a');
       assert.equal(norm(await arabicBlock(page).innerText()), norm(cleanText(muslim.arabic)));
 
-      // Bukhari 3: the topic collection's Vietnamese translation, labelled as such,
-      // its source line closing the box
+      // Bukhari 3: the topic collection's Vietnamese translation, labelled as such, naming
+      // no source
       const linked = three.linkedTranslation;
       await h.goto(page, `/books/${BUKHARI}/hadiths/3`);
       const block = page.locator('section[class*="translationBlock"] div[class*="linked"]').first();
       await waitForText(block.locator('span[class*="linkedBadge"]'), 'Bản dịch tiếng Việt từ bộ hadith theo chủ đề');
       assert.ok(norm(await block.locator('p[class*="linkedNote"]').textContent()).startsWith('Hadith này chưa có bản dịch riêng bằng ngôn ngữ này.'));
       assert.equal(norm(await block.locator('div[lang="vi"]').innerText()), norm(cleanText(linked.text)), 'linked text is the API text');
-      assert.deepEqual((await block.locator('p[data-source-line]').allTextContents()).map(norm), ['Nguồn: HadeethEnc.com']);
+      assert.equal(await block.getByText(/hadeeth\s*enc/i).count(), 0);
       assert.equal(await block.getByRole('link', { name: /Xem giải thích đầy đủ/ }).getAttribute('href'), `/hadiths/${linked.hadithId}`);
       // the collection's own (English) translation stays available, folded
       const details = page.locator('section[class*="translationBlock"] details');
@@ -287,8 +287,7 @@ module.exports = spec(module, 'hadith page', (h) => {
     }
     const categories = await page.locator('section[aria-labelledby="hadith-categories"] a').evaluateAll((links) => links.map((a) => decodeURIComponent(a.getAttribute('href'))));
     assert.deepEqual(categories, henc.categories.map((c) => `/categories/${c.slug}`));
-    // HadeethEnc's content, so one source line on the page, under the translations
-    assert.deepEqual((await page.locator('article [data-source-line]').allTextContents()).map(norm), ['Nguồn: HadeethEnc.com']);
-    assert.equal(await page.locator('section[class*="translationBlock"] [data-source-line]').count(), 1);
+    // HadeethEnc's content, but no line names it (the owner's decision of 2026-11-19)
+    assert.equal(await page.getByText(/hadeeth\s*enc/i).count(), 0);
   });
 });

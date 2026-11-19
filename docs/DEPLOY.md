@@ -35,6 +35,23 @@ Setting it only at `npm start` has no effect.
 | `ALLOW_LOCAL_BUILD` | no | `1` lets a **local test build** use local or http addresses. Never set it for a build you deploy. |
 | `NAMES_FIXTURE` | no | `1` (with `ALLOW_LOCAL_BUILD=1` only) replaces the book names with the end-to-end suite's few (`scripts/e2e/fixtures/names`). For test builds; never deploy one. |
 
+**Where the pages are built (Vercel).** A page not yet cached is built by a server function,
+which calls the API several times. Those calls cross the distance to the API each time, so the
+function must run next to the API: `vercel.json` sets `"regions"` to Mumbai (`bom1`), beside
+the API's current tunnel (ngrok's India region, to a machine in Bangladesh). From Vercel's
+default (Washington, `iad1`) a list page not yet cached took 3 to 6 seconds; cached pages are
+served from the edge near the reader either way. When the API moves to its own server, set
+`regions` to the Vercel region nearest that server.
+
+**Share cards.** Every page has a 1200 x 630 `og:image` (Open Graph and X's large card, with
+its size and alt text): the edition's card, `public/img/share/<code>.png` (its `shareImage` in
+`config/countries.json`; editions without one get `default.png`, the name only). Make a new
+edition's card with `PLAYWRIGHT_CORE=<playwright-core> node scripts/share-images.mjs <code>`.
+A hadith page's card is drawn on request by `pages/api/og/hadith/[id].js` (an Edge Function):
+the logo, the reference and the hadith's own translation in the site's language. Where that
+text cannot be drawn (a script the drawing library cannot shape, such as Bengali or Arabic, or
+no translation of its own) it sends the edition's card. Cards are cached for a week at the edge.
+
 The country decides:
 
 - the default content language (the reader can pick another with the language menu, the

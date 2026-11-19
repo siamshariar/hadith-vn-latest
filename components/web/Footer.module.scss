@@ -1,6 +1,6 @@
 // Phones and tablets: links as a wrapped row of 44px-high targets, then the
-// copyright and credit lines; clear of the back-to-top button and the
-// iPhone home indicator.
+// copyright and credit lines, 16px above the iPhone home indicator. The lines are centred and
+// short, so the back-to-top button in the corner stays clear of them.
 .footer {
   display: block;
   background: var(--surface);
@@ -15,7 +15,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 12px 0 calc(72px + env(safe-area-inset-bottom, 0px));
+  padding: 12px 0 calc(16px + env(safe-area-inset-bottom, 0px));
   text-align: center;
 }
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { server, config, shareImage } from "../../../../../lib/config";
-import { getBook, getChapterHadiths, loadStatic, staticPaths } from "../../../../../lib/api";
+import { getBook, getChapterHadiths, loadStatic, staticPaths, warm } from "../../../../../lib/api";
 import { INTERNATIONAL } from "../../../../../lib/language";
 import { UNASSIGNED_CHAPTER, bookPath, chapterPath, listPath, parseListView } from "../../../../../lib/hadith";
 import { useLocale } from "../../../../../contexts/LocaleContext";
@@ -185,7 +185,7 @@ Chapter.getLayout = function getLayout(page) {
       sidebar="books"
       selectedBookSlug={data ? data.book.slug : null}
       selectedChapterNo={data ? data.chapter.chapterNo : null}
-      title={data ? ({ t, formatNumber }) => numberedName(data.chapter, t, formatNumber) : undefined}
+      title={data ? ({ t, formatNumber }) => ({ context: data.book.name, label: numberedName(data.chapter, t, formatNumber) }) : undefined}
     >
       {page}
     </Layout>
@@ -208,6 +208,7 @@ export async function getStaticProps({ params }) {
   }
 
   return loadStatic(async (lang) => {
+    warm(lang, { books: true });
     // translated: only hadiths readable in the language (own or linked translation). Off by
     // default; Arabic is the original text.
     const onlyReadable = lang !== "ar" && view.translated;

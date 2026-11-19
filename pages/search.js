@@ -26,24 +26,21 @@ import Layout from "../components/layouts/LayoutSecondary";
 import { sidebarCategoriesData } from "../components/sidebar/data";
 import HadithCard, { HadithList } from "../components/hadith/HadithCard";
 import { HighlightProvider } from "../components/hadith/Highlight";
+import SelectMenu from "../components/core/SelectMenu";
 import SearchIcon from "../components/icons/Search";
-import TuneIcon from "../components/icons/Tune";
+import MenuBookIcon from "../components/icons/MenuBook";
 import styles from "../components/content/Page.module.scss";
 import searchStyles from "../components/home/search.module.scss";
 
-// One GET form: text, collection and language. Changing a filter re-runs
-// the search; everything lives in the URL. On phones the filters (and "go
-// to hadith" once there are results) fold into a "Bộ lọc" panel so the
-// results start on the first screen; from 768px the panel is always open.
-// The selects sit outside the <form> element (form="search-form") so the
-// panel can also hold the separate go-to form.
+// One GET form: the text and the collection. Choosing a collection re-runs the search;
+// everything lives in the URL. The collection is the site's dropdown (components/core/
+// SelectMenu) under the field: the width of the column on phones, beside nothing and as wide as
+// it needs from 768px. A citation typed in the field ("Bukhari 1") opens that hadith.
 function SearchForm({ query, book, books }) {
   const router = useRouter();
-  const { t, formatNumber } = useLocale();
+  const { t } = useLocale();
   const [value, setValue] = useState(query);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [busy, startBusy] = useSubmitBusy();
-  const active = book ? 1 : 0;
   // The header's search icon brings the reader here: the field is ready to type in.
   const field = useRef(null);
   useEffect(() => {
@@ -94,42 +91,21 @@ function SearchForm({ query, book, books }) {
         </div>
       </form>
 
-      <button
-        type="button"
-        className={searchStyles.filterToggle}
-        aria-expanded={filtersOpen ? "true" : "false"}
-        aria-controls="search-filters"
-        onClick={() => setFiltersOpen((open) => !open)}
-      >
-        <TuneIcon />
-        <span>{t("filters")}</span>
-        {active > 0 && <span className={searchStyles.filterCount}>{formatNumber(active)}</span>}
-        <span className={searchStyles.filterChevron} aria-hidden="true" />
-      </button>
-
-      <div id="search-filters" className={`${searchStyles.filterPanel} ${filtersOpen ? searchStyles.filterPanelOpen : ""}`}>
-        <div className={styles.filters}>
-          {books.length > 0 && (
-            <label className={styles.filter}>
-              <span>{t("books")}</span>
-              <select
-                name="book"
-                form="search-form"
-                value={book}
-                onChange={(event) => go({ book: event.target.value })}
-                className={styles.select}
-              >
-                <option value="">{t("searchAllBooks")}</option>
-                {books.map((item) => (
-                  <option key={item.slug} value={item.slug}>
-                    {shortBookName(item)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
+      {books.length > 0 && (
+        <div id="search-filters" className={searchStyles.filters}>
+          <SelectMenu
+            className={searchStyles.bookFilter}
+            label={t("books")}
+            name="book"
+            form="search-form"
+            value={book || ""}
+            icon={<MenuBookIcon />}
+            busy={busy}
+            onChange={(slug) => go({ book: slug })}
+            options={[{ value: "", label: t("searchAllBooks") }, ...books.map((item) => ({ value: item.slug, label: shortBookName(item) }))]}
+          />
         </div>
-      </div>
+      )}
     </div>
   );
 }

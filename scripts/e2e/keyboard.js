@@ -45,20 +45,20 @@ module.exports = spec(module, 'keyboard and screen readers', (h) => {
   });
 
   h.test(
-    'the phone drawer and the reading settings are dialogs: focus goes in, stays, comes back; Esc clears the filter first',
+    'the phone drawer and the settings panel are dialogs: focus goes in, stays, comes back; Esc clears the filter first',
     async (t) => {
       const { page } = await h.open(t, CHAPTER);
-      // the reading settings, from the header
-      const tune = page.getByRole('button', { name: 'Cài đặt hiển thị', exact: true });
+      // the settings, from the header
+      const tune = page.getByRole('button', { name: 'Cài đặt', exact: true });
       await tune.focus();
       await page.keyboard.press('Enter');
-      await until(async () => (await focused(page)).dialog === 'Cài đặt hiển thị', 'focus in the Reading settings dialog');
+      await until(async () => (await focused(page)).dialog === 'Cài đặt', 'focus in the settings panel');
       for (let i = 1; i <= 16; i += 1) {
         await page.keyboard.press('Tab');
         assert.ok((await focused(page)).dialog, `Tab ${i} stays in the dialog`);
       }
       await page.keyboard.press('Escape');
-      await until(async () => (await focused(page)).name === 'Cài đặt hiển thị', 'closed; focus back on its button');
+      await until(async () => (await focused(page)).name === 'Cài đặt', 'closed; focus back on its button');
 
       // the navigation, from the title
       const title = page.locator('button[class*="titleButton"]');

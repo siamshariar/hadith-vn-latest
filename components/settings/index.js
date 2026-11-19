@@ -9,11 +9,11 @@ import Brightness4Icon from "../icons/Brightness4";
 import { ARABIC_SIZE, TRANSLATION_SIZE, FontChoices, Segmented, SizeStepper, SwitchRow } from "./controls";
 import styles from "./index.module.scss";
 
-// The settings (the header's settings dialog and the /settings page): three sections, each
-// with its title (text size, faces, appearance), then the note on where they are kept and
-// Reset. Everything applies at once and is saved in this browser (SettingsContext).
+// The settings (the settings panel, components/settings/Panel, and the /settings page): three
+// sections, each with its title (text size, faces, appearance), then the note on where they
+// are kept and Reset. Everything applies at once and is saved in this browser (SettingsContext).
 // The face samples are the word "hadith" in Arabic, and each translation face's own name.
-// `headingLevel`: the sections' headings, 3 under the dialog's title, 2 under the page's.
+// `headingLevel`: the sections' headings, 3 under the panel's title, 2 under the page's.
 const ARABIC_SAMPLE = "الحديث";
 
 export default function SettingsContent({ headingLevel = 3 }) {

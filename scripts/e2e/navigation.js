@@ -363,7 +363,8 @@ module.exports = spec(module, 'navigation', (h) => {
       const creed = await api(`/categories/the-creed${loc()}`);
       const child = creed.children.find((c) => c.totalChildren > 0);
       const { page } = await h.open(t, `/categories/${creed.slug}`);
-      await page.getByRole('button', { name: creed.title, exact: true }).click();
+      // the header's title: the section above, the category under it
+      await page.getByRole('button', { name: `Danh mục ${creed.title}`, exact: true }).click();
       const drawer = page.locator('.MuiDrawer-paper').filter({ has: page.locator('a[href="/privacy-policy"]') });
       await drawer.waitFor({ state: 'visible' });
       assert.equal(await drawer.getByRole('tab', { name: 'Danh mục' }).getAttribute('aria-selected'), 'true');

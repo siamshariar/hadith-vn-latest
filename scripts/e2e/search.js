@@ -1,6 +1,6 @@
 // Search: Vietnamese, Arabic and no results, in the site's one language (an old ?lang= is
-// ignored); the book filter of the "Bộ lọc" panel; the pager and the count line; highlighting
-// (whole words only).
+// ignored); the collection dropdown; the pager and the count line; highlighting (whole words
+// only).
 'use strict';
 
 const { api, assert, interfaceStrings, loc, norm, spec, until, waitForText, viNumber } = require('./harness');
@@ -43,18 +43,20 @@ async function expectCountLine(page, results, tr = null) {
   await waitForText(page.locator('[aria-live="polite"] p'), line);
 }
 
-// Opens the filter panel on phones (always open from 768px).
-const filterToggle = (page) => page.locator('button[aria-controls="search-filters"]');
-async function filters(h, page) {
-  const toggle = filterToggle(page);
-  if (h.phone) {
-    assert.equal(await toggle.getAttribute('aria-expanded'), 'false');
-    assert.equal(await page.locator('#search-filters select[name="book"]').isVisible(), false, 'filters folded on phones');
-    await toggle.click();
-    assert.equal(await toggle.getAttribute('aria-expanded'), 'true');
-  }
-  await page.locator('#search-filters select[name="book"]').waitFor({ state: 'visible' });
-  return page.locator('#search-filters');
+// The collection dropdown (components/core/SelectMenu), in view on every screen: a button that
+// opens a listbox. Opens it and returns the listbox.
+// While the list is open the page behind it is aria-hidden (a modal menu), so the open field is
+// found by its attributes, not its role.
+const bookField = (page) => page.locator('#search-filters').getByRole('button', { name: /^Bộ sưu tập hadith / });
+const bookFieldEl = (page) => page.locator('#search-filters button[aria-haspopup="listbox"]');
+async function openBooks(page) {
+  const field = bookField(page);
+  await field.waitFor({ state: 'visible' });
+  await field.click();
+  const list = page.getByRole('listbox', { name: 'Bộ sưu tập hadith' });
+  await list.waitFor();
+  assert.equal(await bookFieldEl(page).getAttribute('aria-expanded'), 'true');
+  return list;
 }
 
 module.exports = spec(module, 'search', (h) => {
@@ -136,24 +138,33 @@ module.exports = spec(module, 'search', (h) => {
     const vi = await interfaceStrings('vi');
     const books = await api(`/books${loc()}`);
     const { page } = await h.open(t, searchPath(VI));
-    const panel = await filters(h, page);
-    const bookSelect = panel.locator('select[name="book"]');
-    const options = await bookSelect.locator('option').evaluateAll((items) => items.map((o) => [o.value, o.textContent.trim()]));
+    // the field shows the choice: all collections
+    assert.equal(norm(await bookField(page).textContent()), vi('searchAllBooks'));
+    // no overflow: the field fits the column on every screen
+    const box = await bookField(page).boundingBox();
+    assert.ok(box.x >= 0 && box.x + box.width <= page.viewportSize().width, `the field in view: ${JSON.stringify(box)}`);
+    const list = await openBooks(page);
+    const options = (await list.getByRole('option').allTextContents()).map(norm);
     assert.deepEqual(
       options,
       // the topic collection is named by the interface (lib/names), never by its source
-      [['', vi('searchAllBooks')], ...books.map((b) => [b.slug, b.code === 'hadeethenc' ? vi('topicCollection') : b.name])],
+      [vi('searchAllBooks'), ...books.map((b) => (b.code === 'hadeethenc' ? vi('topicCollection') : b.name))],
       'every collection in the book filter'
     );
-    assert.equal(await panel.locator('select[name="lang"]').count(), 0, 'no language filter');
+    assert.equal(await list.getByRole('option', { selected: true }).textContent().then(norm), vi('searchAllBooks'), 'the choice is selected');
+    assert.equal(await page.locator('select').count(), 0, 'no native select');
 
-    await bookSelect.selectOption('hadeethenc');
+    await list.getByRole('option', { name: vi('topicCollection'), exact: true }).click();
     await h.waitForPath(page, (url) => url.searchParams.get('book') === 'hadeethenc', 'book filter');
     const inTopic = await apiSearch(VI, 'vi', { book: 'hadeethenc' });
     await expectCountLine(page, inTopic);
     assert.deepEqual(await cardCitations(page), inTopic.hadiths.map((hadith) => String(hadith.id)));
-    // the active filter is counted on the toggle
-    assert.equal(norm(await filterToggle(page).textContent()).replace(/\s+/g, ''), `${vi('filters')}1`.replace(/\s+/g, ''));
+    // the field shows the collection chosen, and the list ticks it
+    await until(async () => norm(await bookField(page).textContent()) === vi('topicCollection'), 'the field shows the choice');
+    const again = await openBooks(page);
+    assert.equal(await again.getByRole('option', { selected: true }).textContent().then(norm), vi('topicCollection'));
+    await page.keyboard.press('Escape');
+    await until(async () => (await bookFieldEl(page).getAttribute('aria-expanded')) === 'false', 'closed with Esc');
   });
 
   h.test(

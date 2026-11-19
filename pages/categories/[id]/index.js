@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { server, shareImage } from "../../../lib/config";
-import { booksForHadiths, getCategories, getCategory, getCategoryHadiths, loadStatic, readableChildren, staticPaths } from "../../../lib/api";
+import { booksForHadiths, getCategories, getCategory, getCategoryHadiths, loadStatic, readableChildren, staticPaths, warm } from "../../../lib/api";
 import { categoryCrumbs, categoryHadithsPath, categoryPath, listPath } from "../../../lib/hadith";
 import { useLocale } from "../../../contexts/LocaleContext";
 import Meta from "../../../components/core/meta";
@@ -129,7 +129,7 @@ export default function Category({ category, preview, previewFiltered, books, er
 Category.getLayout = function getLayout(page) {
   const { category } = page.props;
   return (
-    <Layout selectedCategoryId={category ? category.id : null} title={category ? () => category.title : undefined}>
+    <Layout selectedCategoryId={category ? category.id : null} title={category ? ({ t }) => ({ context: t("categories"), label: category.title }) : undefined}>
       {page}
     </Layout>
   );
@@ -142,6 +142,7 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const { id } = params;
   return loadStatic(async (lang) => {
+    warm(lang, { books: true, categories: true });
     // Preview the hadiths translated into the reader's language first,
     // like the full list; fall back to all when none are.
     let previewFiltered = lang !== "ar";
@@ -154,15 +155,20 @@ export async function getStaticProps({ params }) {
       preview = await getCategoryHadiths(id, lang, { perPage: PREVIEW_SIZE });
       previewFiltered = false;
     }
+    const [all, books, sidebarData] = await Promise.all([
+      getCategories(lang).catch(() => null),
+      booksForHadiths(preview.hadiths, lang),
+      sidebarCategoriesData(lang, category.id),
+    ]);
     return {
       props: {
         // Subcategories with nothing to read in the language are left out, as in every list of categories
         // (the flat list is the sidebar's, already loaded; without it the subcategories are only filtered)
-        category: { ...category, children: readableChildren(category.children, await getCategories(lang).catch(() => null), lang) },
+        category: { ...category, children: readableChildren(category.children, all, lang) },
         preview,
         previewFiltered,
-        books: await booksForHadiths(preview.hadiths, lang),
-        sidebarData: await sidebarCategoriesData(lang, category.id),
+        books,
+        sidebarData,
         backLink: category.breadcrumbs && category.breadcrumbs.length
           ? categoryPath(category.breadcrumbs[category.breadcrumbs.length - 1])
           : "/categories",

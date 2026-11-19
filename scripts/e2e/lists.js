@@ -105,11 +105,11 @@ module.exports = spec(module, 'lists', (h) => {
       await h.waitForPath(page, (url) => url.pathname === '/books/sahih-al-bukhari/chapters/1/translated', 'filter on');
       await until(async () => (await page.getByRole('switch').getAttribute('aria-checked')) === 'true', 'switch checked');
       await until(async () => JSON.stringify(await cardIds(page)) === JSON.stringify(ids(readable)), 'only the readable hadiths');
-      // each shows the topic collection's translation, labelled as such and with its
-      // source line, and the list says what that means once
+      // each shows the topic collection's translation, labelled as such (naming no source),
+      // and the list says what that means once
       const linkedCount = readable.hadiths.filter((x) => x.linkedTranslation).length;
       assert.equal(await page.getByText('Bản dịch tiếng Việt từ bộ hadith theo chủ đề', { exact: true }).count(), linkedCount);
-      assert.equal(await page.locator('article div[class*="linked"] p[data-source-line]').count(), linkedCount);
+      assert.equal(await page.locator('article').getByText(/hadeeth\s*enc/i).count(), 0);
       assert.equal(await page.getByRole('note').filter({ hasText: 'Những hadith có nhãn' }).count(), 1);
 
       await page.getByRole('switch').click();

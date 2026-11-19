@@ -73,8 +73,8 @@ the easiest to read, and that UI is locked. Measure against it before proposing 
 - Show only what the API's sources state: no invented hadith text, translations, grades,
   references or names. Never machine-translate hadith text or book, chapter or category
   names.
-- No data-source names in the interface. The one exception is HadeethEnc's source line
-  under its content, which its terms require.
+- No data-source names anywhere in the interface, citations or share text: not even
+  HadeethEnc's (the owner's decision of 2026-11-19; provenance stays in the API and DB).
 - Interface strings live in `lib/locales/*.js`, one catalog per language (English is the
   fallback and the one in the bundle; the others load with the page). A new string needs
   every catalog, with plural forms where the count is a number; `npm run i18n:missing`

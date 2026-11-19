@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useLocale } from "../../contexts/LocaleContext";
 import HeaderLogo from "../web/HeaderLogo";
 import NavDrawer from "./NavDrawer";
-import ReaderSettings from "../hadith/ReaderSettings";
+import SettingsPanel from "../settings/Panel";
 import MenuIcon from "../icons/Menu";
 import SearchIcon from "../icons/Search";
 import TuneIcon from "../icons/Tune";
@@ -41,8 +41,8 @@ export default function HeaderMobile({ navMode = "books" }) {
             type="button"
             className={styles.icon}
             onClick={() => setSettingsOpen(true)}
-            aria-label={t("readerSettings")}
-            title={t("readerSettings")}
+            aria-label={t("settings")}
+            title={t("settings")}
             aria-haspopup="dialog"
             aria-expanded={settingsOpen ? "true" : "false"}
           >
@@ -51,7 +51,7 @@ export default function HeaderMobile({ navMode = "books" }) {
         </div>
       </div>
       <NavDrawer open={navOpen} onClose={() => setNavOpen(false)} where={{ mode: navMode }} onSettings={() => setSettingsOpen(true)} />
-      <ReaderSettings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </>
   );
 }

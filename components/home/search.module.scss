@@ -183,79 +183,23 @@
   }
 }
 
-// Search page: "Filters" toggle and panel. Phones start folded; from 768px
-// the panel is always open and the toggle goes away.
-.filterToggle {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--tap);
-  padding: 0 var(--space-4) 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-md);
-  background: var(--surface-soft);
-  color: var(--text);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-
-  svg {
-    width: 20px;
-    height: 20px;
-    fill: var(--text-secondary);
-  }
-
-  &[aria-expanded="true"] .filterChevron {
-    transform: rotate(-135deg);
-    margin-top: 4px;
-  }
-}
-
-.filterCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: var(--text-xs);
-}
-
-.filterChevron {
-  width: 7px;
-  height: 7px;
-  margin-top: -3px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-}
-
-.filterPanel {
-  display: none;
-  flex-direction: column;
+// Search page: the collection dropdown under the field, the column's width on phones, as wide
+// as its choice (up to 360px) from 768px.
+.filters {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
 }
 
-.filterPanelOpen {
-  display: flex;
-}
-
-// 44px selects on touch screens
-.filterPanel select {
-  min-height: var(--tap);
+.bookFilter {
+  flex: 1 1 100%;
 }
 
 @media only screen and (min-width: 768px) {
-  .filterToggle {
-    display: none;
-  }
-  .filterPanel {
-    display: flex;
+  .bookFilter {
+    flex: 0 1 auto;
+    min-width: 260px;
+    max-width: 360px;
   }
 }
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import Skeleton from "react-loading-skeleton";
 import ErrorState from "../core/error";
-import ReaderSettings from "../hadith/ReaderSettings";
+import SettingsPanel from "../settings/Panel";
 import BackIcon from "../icons/NavigateBefore";
 import BookmarkIcon from "../icons/BookmarkBorder";
 import ChevronRightIcon from "../icons/ChevronRight";
@@ -521,7 +521,7 @@ export default function Sidebar({ lazy = false, ...where }) {
         <Link href="/bookmarks" aria-label={t("savedLists")} title={t("savedLists")}>
           <BookmarkIcon />
         </Link>
-        <button type="button" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog" aria-label={t("readerSettings")} title={t("readerSettings")}>
+        <button type="button" onClick={() => setSettingsOpen(true)} aria-haspopup="dialog" aria-label={t("settings")} title={t("settings")}>
           <SettingsIcon />
         </button>
       </div>
@@ -542,7 +542,7 @@ export default function Sidebar({ lazy = false, ...where }) {
           </button>
         </div>
       </div>
-      <ReaderSettings open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

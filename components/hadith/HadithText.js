@@ -2,8 +2,8 @@ import { Fragment, useId, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "../../contexts/LocaleContext";
 import { languageName as catalogName } from "../../lib/i18n";
-import { sourceLine, translatorName } from "../../lib/citation";
-import { cleanText, hadithPath, isCategoryBook } from "../../lib/hadith";
+import { translatorName } from "../../lib/citation";
+import { cleanText, hadithPath } from "../../lib/hadith";
 import { extraTranslations, fallbackShownAsExtra, primaryTranslation } from "../../lib/translations";
 import ChevronDownIcon from "../icons/ChevronDown";
 import { Highlighted } from "./Highlight";
@@ -97,18 +97,6 @@ export function Translator({ entry, first = false }) {
       {!first && SEPARATOR}
       <bdi className={styles.creditName}>{name}</bdi>
     </>
-  );
-}
-
-// "Nguồn: HadeethEnc.com": one small line under HadeethEnc's content, as its
-// terms ask (lib/citation sourceLine): under the translations of its own
-// hadiths, and under its translation shown with another collection's hadith.
-export function SourceLine() {
-  const { t } = useLocale();
-  return (
-    <p className={styles.sourceLine} data-source-line="">
-      {sourceLine(t)}
-    </p>
   );
 }
 
@@ -207,7 +195,6 @@ export function LinkedTranslation({ linked, clamped = false, compact = false }) 
       >
         {cleanText(linked.text)}
       </div>
-      <SourceLine />
     </div>
   );
 }
@@ -280,7 +267,6 @@ export function ExtraTranslation({ slot, collapsible = false, compact = false })
         <div className={styles.translationText} lang={slot.code} dir={direction}>
           <TranslationText text={entry.text} code={slot.code} />
         </div>
-        {linked && <SourceLine />}
       </div>
     </div>
   );
@@ -318,17 +304,14 @@ export function LinkedTranslationNote({ hadiths }) {
 // Cards, the detail page and the daily hadith all render translations here:
 // the primary translation (own, the topic collection's linked one, or the
 // labelled English fallback), then the reader's extra languages in their
-// order. A hadith of the topic collection ends with its source line (`book`:
-// the hadith's collection, when the hadith does not carry it); a linked
-// translation carries its own.
+// order. The site names no data source (not even the topic collection's).
 // `compact`: the short linked-translation label of the cards;
 // `collapsible`: extra languages fold on phones (lists).
-export function HadithTranslations({ hadith, book, clamped = false, showNote = false, compact = false, collapsible = false }) {
+export function HadithTranslations({ hadith, clamped = false, showNote = false, compact = false, collapsible = false }) {
   const { t, languageName } = useLocale();
   const { own, linked, fallback } = primaryTranslation(hadith);
   const extras = extraTranslations(hadith);
   const othersShown = extras.some((slot) => slot.entry);
-  const source = isCategoryBook(book || hadith.book);
 
   const primary = linked ? (
     <div className={styles.translations}>
@@ -344,7 +327,7 @@ export function HadithTranslations({ hadith, book, clamped = false, showNote = f
     <Translation translation={own} clamped={clamped} showNote={showNote} othersShown={othersShown} />
   );
 
-  if (!extras.length && !source) return primary;
+  if (!extras.length) return primary;
 
   return (
     <div className={styles.stack}>
@@ -352,7 +335,6 @@ export function HadithTranslations({ hadith, book, clamped = false, showNote = f
       {extras.map((slot) => (
         <ExtraTranslation key={slot.code} slot={slot} collapsible={collapsible} compact={compact} />
       ))}
-      {source && <SourceLine />}
     </div>
   );
 }

@@ -113,36 +113,38 @@
   min-width: 0;
 }
 
-// "1. Revelation ▾": where the reader is; it opens the navigation (NavDrawer). A long title is
-// cut here: the page shows it in full.
+// Where the reader is, in a filled button that hugs its text in the middle of the header: the
+// book or section above, smaller and muted ("Sahih Muslim"), the page under it ("0.
+// Introduction"), then a chevron: it opens the navigation (NavDrawer) at that place. A long name
+// is cut here: the page shows it in full.
 .titleButton {
-  display: flex;
-  flex: 1 1 auto;
+  display: inline-flex;
+  flex: 0 1 auto;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
+  gap: 4px;
+  max-width: 100%;
   min-width: 0;
   min-height: 44px;
-  padding: 0 4px;
+  padding: 3px 6px 3px 14px;
   border: 0;
   border-radius: var(--radius-md); // a button: never a pill
-  background: transparent;
+  background: var(--surface-soft);
   color: var(--text);
   font: inherit;
-  font-size: 16px;
+  text-align: start;
   cursor: pointer;
-
-  span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+  transition: background-color var(--duration) var(--ease);
 
   svg {
-    width: 24px;
-    height: 24px;
-    fill: var(--text-secondary);
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition: transform var(--duration) var(--ease);
+  }
+
+  &[aria-expanded="true"] svg {
+    transform: rotate(180deg);
   }
 
   &:active {
@@ -150,11 +152,47 @@
   }
 }
 
+.titleText {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.titleContext,
+.titleLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.titleContext {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.titleLabel {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titleButton svg {
+    transition: none;
+  }
+}
+
 // Tablets with a mouse or trackpad use this header too.
 @media (hover: hover) {
-  .icon:hover,
-  .titleButton:hover {
+  .icon:hover {
     background: var(--hover);
+  }
+
+  .titleButton:hover {
+    background: var(--surface-card);
   }
 }
 

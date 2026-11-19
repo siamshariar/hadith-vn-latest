@@ -102,7 +102,7 @@ export default function HadithCard({ hadith, book, showContext = false, inBookRe
       ) : (
         <>
           <div className={styles.translationCol}>
-            <HadithTranslations hadith={hadith} book={book} compact collapsible />
+            <HadithTranslations hadith={hadith} compact collapsible />
           </div>
           <div className={styles.arabicCol}>
             <ArabicFold text={hadith.arabic} />

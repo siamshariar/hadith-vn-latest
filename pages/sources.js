@@ -8,15 +8,14 @@ import { site } from "../lib/sites";
 import { useLocale } from "../contexts/LocaleContext";
 import Meta from "../components/core/meta";
 import Breadcrumbs from "../components/core/breadcrumbs";
-import { SourceLine } from "../components/hadith/HadithText";
 import Layout from "../components/layouts/LayoutSecondary";
 import { sidebarCategoriesData } from "../components/sidebar/data";
 import styles from "../components/content/Page.module.scss";
 
 // The site's data & method page (still at /sources): its collections, how much of them
 // reads in the deployment's content language (on an international site the reader's), how
-// translations and grades are shown, and the translators by language. It names no source:
-// the topic collection's description carries HadeethEnc's source line, as its terms ask.
+// translations and grades are shown, and the translators by language. It names no data
+// source.
 // Prose in each interface language with a catalog (English when there is none); figures
 // come from the API. {site} is the site's name, {language} the language described.
 const COPY = {
@@ -206,7 +205,6 @@ export default function Sources({ books, coverage, translators, topicLanguages }
                   </li>
                   {topicLanguages > 0 && <li>{copy.topicLanguages(formatNumber(topicLanguages))}</li>}
                 </ul>
-                <SourceLine />
               </article>
             )}
           </div>

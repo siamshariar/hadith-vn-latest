@@ -135,15 +135,19 @@
   }
 }
 
-// With a mouse, the delete button shows on the row under it or with focus inside; touch
-// screens always show it (they have no hover).
-@media (hover: hover) and (pointer: fine) {
-  .delete_icon {
-    opacity: 0;
-  }
+// Always in view, quiet, on every screen: a touch screen has no hover to find it with, and a
+// mouse should not have to look for it. Full strength on the row under the pointer or with
+// focus inside; at 0.75 the icon keeps 3:1 against the page (WCAG 1.4.11) in both themes.
+.delete_icon {
+  opacity: 0.75;
+}
 
-  .item:hover .delete_icon,
-  .item:focus-within .delete_icon {
+.item:focus-within .delete_icon {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .item:hover .delete_icon {
     opacity: 1;
   }
 }

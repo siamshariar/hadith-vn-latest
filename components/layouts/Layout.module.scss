@@ -5,10 +5,15 @@
 // with white cards, on one centred frame: the navigation card, 16px, the 940px reading card.
 // The frame sets --frame for all that lines up with it: the header's logo and tools, the
 // footer, the back-to-top button (ScrollFrame).
+// Phones and tablets: a column at least as tall as the screen, so on a short page the footer
+// sits at the bottom of the screen, not below it after a blank.
 .wrapper {
   --frame: calc(var(--nav-width) + var(--reading-card) + 64px); // 16 between, 24 at each side
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .header {
@@ -17,9 +22,8 @@
 
 .body {
   display: block;
+  flex: 1 0 auto;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
   padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
@@ -55,6 +59,11 @@
 }
 
 @media screen and (min-width: 1024px) {
+  .wrapper {
+    display: block;
+    min-height: 0;
+  }
+
   .header {
     position: fixed;
     top: 0;

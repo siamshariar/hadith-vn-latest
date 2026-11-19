@@ -128,7 +128,7 @@ module.exports = spec(module, 'international (ac)', (h) => {
       assert.equal(brand.logo, '/img/logo_ac_dark.png');
       assert.equal(brand.loaded, true);
       const share = await page.getAttribute('meta[property="og:image"]', 'content');
-      assert.match(share, /\/img\/s_logo_ac\.png$/);
+      assert.match(share, /\/img\/share\/ac\.png$/);
     },
     { smoke: true }
   );
