@@ -1,12 +1,16 @@
 import { ImageResponse } from "next/server";
-import { config as siteConfig, shareImage, SHARE_IMAGE_SIZE } from "../../../../lib/config";
+import { SITE_LANGUAGE, getHadith } from "../../../../lib/api";
+import { referenceText } from "../../../../lib/citation";
+import { shareImage, SHARE_IMAGE_SIZE } from "../../../../lib/config";
+import { loadCatalog, translate } from "../../../../lib/i18n";
+import { SITE_INTERFACE } from "../../../../lib/language";
 import { accentGradient, site } from "../../../../lib/sites";
 
-// /api/og/hadith/{id}?r={reference}: a hadith's share card (og:image of its page), 1200 x 630:
+// /api/og/hadith/{id}: a hadith's share card (og:image of its page), 1200 x 630:
 // the site's logo and the reference above, the hadith's own translation in the site's language
-// in the middle, the site's address and accent ribbon at the foot. `r` is the reference as the page
-// shows it ("Sahih al-Bukhari 3", the books named as the site names them); it is used only
-// when it ends with the hadith's number.
+// in the middle, the site's address and accent ribbon at the foot. Everything on it comes from
+// the API and the site (the reference by the page's own code, lib/citation), never from the
+// address: a card carries the site's name, so nobody may put other words on one.
 // Satori draws text without shaping, so a card is drawn only for a text in Latin, Cyrillic or
 // Greek letters (Noto Sans; ﷺ from Noto Naskh Arabic, public/fonts/og). For anything else, or
 // a hadith with no text in the language, or the API away, it sends the site's card instead.
@@ -15,9 +19,7 @@ export const config = { runtime: "edge" };
 const { width, height } = SHARE_IMAGE_SIZE;
 const DRAWABLE = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}\p{Script=Common}\p{Script=Inherited}ﷺ]*$/u;
 const LOGO_RATIO = 2020 / 343; // the logos' size (public/img/logo*.png)
-const API_HEADERS = /\.ngrok(-free)?\.(app|dev)$/.test(new URL(siteConfig.apiBaseUrl).hostname)
-  ? { Accept: "application/json", "ngrok-skip-browser-warning": "1" }
-  : { Accept: "application/json" };
+const t = (key, vars) => translate(SITE_INTERFACE, key, vars);
 
 let fonts = null;
 const loadFonts = (origin) => {
@@ -75,25 +77,18 @@ export default async function handler(request) {
   const url = new URL(request.url);
   const id = decodeURIComponent(url.pathname.split("/").pop() || "");
   if (!/^\d{1,9}$/.test(id)) return fallback();
-  const lang = site.language;
 
   let hadith;
   try {
-    const response = await fetch(`${siteConfig.apiBaseUrl}/hadith/hadiths/${id}/localizations/${encodeURIComponent(lang)}`, {
-      headers: API_HEADERS,
-    });
-    if (!response.ok) return fallback();
-    const body = await response.json();
-    hadith = body && (body.hadith || body.data || body);
+    [hadith] = await Promise.all([getHadith(id, SITE_LANGUAGE), loadCatalog(SITE_INTERFACE).catch(() => null)]);
   } catch (_) {
     return fallback();
   }
-  const text = hadith && readableText(hadith, lang);
+  const text = hadith && readableText(hadith, SITE_LANGUAGE);
   if (!text || !DRAWABLE.test(text)) return fallback();
 
-  const number = String(hadith.referenceNumber || "").trim();
-  const asked = (url.searchParams.get("r") || "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 80);
-  const reference = asked && number && asked.endsWith(number) && DRAWABLE.test(asked) ? asked : "";
+  const named = referenceText(hadith, hadith.book, t);
+  const reference = DRAWABLE.test(named) ? named : "";
   const { text: shown, size } = fit(text);
   const ribbon = accentGradient() || "linear-gradient(90deg, #466548, #7c9a6e)";
   const host = new URL(shareImage).host;

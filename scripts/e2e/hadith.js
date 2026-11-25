@@ -290,4 +290,50 @@ module.exports = spec(module, 'hadith page', (h) => {
     // HadeethEnc's content, but no line names it (the owner's decision of 2026-11-19)
     assert.equal(await page.getByText(/hadeeth\s*enc/i).count(), 0);
   });
+
+  h.test(
+    'share card: 1200x630, the reference is the site\'s own, whatever the address asks for',
+    async (t) => {
+      const list = await api(`/categories/the-creed/hadiths${loc()}?perPage=1&translated=1`);
+      const { id } = list.hadiths[0];
+      const { page } = await h.open(t, `/hadiths/${id}`);
+      const image = await page.getAttribute('meta[property="og:image"]', 'content');
+      assert.equal(new URL(image).search, '', 'nothing of the card is in its address');
+      assert.equal(new URL(image).pathname, `/api/og/hadith/${id}`);
+      const reference = await page.getAttribute('meta[property="og:image:alt"]', 'content');
+      const get = async (query) => {
+        const response = await fetch(`${BASE}/api/og/hadith/${id}${query}`, { redirect: 'manual' });
+        assert.equal(response.status, 200);
+        assert.equal(response.headers.get('content-type'), 'image/png');
+        return Buffer.from(await response.arrayBuffer());
+      };
+      const card = await get('');
+      assert.deepEqual([card.readUInt32BE(16), card.readUInt32BE(20)], [1200, 630]);
+      const number = reference.split(' ').pop();
+      for (const label of [`Sahih al-Bukhari ${number}`, `FAKE ${number}`, reference]) {
+        assert.ok(card.equals(await get(`?r=${encodeURIComponent(label)}`)), `the same card for ?r=${label}`);
+      }
+      // the reference is drawn, in the accent, at the top right
+      const inked = await page.evaluate(async (src) => {
+        const img = new Image();
+        img.src = src;
+        await img.decode();
+        const canvas = document.createElement('canvas');
+        canvas.width = 1200;
+        canvas.height = 630;
+        const context = canvas.getContext('2d');
+        context.drawImage(img, 0, 0);
+        const { data } = context.getImageData(640, 50, 500, 70);
+        let count = 0;
+        for (let i = 0; i < data.length; i += 4) if (data[i] < 110 && data[i + 1] < 130 && data[i + 2] < 110) count += 1;
+        return count;
+      }, `data:image/png;base64,${card.toString('base64')}`);
+      assert.ok(inked > 500, `the reference on the card: ${inked} dark pixels`);
+      // not a hadith: the site's card
+      const none = await fetch(`${BASE}/api/og/hadith/999999999`, { redirect: 'manual' });
+      assert.equal(none.status, 307);
+      assert.match(none.headers.get('location'), /\/img\/share\/vn\.png$/);
+    },
+    { only: 'desktop' }
+  );
 });

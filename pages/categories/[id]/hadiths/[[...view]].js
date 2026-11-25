@@ -41,12 +41,14 @@ export default function CategoryHadiths({ data, books, direct, all, filtered, co
   const crumbs = categoryCrumbs(category, t, { linkCurrent: true });
   crumbs.push({ label: t("hadith") });
   const pastLastPage = hadiths.length === 0 && pagination.total > 0;
+  // Pages 2 and on say so, or every page of the list has one title in search results.
+  const pageLabel = pagination.page > 1 ? `${t("page")} ${formatNumber(pagination.page)}` : "";
 
   return (
     <>
       <Meta
-        title={t("labelValue", { label: t("hadithsInCategory"), value: category.title })}
-        description={`${category.title}: ${t("hadithCount", { count: pagination.total })}.`}
+        title={[t("labelValue", { label: t("hadithsInCategory"), value: category.title }), pageLabel].filter(Boolean).join(" - ")}
+        description={`${category.title}: ${t("hadithCount", { count: pagination.total })}.${pageLabel ? ` ${pageLabel}.` : ""}`}
         url={`${server}${at({}, pagination.page)}`}
         image={shareImage}
         type="website"

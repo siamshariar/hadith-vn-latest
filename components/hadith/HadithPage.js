@@ -68,7 +68,7 @@ export default function HadithPage({ hadith, translations, error }) {
         description={snippet || `${reference} - ${book.name}`}
         url={url}
         canonical={url}
-        image={`${server}/api/og/hadith/${encodeURIComponent(hadith.id)}?r=${encodeURIComponent(reference)}`}
+        image={`${server}/api/og/hadith/${encodeURIComponent(hadith.id)}`}
         imageAlt={reference}
         type="article"
       />

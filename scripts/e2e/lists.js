@@ -267,4 +267,24 @@ module.exports = spec(module, 'lists', (h) => {
     }
     assert.equal(await page.locator('main [lang="ar"]').count(), 0, 'no Arabic names');
   });
+
+  h.test(
+    'pages 2 and on of a list have their own title and description',
+    async (t) => {
+      const { page } = await h.open(t, '/books/sahih-muslim/chapters/1');
+      for (const first of ['/books/sahih-muslim/chapters/1', '/categories/the-creed/hadiths']) {
+        const seen = [];
+        for (const path of [first, `${first}/page/2`, `${first}/page/3`]) {
+          await h.goto(page, path);
+          seen.push({ title: await page.title(), description: await page.getAttribute('meta[name="description"]', 'content'), og: await page.getAttribute('meta[property="og:title"]', 'content') });
+        }
+        assert.ok(!/Trang \d/.test(seen[0].title), `page 1 as it was: ${seen[0].title}`);
+        seen.slice(1).forEach((item, index) => {
+          assert.ok(Object.values(item).every((text) => text.includes(`Trang ${index + 2}`)), JSON.stringify(item));
+        });
+        assert.equal(new Set(seen.map((item) => item.title)).size, 3, 'three titles');
+      }
+    },
+    { only: 'desktop' }
+  );
 });

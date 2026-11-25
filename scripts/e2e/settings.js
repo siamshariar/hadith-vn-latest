@@ -181,6 +181,13 @@ module.exports = spec(module, 'settings', (h) => {
           const box = await dialog.boundingBox();
           return box && Math.abs(box.x + box.width - width) <= 1 && box.y <= 1 && box.height >= page.viewportSize().height - 1;
         }, 'a panel on the right, the screen\'s height');
+      } else {
+        // a sheet from the bottom that leaves 48px of the page in view, once it has come up
+        const { width, height } = page.viewportSize();
+        await until(async () => {
+          const box = await dialog.boundingBox();
+          return box && box.y >= 47 && Math.abs(box.y + box.height - height) <= 1 && Math.abs(box.width - width) <= 1;
+        }, 'a sheet with 48px of the page above it');
       }
       return dialog;
     };

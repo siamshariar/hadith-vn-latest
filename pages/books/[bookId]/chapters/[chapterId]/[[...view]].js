@@ -55,6 +55,8 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
     onlyReadable || unassigned
       ? undefined
       : { chapterNo: chapter.chapterNo, position: (pagination.page - 1) * pagination.perPage + index + 1 };
+  // Pages 2 and on say so, or every page of a chapter has one title in search results.
+  const pageLabel = pagination.page > 1 ? `${t("page")} ${formatNumber(pagination.page)}` : "";
   const showToggle =
     lang !== "ar" &&
     readableCount != null &&
@@ -63,8 +65,8 @@ export default function Chapter({ data, neighbours, onlyReadable, readableCount,
   return (
     <>
       <Meta
-        title={`${title} - ${book.name}`}
-        description={`${book.name}, ${chapterLabel(chapter, t)}: ${title}.`}
+        title={[title, book.name, pageLabel].filter(Boolean).join(" - ")}
+        description={`${book.name}, ${chapterLabel(chapter, t)}: ${title}.${pageLabel ? ` ${pageLabel}.` : ""}`}
         url={`${server}${listPath(basePath, { page: pagination.page })}`}
         image={shareImage}
         type="website"
