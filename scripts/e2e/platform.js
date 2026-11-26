@@ -120,7 +120,7 @@ module.exports = spec(module, 'platform', (h) => {
         }
         const error = await get(`${target}/500`);
         assert.equal(error.status, 500, `${target}/500`);
-        assert.match(error.text, /<meta name="robots" content="noindex"\/?>/, 'the error page is not indexed');
+        assert.match(error.text, /<meta name="robots" content="noindex"( data-next-head="")?\/?>/, 'the error page is not indexed');
       }
     },
     { only: 'desktop' }
@@ -140,7 +140,7 @@ module.exports = spec(module, 'platform', (h) => {
         assert.equal(manifest.name, siteName, `${target}: manifest name = og:site_name`);
         assert.equal(manifest.lang, htmlLang, `${target}: manifest lang = <html lang>`);
         assert.equal(manifest.start_url, '/');
-        assert.match(home, /<link rel="manifest" href="\/manifest\.webmanifest"\/?>/);
+        assert.match(home, /<link rel="manifest" href="\/manifest\.webmanifest"( data-next-head="")?\/?>/); // Next 15+ marks its head tags
       }
     },
     { only: 'desktop' }

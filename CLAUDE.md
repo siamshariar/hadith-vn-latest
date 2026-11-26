@@ -3,8 +3,8 @@
 A multilingual hadith reading site. Arabic originals with translations in up to 72
 languages, read from the hadith API inside the Quran API.
 
-- **Stack:** Next.js 13.5 (Pages Router, plain JS), SCSS modules, and MUI 7 for menus,
-  drawers and modals only.
+- **Stack:** Next.js 16 (Pages Router, plain JS, built with webpack: `next build --webpack`),
+  React 18, SCSS modules, and MUI 7 for menus, drawers and modals only.
 - **Builds:** one build per country edition (`NEXT_PUBLIC_COUNTRY_CODE`); see `docs/DEPLOY.md`.
 
 ## Design: act as this product's frontend architect

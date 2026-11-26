@@ -12,6 +12,7 @@ const {
   lettered,
   loc,
   meta,
+  norm,
   readClipboard,
   sleep,
   spec,
@@ -232,6 +233,48 @@ module.exports = spec(module, 'hadith actions', (h) => {
       await h.waitForHydration(page);
       await waitForText(page.getByText('Thư mục này chưa có dấu trang.'), 'Thư mục này chưa có dấu trang.');
       assert.deepEqual((await stored(page, 'bookmarks')).favorites.entry, []);
+    },
+    { smoke: true }
+  );
+
+  // Safari's "Block all cookies", Chrome's "Don't allow sites to save data", some in-app
+  // browsers: every use of localStorage throws. The site still opens on every layout, and what
+  // a reader saves holds for the visit (nothing can keep it longer).
+  h.test(
+    "with the browser's site data blocked, the pages open and a hadith can still be saved",
+    async (t) => {
+      const { page } = await h.open(t, `/books/${BUKHARI}/hadiths/1`, {
+        initScript: () => {
+          const deny = () => {
+            throw new DOMException('The operation is insecure.', 'SecurityError');
+          };
+          Object.defineProperty(window, 'localStorage', { get: deny, configurable: true });
+          Object.defineProperty(window, 'sessionStorage', { get: deny, configurable: true });
+        },
+      });
+      const blocked = await page.evaluate(() => {
+        try {
+          return typeof localStorage;
+        } catch (_) {
+          return 'blocked';
+        }
+      });
+      assert.equal(blocked, 'blocked');
+      await waitForH1(page, 'Sahih al-Bukhari 1');
+      const header = page.locator('article > header');
+      await header.getByRole('button', { name: HADITH_OPTIONS }).click();
+      await page.getByRole('menuitem', { name: 'Lưu dấu trang', exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: 'Lưu dấu trang' });
+      await dialog.getByRole('button', { name: 'Thêm', exact: true }).click();
+      await dialog.waitFor({ state: 'detached' });
+      await until(async () => (await header.getByRole('button', { name: 'Bỏ dấu trang' }).count()) === 1, 'saved for the visit');
+
+      // every layout (LayoutPrimary, Secondary, Tertiary) and the pages that read saved data
+      for (const path of ['/', `/books/${BUKHARI}`, '/bookmarks', '/settings', `/search?q=${encodeURIComponent('cầu nguyện')}`, '/about']) {
+        await h.goto(page, path);
+        const h1 = norm(await page.locator('h1').first().textContent());
+        assert.ok(h1.length > 0, `${path}: the page shows (h1 ${JSON.stringify(h1)})`);
+      }
     },
     { smoke: true }
   );

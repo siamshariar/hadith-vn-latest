@@ -1,6 +1,6 @@
 # Deploying hadith-vn
 
-hadith-vn is a Next.js 13.5 site (Pages Router) that reads everything from the hadith
+hadith-vn is a Next.js 16 site (Pages Router, built with webpack) that reads everything from the hadith
 endpoints of the Quran API. The same code serves every country. Each country is a
 separate build, run by its own Node.js process behind nginx.
 
@@ -47,7 +47,8 @@ served from the edge near the reader either way. When the API moves to its own s
 its size and alt text): the edition's card, `public/img/share/<code>.png` (its `shareImage` in
 `config/countries.json`; editions without one get `default.png`, the name only). Make a new
 edition's card with `PLAYWRIGHT_CORE=<playwright-core> node scripts/share-images.mjs <code>`.
-A hadith page's card is drawn on request by `pages/api/og/hadith/[id].js` (an Edge Function):
+A hadith page's card is drawn on request by `pages/api/og/hadith/[id].js` (a Node.js function; its
+fonts and the logos travel with it, `outputFileTracingIncludes` in `next.config.js`):
 the logo, the reference and the hadith's own translation in the site's language. Where that
 text cannot be drawn (a script the drawing library cannot shape, such as Bengali or Arabic, or
 no translation of its own) it sends the edition's card. Cards are cached for a week at the edge.

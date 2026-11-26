@@ -266,6 +266,8 @@ export async function getServerSideProps(context) {
   const book = /^[\w-]+$/.test(String(rawBook || "")) ? String(rawBook) : "";
 
   return loadPage(context, async (lang) => {
+    // The sidebar alongside the rest, not after it (it never throws: null when the API fails)
+    const sidebar = sidebarCategoriesData(lang);
     const books = await getBooks(lang).catch(() => []);
 
     // "Go to hadith": ?go=Bukhari 1, ?go=8a&book=sahih-muslim, or a search
@@ -298,6 +300,15 @@ export async function getServerSideProps(context) {
             book: book || undefined,
           })
         : null;
+    const sidebarData = await sidebar;
+
+    // A search's page depends on its address alone (the site's language, no cookie), so the
+    // edge keeps it: an hour fresh, then served while a new one is made, for a day. A
+    // repeated search (the common words most of all) then never reaches the API. Only a
+    // whole page is kept: one with the book list or the sidebar missing is made again.
+    if (context.res && books.length > 0 && sidebarData) {
+      context.res.setHeader("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=86400");
+    }
 
     return {
       props: {
@@ -313,7 +324,7 @@ export async function getServerSideProps(context) {
           source,
           totalHadith,
         })),
-        sidebarData: await sidebarCategoriesData(lang),
+        sidebarData,
         backLink: "/",
       },
     };

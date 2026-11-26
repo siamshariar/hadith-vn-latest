@@ -287,4 +287,27 @@ module.exports = spec(module, 'lists', (h) => {
     },
     { only: 'desktop' }
   );
+
+  h.test(
+    "a category list's views (all, direct) each have their own title and description",
+    async (t) => {
+      const first = '/categories/the-creed/hadiths';
+      const { page } = await h.open(t, first);
+      const seen = [];
+      for (const view of ['', '/all', '/direct', '/all/direct', '/all/page/2']) {
+        await h.goto(page, `${first}${view}`);
+        const canonical = await page.getAttribute('link[rel="canonical"]', 'href');
+        assert.equal(new URL(canonical).pathname, `${first}${view}`, 'each view is its own page');
+        const title = await page.title();
+        const description = await page.getAttribute('meta[name="description"]', 'content');
+        assert.equal(/Tất cả \(/.test(title), view.includes('/all'), `"all" named: ${title}`);
+        assert.equal(/trực tiếp/.test(title), view.includes('/direct'), `"direct" named: ${title}`);
+        assert.equal(/Tất cả \(/.test(description), view.includes('/all'), `"all" in the description: ${description}`);
+        seen.push({ title, description });
+      }
+      assert.equal(new Set(seen.map((item) => item.title)).size, seen.length, 'a title each');
+      assert.equal(new Set(seen.map((item) => item.description)).size, seen.length, 'a description each');
+    },
+    { only: 'desktop' }
+  );
 });

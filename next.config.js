@@ -131,10 +131,15 @@ module.exports = (phase) => {
     },
     images: {
       // The site's images are small static files (logos), so next/image serves
-      // them as they are. This also switches off the /_next/image optimizer,
-      // whose known vulnerabilities (DoS, cache confusion, remote code execution
-      // with crafted AVIF/SVG) have no fix in Next.js 13.
+      // them as they are. This also switches off the /_next/image optimizer, which
+      // the site does not need and which has had its own vulnerabilities (DoS,
+      // cache confusion), so there is nothing of it to attack.
       unoptimized: true,
+    },
+    // The share card route (pages/api/og/hadith/[id].js) reads its fonts and the logos from
+    // public/, which is not part of a function unless named here.
+    outputFileTracingIncludes: {
+      "/api/og/hadith/*": ["./public/fonts/og/*.ttf", "./public/img/logo*.png"],
     },
     async headers() {
       return [

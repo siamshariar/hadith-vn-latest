@@ -3,7 +3,7 @@
 // only).
 'use strict';
 
-const { api, assert, interfaceStrings, loc, norm, spec, until, waitForText, viNumber } = require('./harness');
+const { BASE, api, assert, interfaceStrings, loc, norm, spec, until, waitForText, viNumber } = require('./harness');
 
 const VI = 'cầu nguyện';
 const AR = 'انما الاعمال';
@@ -221,4 +221,21 @@ module.exports = spec(module, 'search', (h) => {
       assert.ok(fold(mark.text).split(/\s+/).every((w) => ['cau', 'nguyen'].some((q2) => w.startsWith(q2))), `"${mark.text}" folds to the query`);
     }
   });
+
+  h.test(
+    'a search is kept at the edge (its page depends on its address alone), one with no results too; a reference is not',
+    async () => {
+      const get = (path) => fetch(`${BASE}${path}`, { redirect: 'manual' });
+      for (const path of [searchPath(VI), searchPath(VI, { page: '2' }), searchPath('zzzqqq')]) {
+        const response = await get(path);
+        assert.equal(response.status, 200, path);
+        assert.equal(response.headers.get('cache-control'), 'public, s-maxage=3600, stale-while-revalidate=86400', path);
+      }
+      // a reference opens the hadith: a redirect, not kept
+      const reference = await get(searchPath('Bukhari 1'));
+      assert.equal(reference.status, 307);
+      assert.doesNotMatch(String(reference.headers.get('cache-control')), /s-maxage/);
+    },
+    { only: 'desktop' }
+  );
 });
